@@ -1,0 +1,22 @@
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+filegroup(
+    name = "package_content",
+    srcs = glob([
+        "*.bzl",
+        "*.bazel",
+    ]),
+    visibility = ["//mylang:__pkg__"],
+)
+
+bzl_library(
+    name = "toolchains_repo",
+    srcs = ["toolchains_repo.bzl"],
+    visibility = ["//mylang:__subpackages__"],
+)
+
+bzl_library(
+    name = "versions",
+    srcs = ["versions.bzl"],
+    visibility = ["//mylang:__subpackages__"],
+)
