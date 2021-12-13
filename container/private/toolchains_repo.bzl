@@ -32,6 +32,48 @@ PLATFORMS = {
             "@platforms//cpu:aarch64",
         ],
     ),
+    "linux_arm64": struct(
+        compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:aarch64",
+        ],
+    ),
+    "linux_armv6": struct(
+        compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:arm64",
+        ],
+    ),
+    "linux_i386": struct(
+        compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_32",
+        ],
+    ),
+    "linux_s390x": struct(
+        compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:s390x",
+        ],
+    ),
+    "linux_x86_64": struct(
+        compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    ),
+    "windows_armv6": struct(
+        compatible_with = [
+            "@platforms//os:windows",
+            "@platforms//cpu:arm64",
+        ],
+    ),
+    "windows_x86_64": struct(
+        compatible_with = [
+            "@platforms//os:windows",
+            "@platforms//cpu:x86_64",
+        ],
+    ),
 }
 
 def _toolchains_repo_impl(repository_ctx):
