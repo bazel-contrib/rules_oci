@@ -19,8 +19,8 @@ load("//container:repositories.bzl", "container_register_toolchains", "rules_con
 rules_container_dependencies()
 
 container_register_toolchains(
-    name = "container1_14",
-    crane_version = "7.0.1-rc1",
+    name = "container",
+    crane_version = "v0.7.0",
 )
 
 # For running our own unit tests
