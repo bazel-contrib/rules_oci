@@ -14,11 +14,11 @@ gazelle(
 
 # This declares the release artifact users
 pkg_tar(
-    name = "rules_mylang",
+    name = "rules_container",
     srcs = [
         "LICENSE",
         "README.md",
-        "//mylang:package_content",
+        "//container:package_content",
     ],
     extension = "tar.gz",
     # It is all source code, so make it read-only.

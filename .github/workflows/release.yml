@@ -21,13 +21,13 @@ jobs:
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
       - name: Rename release artifact with version
-        run: cp $(ls bazel-out/*/bin/*.tar.gz | tail -1) "rules_mylang-$(git describe --tags | sed 's/^v//').tar.gz"
+        run: cp $(ls bazel-out/*/bin/*.tar.gz | tail -1) "rules_container-$(git describe --tags | sed 's/^v//').tar.gz"
       # TODO: move this into bazel to produce the file with expand_template rule when it has stamping
       - name: Prepare workspace snippet
         run: |
-          echo -e "WORKSPACE snippet:\n\n\`\`\`starlark\nhttp_archive(\n    name = \"com_myorg_rules_mylang\"," > release_notes.txt
+          echo -e "WORKSPACE snippet:\n\n\`\`\`starlark\nhttp_archive(\n    name = \"rules_container\"," > release_notes.txt
           echo "    sha256 = \"$(shasum -a 256 *.tar.gz | awk '{print $1}')\"," >> release_notes.txt
-          echo -e "    url = \"https://github.com/myorg/rules_mylang/releases/download/$(git describe --tags)/$(ls *.tar.gz)\",\n)\n\`\`\`" >> release_notes.txt
+          echo -e "    url = \"https://github.com/thesayyn/rules_container/releases/download/$(git describe --tags)/$(ls *.tar.gz)\",\n)\n\`\`\`" >> release_notes.txt
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
