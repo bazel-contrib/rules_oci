@@ -20,3 +20,9 @@ bzl_library(
     srcs = ["versions.bzl"],
     visibility = ["//container:__subpackages__"],
 )
+
+bzl_library(
+    name = "container",
+    srcs = ["container.bzl"],
+    visibility = ["//container:__subpackages__"],
+)

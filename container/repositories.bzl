@@ -37,7 +37,7 @@ _ATTRS = {
 }
 
 def _container_repo_impl(repository_ctx):
-    url = "https://github.com/google/go-containerregistry/releases/download/{0}/go-containerregistry_{1}.tar.gz".format(
+    url = "https://github.com/thesayyn/go-containerregistry/releases/download/{0}/go-containerregistry_{1}.tar.gz".format(
         repository_ctx.attr.crane_version,
         repository_ctx.attr.platform[:1].upper() + repository_ctx.attr.platform[1:],
     )

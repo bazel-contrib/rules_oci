@@ -20,7 +20,7 @@ rules_container_dependencies()
 
 container_register_toolchains(
     name = "container",
-    crane_version = "v0.7.0",
+    crane_version = "v0.7.1-thesayyn",
 )
 
 # For running our own unit tests

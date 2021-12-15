@@ -21,6 +21,14 @@ def rules_container_internal_deps():
 
     maybe(
         http_archive,
+        name = "aspect_bazel_lib",
+        sha256 = "e834c368f36cb336b5b42cd1dd9cd4b6bafa0ad3ed7f92f54a47e5ab436e4f59",
+        strip_prefix = "bazel-lib-0.3.0",
+        url = "https://github.com/aspect-build/bazel-lib/archive/v0.3.0.tar.gz",
+    )
+
+    maybe(
+        http_archive,
         name = "build_bazel_integration_testing",
         urls = [
             "https://github.com/bazelbuild/bazel-integration-testing/archive/165440b2dbda885f8d1ccb8d0f417e6cf8c54f17.zip",

@@ -23,8 +23,8 @@ def _impl(ctx):
 
     ctx.actions.write(
         launcher,
-        """#/usr/bin/env bash
-set -o pipefail -o errexit -o nounset
+        """#!/usr/bin/env bash
+set -euo pipefail
 {crane} --platform=linux/arm64 $@""".format(
             crane = toolchain.containerinfo.crane_path,
         ),
@@ -61,7 +61,7 @@ set -o pipefail -o errexit -o nounset
         arguments = [pull],
         outputs = [tar],
         executable = launcher,
-        progress_message = "Pulling base image (%s)" % ctx.attr.base
+        progress_message = "Pulling base image and appending new layers (%s)" % ctx.attr.base
     )
 
     # Mutate it
@@ -73,6 +73,7 @@ set -o pipefail -o errexit -o nounset
         "--tag",
         ctx.label.name,
         tar,
+        "--output",
         resultTar
     ])
 
@@ -83,7 +84,7 @@ set -o pipefail -o errexit -o nounset
     if ctx.attr.cmd:
         mutate.add("--cmd")
         mutate.add_all(ctx.attr.cmd)
-
+    
 
 
     ctx.actions.run(
@@ -96,7 +97,7 @@ set -o pipefail -o errexit -o nounset
 
     return [
         DefaultInfo(
-            files = depset([tar, resultTar]),
+            files = depset([resultTar]),
         ),
     ]
 
