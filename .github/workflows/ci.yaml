@@ -33,13 +33,16 @@ jobs:
         with:
           path: "~/.cache/bazel-repo"
           key: bazel-repo
+      - name: bazel build //example:image && docker load
+        env:
+          # Bazelisk will download bazel to here, ensure it is cached between runs.
+          XDG_CACHE_HOME: ~/.cache/bazel-repo
+        run: |
+          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example:image
+          docker load -i bazel-bin/example/image.tar
+          docker run --rm -w /example/_bin_launcher.sh.runfiles/rules_container image:latest
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
-      - name: bazel build //example:image
-        env:
-          # Bazelisk will download bazel to here, ensure it is cached between runs.
-          XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example:image

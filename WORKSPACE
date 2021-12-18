@@ -38,3 +38,44 @@ go_rules_dependencies()
 go_register_toolchains(version = "1.17.2")
 
 gazelle_dependencies()
+
+# Rules pkg
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()
+
+
+
+
+
+
+# Testing only - Remove these afterwards
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "aspect_rules_js",
+    sha256 = "e8576a74a7e80b873179514cf1ad48b62b18ae024e74200ecd40ae6dc00c515a",
+    strip_prefix = "rules_js-0.3.0",
+    url = "https://github.com/aspect-build/rules_js/archive/v0.3.0.tar.gz",
+)
+
+load("@aspect_rules_js//js:repositories.bzl", "rules_js_dependencies")
+
+rules_js_dependencies()
+
+load("@rules_nodejs//nodejs:repositories.bzl", "nodejs_register_toolchains")
+
+nodejs_register_toolchains(
+    name = "node16",
+    node_version = "16.9.0",
+)
+
+load("@aspect_rules_js//js:npm_import.bzl", "npm_import", "translate_package_lock")
+
+npm_import(
+    integrity = "sha512-ULr0LDaEqQrMFGyQ3bhJkLsbtrQ8QibAseGZeaSUiT/6zb9IvIkomWHJIvgvwad+hinRAgsI51JcWk2yvwyL+w==",
+    package = "acorn",
+    version = "8.4.0",
+    deps = [],
+)
