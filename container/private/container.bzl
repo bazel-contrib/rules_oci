@@ -21,11 +21,12 @@ def _impl(ctx):
 
     launcher = ctx.actions.declare_file("crane.sh")
 
+    # TODO: dynamically get --platform from toolchain
     ctx.actions.write(
         launcher,
         """#!/usr/bin/env bash
 set -euo pipefail
-{crane} --platform=linux/arm64 $@""".format(
+{crane} $@""".format(
             crane = toolchain.containerinfo.crane_path,
         ),
         is_executable = True,
@@ -78,15 +79,11 @@ set -euo pipefail
     ])
 
     if ctx.attr.entrypoint:
-        mutate.add("--entrypoint")
-        mutate.add_all(ctx.attr.entrypoint)
+        mutate.add_joined("--entrypoint", ctx.attr.entrypoint, join_with=",")
 
     if ctx.attr.cmd:
-        mutate.add("--cmd")
-        mutate.add_all(ctx.attr.cmd)
+        mutate.add_joined("--cmd", ctx.attr.cmd, join_with=",")
     
-
-
     ctx.actions.run(
         inputs = [tar] + toolchain.containerinfo.crane_files,
         arguments = [mutate],

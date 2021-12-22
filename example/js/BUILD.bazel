@@ -1,0 +1,33 @@
+load("//container:container.bzl", "container")
+load("//language:runfiles.bzl", "expand_runfiles")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@aspect_rules_js//js:nodejs_binary.bzl", "nodejs_binary")
+
+nodejs_binary(
+    name = "bin",
+    data = ["@npm_acorn-8.4.0"],
+    entry_point = "main.js",
+)
+
+expand_runfiles(
+    name = "runfiles",
+    binary = ":bin"
+)
+
+pkg_tar(
+    name = "entrypoint",
+    strip_prefix = ".",
+    srcs = [
+        ":runfiles",
+    ],
+)
+
+container(
+    name = "image",
+    base = "debian:latest",
+    cmd = ["/example/js/_bin_launcher.sh"],
+    entrypoint = ["bash"],
+    layers = [
+        ":entrypoint"
+    ]
+)
