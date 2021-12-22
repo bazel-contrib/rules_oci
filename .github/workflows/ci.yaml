@@ -44,6 +44,8 @@ jobs:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: |
-          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example:image
-          docker load -i bazel-bin/example/image.tar
-          docker run --rm -w /example/_bin_launcher.sh.runfiles/rules_container image:latest
+          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:image //example/py:image
+          docker load -i bazel-bin/example/js/image.tar
+          docker run --rm image:latest
+          docker load -i bazel-bin/example/py/image.tar
+          docker run --rm image:latest

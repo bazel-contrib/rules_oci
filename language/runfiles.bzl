@@ -1,6 +1,5 @@
 load("@rules_pkg//:providers.bzl", "PackageFilesInfo", "PackageSymlinkInfo", "PackageFilegroupInfo")
 
-
 def _runfile_path(ctx, file, runfiles_dir):
     path = file.short_path
     if path.startswith(".."):
