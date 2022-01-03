@@ -3,9 +3,8 @@ load(
     "@my_deps//:requirements.bzl",
     "requirement",
 )
-load("//language:runfiles.bzl", "expand_runfiles")
 load("//container:container.bzl", "container")
-load("//language:runfiles.bzl", "expand_runfiles")
+load("//container:runfiles.bzl", "expand_runfiles")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 exports_files(["requirements.txt"], visibility = ["//visibilty:public"])

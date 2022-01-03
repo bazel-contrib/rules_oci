@@ -12,10 +12,6 @@ _attrs = {
 }
 
 
-def _strip_external(path):
-    return path[len("external/"):] if path.startswith("external/") else path
-
-
 def _impl(ctx):
     toolchain = ctx.toolchains["@rules_container//container:toolchain_type"]
 

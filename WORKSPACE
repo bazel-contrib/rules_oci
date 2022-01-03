@@ -23,6 +23,15 @@ container_register_toolchains(
     crane_version = "v0.7.1-thesayyn",
 )
 
+load("//container:pull.bzl", "container_pull")
+
+# Fetch node:latest incrementally
+container_pull(
+    name = "node_base",
+    base = "library/node"
+)
+
+
 # For running our own unit tests
 load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
 

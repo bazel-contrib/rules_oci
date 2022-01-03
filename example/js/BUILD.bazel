@@ -1,5 +1,5 @@
 load("//container:container.bzl", "container")
-load("//language:runfiles.bzl", "expand_runfiles")
+load("//container:runfiles.bzl", "expand_runfiles")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@aspect_rules_js//js:nodejs_binary.bzl", "nodejs_binary")
 
