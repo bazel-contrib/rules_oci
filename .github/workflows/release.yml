@@ -27,7 +27,14 @@ jobs:
         env:
           # Bazelisk will download bazel to here
           XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
+        run: |
+          bazel \
+            --bazelrc=.github/workflows/ci.bazelrc \
+            --bazelrc=.bazelrc \
+            test \
+            --disk_cache=${HOME}/.cache/bazel \
+            --repository_cache=${HOME}/.cache/bazel-repo \
+            //...
       - name: Rename release artifact with version
         run: cp $(ls bazel-out/*/bin/*.tar.gz | tail -1) "rules_container-$(git describe --tags | sed 's/^v//').tar.gz"
       # TODO: move this into bazel to produce the file with expand_template rule when it has stamping
