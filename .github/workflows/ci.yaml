@@ -35,28 +35,14 @@ jobs:
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: |
-          bazel \
-            --bazelrc=.github/workflows/ci.bazelrc \
-            --bazelrc=.bazelrc \
-            test \
-            --disk_cache=${HOME}/.cache/bazel \
-            --repository_cache=${HOME}/.cache/bazel-repo \
-            //...
+        run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
       - name: bazel build //example:image && docker load
         if: ${{ matrix.os != 'macos-latest' }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: |
-          bazel \
-            --bazelrc=.github/workflows/ci.bazelrc \
-            --bazelrc=.bazelrc \
-            build \
-            --disk_cache=${HOME}/.cache/bazel \
-            --repository_cache=${HOME}/.cache/bazel-repo \
-            //example/js:image \
-            //example/py:image
+          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:image //example/py:image
           docker load -i bazel-bin/example/js/image.tar
           docker run --rm image:latest
           docker load -i bazel-bin/example/py/image.tar
