@@ -26,3 +26,20 @@ rules_container_dependencies()
 > note, in the above, replace the version and sha256 with the one indicated
 > in the release notes for rules_container
 > In the future, our release automation should take care of this.
+
+
+# Roadmap
+- Support for pulling docker images as the base OCI: work in progress
+- Put external repositories into their own layer
+- Support for pushing the build image to remote registries 
+- Container signing 
+- Multi arch container images via Transitions
+- Advanced layer manipulation macros such as `symlink` `without`
+- Layer deduplication via https://github.com/anuvu/atomfs
+
+# Resources
+- https://archive.fosdem.org/2019/schedule/event/containers_atomfs/
+- https://github.com/anuvu/atomfs
+- https://github.com/opencontainers/umoci
+- https://github.com/containers/skopeo
+- https://github.com/sigstore/cosign

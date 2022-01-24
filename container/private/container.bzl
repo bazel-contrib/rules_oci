@@ -1,96 +1,89 @@
-_attrs = {
-    "base": attr.string(
-        mandatory = True
-    ),
-
+_ATTRS = {
+    "base": attr.label(),
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
     "entrypoint": attr.string_list(),
+    "working_dir": attr.string(),
     "cmd": attr.string_list(),
     "labels": attr.string_list(),
     "tag": attr.string_list(),
     "layers": attr.label_list(),
 }
 
-
 def _impl(ctx):
     toolchain = ctx.toolchains["@rules_container//container:toolchain_type"]
 
-    launcher = ctx.actions.declare_file("crane.sh")
+    # Copy the base and add layers
+    bundle = ctx.actions.declare_directory("bundle")
 
-    # TODO: dynamically get --platform from toolchain
-    ctx.actions.write(
-        launcher,
-        """#!/usr/bin/env bash
-set -euo pipefail
-{crane} $@""".format(
-            crane = toolchain.containerinfo.crane_path,
-        ),
-        is_executable = True,
+    inputs = depset(transitive = [ctx.attr.base[DefaultInfo].files])
+
+    layers = ctx.actions.args()
+
+    for layer in ctx.attr.layers:
+        inputs = depset(transitive = [layer[DefaultInfo].files, inputs])
+        layers.add_all(layer[DefaultInfo].files)
+
+
+    cmd = """
+cp -r {base}/ {bundle}
+for layer in "$@"
+do
+    echo $layer
+    {umoci} raw add-layer --image {bundle} "$layer"
+done
+""".format(
+        base = ctx.attr.base[DefaultInfo].files.to_list()[0].path,
+        bundle = bundle.path,
+        umoci = toolchain.containerinfo.umoci_path
     )
 
-    # Pull the image
-    pull = ctx.actions.args()
-
-    tar = ctx.actions.declare_file("base_%s.tar" % ctx.label.name)
-
-    pull.add_all([
-        "append",
-        "--base",
-        ctx.attr.base,
-        "--output",
-        tar,
-        "--new_tag",
-        ctx.label.name,
-    ])
-
-    inputs = list()
-
-    inputs.extend(toolchain.containerinfo.crane_files)
-
-    if ctx.attr.layers:
-        pull.add("--new_layer")
-        for layer in ctx.attr.layers:
-            inputs.extend(layer[DefaultInfo].files.to_list())
-            pull.add_all(layer[DefaultInfo].files)
-
-    ctx.actions.run(
+    ctx.actions.run_shell(
         inputs = inputs,
-        arguments = [pull],
-        outputs = [tar],
-        executable = launcher,
-        progress_message = "Pulling base image and appending new layers (%s)" % ctx.attr.base
+        command = cmd,
+        arguments = [layers],
+        tools = toolchain.containerinfo.umoci_files,
+        outputs = [bundle]
     )
 
-    # Mutate it
-    mutate = ctx.actions.args()
-    resultTar = ctx.actions.declare_file("%s.tar" % ctx.label.name)
+    
 
-    mutate.add_all([
-        "mutate",
-        "--tag",
-        ctx.label.name,
-        tar,
-        "--output",
-        resultTar
-    ])
+    # Config
+    # TODO: os, arch
+    bundle_app = ctx.actions.declare_directory("bundle_app")
+
+    cmd = """
+cp -r {bundle}/ {bundle_app}
+{umoci} config $@
+""".format(
+        bundle = bundle.path,
+        bundle_app = bundle_app.path,
+        umoci = toolchain.containerinfo.umoci_path
+    )
+
+    config = ctx.actions.args()
+
+    config.add_all(["--image", bundle_app.path])
 
     if ctx.attr.entrypoint:
-        mutate.add_joined("--entrypoint", ctx.attr.entrypoint, join_with=",")
+        config.add_joined("--config.entrypoint", ctx.attr.entrypoint, join_with=",")
 
     if ctx.attr.cmd:
-        mutate.add_joined("--cmd", ctx.attr.cmd, join_with=",")
-    
-    ctx.actions.run(
-        inputs = [tar] + toolchain.containerinfo.crane_files,
-        arguments = [mutate],
-        outputs = [resultTar],
-        executable = launcher,
-        progress_message = "Mutating base image (%s)" % ctx.attr.base
+        config.add_joined("--config.cmd", ctx.attr.cmd, join_with=",")
+
+    if ctx.attr.working_dir:
+        config.add("--config.workingdir", ctx.attr.working_dir)
+
+    ctx.actions.run_shell(
+        inputs = [bundle],
+        command = cmd,
+        arguments = [config],
+        tools = toolchain.containerinfo.umoci_files,
+        outputs = [bundle_app]
     )
 
     return [
         DefaultInfo(
-            files = depset([resultTar]),
+            files = depset([bundle_app]),
         ),
     ]
 
@@ -98,6 +91,6 @@ set -euo pipefail
 
 container = struct(
     implementation = _impl,
-    attrs = _attrs,
+    attrs = _ATTRS,
     toolchains = ["@rules_container//container:toolchain_type"],
 )

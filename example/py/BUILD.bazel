@@ -32,7 +32,7 @@ pkg_tar(
 
 container(
     name = "image",
-    base = "python:latest",
+    base = "@py_base//:image",
     cmd = ["/example/py/main"],
     layers = [
         ":entrypoint"

@@ -20,7 +20,7 @@ rules_container_dependencies()
 
 container_register_toolchains(
     name = "container",
-    crane_version = "v0.7.1-thesayyn",
+    umoci_version = "v0.4.7",
 )
 
 load("//container:pull.bzl", "container_pull")
@@ -28,7 +28,13 @@ load("//container:pull.bzl", "container_pull")
 # Fetch node:latest incrementally
 container_pull(
     name = "node_base",
-    base = "library/node"
+    base = "library/node:latest"
+)
+
+# Fetch node:latest incrementally
+container_pull(
+    name = "py_base",
+    base = "library/python"
 )
 
 

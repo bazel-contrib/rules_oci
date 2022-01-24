@@ -24,7 +24,7 @@ pkg_tar(
 
 container(
     name = "image",
-    base = "debian:latest",
+    base = "@node_base//:image",
     cmd = ["/example/js/_bin_launcher.sh"],
     entrypoint = ["bash"],
     layers = [
