@@ -23,16 +23,14 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       - uses: bazelbuild/setup-bazelisk@v1
-      - name: Mount bazel action cache
+      - name: Mount bazel caches
         uses: actions/cache@v2
         with:
-          path: "~/.cache/bazel"
-          key: bazel
-      - name: Mount bazel repo cache
-        uses: actions/cache@v2
-        with:
-          path: "~/.cache/bazel-repo"
-          key: bazel-repo
+          path: |
+            "~/.cache/bazel"
+            "~/.cache/bazel-repo"
+          key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
+          restore-keys: bazel-cache-
       - name: Get skopeo (linux)
         run: sudo apt-get -y update && sudo apt-get -y install skopeo
         if: ${{ matrix.os == 'ubuntu-latest' }}
