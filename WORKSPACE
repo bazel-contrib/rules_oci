@@ -25,10 +25,11 @@ container_register_toolchains(
 
 load("//container:pull.bzl", "container_pull")
 
-# Fetch node:latest incrementally
+# Fetch debian:latest incrementally
+# We already have node fetched for us by bazel. we prefer to use it instead.
 container_pull(
     name = "node_base",
-    base = "library/node:latest"
+    base = "library/debian:latest"
 )
 
 # Fetch node:latest incrementally

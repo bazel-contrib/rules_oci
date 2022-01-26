@@ -33,6 +33,9 @@ jobs:
         with:
           path: "~/.cache/bazel-repo"
           key: bazel-repo
+      - name: Get skopeo (linux)
+        run: sudo apt-get -y update && sudo apt-get -y install skopeo
+        if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
@@ -45,7 +48,11 @@ jobs:
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: |
           bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:image //example/py:image
-          docker load -i bazel-bin/example/js/image.tar
-          docker run --rm image:latest
-          docker load -i bazel-bin/example/py/image.tar
-          docker run --rm image:latest
+
+          skopeo copy oci:bazel-bin/example/js/bundle_app docker-archive:js_bundle.tar --additional-tag jsimage:latest
+          docker load -i js_bundle.tar
+          docker run --rm docker.io/library/jsimage:latest
+          
+          skopeo copy oci:bazel-bin/example/py/bundle_app docker-archive:py_bundle.tar --additional-tag pyimage:latest
+          docker load -i py_bundle.tar
+          docker run --rm docker.io/library/pyimage:latest
