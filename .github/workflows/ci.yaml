@@ -34,6 +34,9 @@ jobs:
       - name: Get skopeo (linux)
         run: sudo apt-get -y update && sudo apt-get -y install skopeo
         if: ${{ matrix.os == 'ubuntu-latest' }}
+      - name: Get skopeo (macos)
+        run: brew install skopeo
+        if: ${{ matrix.os == 'macos-latest' }}
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
