@@ -35,7 +35,7 @@ container_pull(
 # Fetch node:latest incrementally
 container_pull(
     name = "py_base",
-    base = "library/python"
+    base = "library/python:latest"
 )
 
 

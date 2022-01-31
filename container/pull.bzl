@@ -42,7 +42,7 @@ def _impl(rctx):
     auth = _auth(rctx)
 
     rctx.report_progress("Fetching the manifest")
-    r = rctx.execute(["skopeo", "inspect", "docker://%s" % image])  
+    r = rctx.execute(["skopeo", "inspect", "docker://%s" % image, "--override-os", "linux"])  
 
     if r.return_code != 0:
         fail("Fetching manifest has failed with code %s.\n%s" % (r.return_code, r.stderr))
