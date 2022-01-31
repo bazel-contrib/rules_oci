@@ -15,6 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - uses: bazelbuild/setup-bazelisk@v1
+      - name: Mount bazel caches
+        uses: actions/cache@v2
+        with:
+          path: |
+            "~/.cache/bazel"
+            "~/.cache/bazel-repo"
+          key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
+          restore-keys: bazel-cache-
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here
