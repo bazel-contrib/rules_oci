@@ -1,28 +1,25 @@
-# Bazel rules for container
+# Bazel rules for OCI containers
+
+**EXPERIMENTAL** This ruleset is highly experimental and not yet fit for production use.
+We might abandon it at any time, there is no guarantee of support or stability.
+
+This is a speculative alternative to rules_docker.
+
+We start from first principles and plan to avoid some pitfalls learned in maintaining that repo:
+
+- Use a toolchain consisting of off-the-shelf, pre-built layer and container manipulation tools.
+- Don't write language-specific rules, as we cannot be experts on all languages, nor can users deal with the versioning issues
+  that come with dependencies we might take on the rules for those languages.
+- Don't be docker-specific, now that it has a commercial license and other container runtimes exist.
+- Use our toolchain hermetically: don't assume there is a docker pre-installed on the machine.
+- Keep a tight complexity budget for the project so we are able to commit to effective maintenance.
 
 ## Installation
 
-Include this in your WORKSPACE file:
+From the release you wish to use: <https://github.com/aspect-build/rules_container/releases>
+copy the WORKSPACE snippet into your `WORKSPACE` file.
 
-```starlark
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-http_archive(
-    name = "rules_container",
-    url = "https://github.com/thesayyn/rules_container/releases/download/0.0.0/rules_container-0.0.0.tar.gz",
-    sha256 = "",
-)
+## Usage
 
-load("@rules_container//container:repositories.bzl", "container_rules_dependencies")
-
-# This fetches the rules_container dependencies, which are:
-# - bazel_skylib
-# If you want to have a different version of some dependency,
-# you should fetch it *before* calling this.
-# Alternatively, you can skip calling this function, so long as you've
-# already fetched these dependencies.
-rules_container_dependencies()
-```
-
-> note, in the above, replace the version and sha256 with the one indicated
-> in the release notes for rules_container
-> In the future, our release automation should take care of this.
+See the API documentation in the [docs](docs/) folder and the example usage in the [example](example/) folder.
+Note that the example relies on the setup code in the `/WORKSPACE` file in the root of this repo.

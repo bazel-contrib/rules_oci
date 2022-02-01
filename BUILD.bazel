@@ -1,5 +1,4 @@
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@bazel_gazelle//:def.bzl", "gazelle", "gazelle_binary")
 
 gazelle_binary(
@@ -10,22 +9,6 @@ gazelle_binary(
 gazelle(
     name = "gazelle",
     gazelle = "gazelle_bin",
-)
-
-# This declares the release artifact users
-pkg_tar(
-    name = "rules_container",
-    srcs = [
-        "LICENSE",
-        "README.md",
-        "//container:package_content",
-    ],
-    extension = "tar.gz",
-    # It is all source code, so make it read-only.
-    mode = "0444",
-    # Make it owned by root so it does not have the uid of the CI robot.
-    owner = "0.0",
-    strip_prefix = ".",
 )
 
 bzl_library(

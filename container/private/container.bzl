@@ -1,6 +1,7 @@
+"Implementation details for container rule"
 _attrs = {
     "base": attr.string(
-        mandatory = True
+        mandatory = True,
     ),
 
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
@@ -11,13 +12,11 @@ _attrs = {
     "layers": attr.label_list(),
 }
 
-
 def _strip_external(path):
     return path[len("external/"):] if path.startswith("external/") else path
 
-
 def _impl(ctx):
-    toolchain = ctx.toolchains["@rules_container//container:toolchain_type"]
+    toolchain = ctx.toolchains["@aspect_rules_container//container:toolchain_type"]
 
     launcher = ctx.actions.declare_file("crane.sh")
 
@@ -62,12 +61,12 @@ set -euo pipefail
         arguments = [pull],
         outputs = [tar],
         executable = launcher,
-        progress_message = "Pulling base image and appending new layers (%s)" % ctx.attr.base
+        progress_message = "Pulling base image and appending new layers (%s)" % ctx.attr.base,
     )
 
     # Mutate it
     mutate = ctx.actions.args()
-    resultTar = ctx.actions.declare_file("%s.tar" % ctx.label.name)
+    result_tar = ctx.actions.declare_file("%s.tar" % ctx.label.name)
 
     mutate.add_all([
         "mutate",
@@ -75,33 +74,31 @@ set -euo pipefail
         ctx.label.name,
         tar,
         "--output",
-        resultTar
+        result_tar,
     ])
 
     if ctx.attr.entrypoint:
-        mutate.add_joined("--entrypoint", ctx.attr.entrypoint, join_with=",")
+        mutate.add_joined("--entrypoint", ctx.attr.entrypoint, join_with = ",")
 
     if ctx.attr.cmd:
-        mutate.add_joined("--cmd", ctx.attr.cmd, join_with=",")
-    
+        mutate.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
+
     ctx.actions.run(
         inputs = [tar] + toolchain.containerinfo.crane_files,
         arguments = [mutate],
-        outputs = [resultTar],
+        outputs = [result_tar],
         executable = launcher,
-        progress_message = "Mutating base image (%s)" % ctx.attr.base
+        progress_message = "Mutating base image (%s)" % ctx.attr.base,
     )
 
     return [
         DefaultInfo(
-            files = depset([resultTar]),
+            files = depset([result_tar]),
         ),
     ]
-
-
 
 container = struct(
     implementation = _impl,
     attrs = _attrs,
-    toolchains = ["@rules_container//container:toolchain_type"],
+    toolchains = ["@aspect_rules_container//container:toolchain_type"],
 )
