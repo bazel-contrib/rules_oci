@@ -30,18 +30,15 @@ artifact or a version fetched from the internet, run this from this
 directory:
 
 ```sh
-OVERRIDE="--override_repository=rules_container=$(pwd)/rules_container"
+OVERRIDE="--override_repository=aspect_rules_container=$(pwd)/rules_container"
 echo "build $OVERRIDE" >> ~/.bazelrc
 echo "query $OVERRIDE" >> ~/.bazelrc
 ```
 
-This means that any usage of `@rules_container` on your system will point to this folder.
+This means that any usage of `@aspect_rules_container` on your system will point to this folder.
 
 ## Releasing
 
-1. Make sure your git state is at the right place (something like `git fetch; git checkout origin/main`)
 1. Determine the next release version, following semver (could automate in the future from changelog)
-1. `git tag -a v1.2.3` (will open an editor to put release notes)
-1. `git push --tags`
+1. Tag the repo and push it
 1. Watch the automation run on GitHub actions
-1. Update the release page with auto-generated release notes

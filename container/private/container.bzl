@@ -10,7 +10,7 @@ _ATTRS = {
 }
 
 def _impl(ctx):
-    toolchain = ctx.toolchains["@rules_container//container:toolchain_type"]
+    toolchain = ctx.toolchains["@aspect_rules_container//container:toolchain_type"]
 
     # Copy the base and add layers
     bundle = ctx.actions.declare_directory("bundle")
@@ -86,8 +86,6 @@ cp -r {bundle}/ {bundle_app}
             files = depset([bundle_app]),
         ),
     ]
-
-
 
 container = struct(
     implementation = _impl,
