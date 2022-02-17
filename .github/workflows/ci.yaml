@@ -34,26 +34,29 @@ jobs:
       - name: Get skopeo (linux)
         run: sudo apt-get -y update && sudo apt-get -y install skopeo
         if: ${{ matrix.os == 'ubuntu-latest' }}
-      - name: Get skopeo (macos)
-        run: brew install skopeo
-        if: ${{ matrix.os == 'macos-latest' }}
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
-      - name: bazel build //example:image && docker load
+      - name: bazel build go, python, js images.
         if: ${{ matrix.os != 'macos-latest' }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: |
           bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:image //example/py:image
+          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc \
+          build --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64  //example/go:image
 
           skopeo copy oci:bazel-bin/example/js/bundle_app docker-archive:js_bundle.tar --additional-tag jsimage:latest
           docker load -i js_bundle.tar
-          docker run --rm docker.io/library/jsimage:latest
+          docker run --rm jsimage:latest
           
           skopeo copy oci:bazel-bin/example/py/bundle_app docker-archive:py_bundle.tar --additional-tag pyimage:latest
           docker load -i py_bundle.tar
-          docker run --rm docker.io/library/pyimage:latest
+          docker run --rm pyimage:latest
+
+          skopeo copy oci:bazel-bin/example/go/bundle_app docker-archive:go_bundle.tar --additional-tag goimage:latest
+          docker load -i go_bundle.tar
+          docker run --rm goimage:latest

@@ -10,6 +10,18 @@ filegroup(
 )
 
 bzl_library(
+    name = "image",
+    srcs = ["image.bzl"],
+    visibility = ["//container:__subpackages__"],
+)
+
+bzl_library(
+    name = "pull",
+    srcs = ["pull.bzl"],
+    visibility = ["//container:__subpackages__"],
+)
+
+bzl_library(
     name = "toolchains_repo",
     srcs = ["toolchains_repo.bzl"],
     visibility = ["//container:__subpackages__"],
@@ -18,11 +30,5 @@ bzl_library(
 bzl_library(
     name = "versions",
     srcs = ["versions.bzl"],
-    visibility = ["//container:__subpackages__"],
-)
-
-bzl_library(
-    name = "container",
-    srcs = ["container.bzl"],
     visibility = ["//container:__subpackages__"],
 )

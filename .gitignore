@@ -1,2 +1,5 @@
 bazel-*
+.bazelrc.user
 .DS_Store
+*.tar
+scripts/run.sh

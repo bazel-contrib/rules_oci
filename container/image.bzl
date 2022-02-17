@@ -1,18 +1,18 @@
 "Public API re-exports"
 
-load("//container/private:container.bzl", _container_lib = "container")
+load("//container/private:image.bzl", _image_lib = "image")
 
-_container = rule(
-    implementation = _container_lib.implementation,
-    attrs = _container_lib.attrs,
-    toolchains = _container_lib.toolchains
+_container_image = rule(
+    implementation = _image_lib.implementation,
+    attrs = _image_lib.attrs,
+    toolchains = _image_lib.toolchains
 )
 
 
-def container(name, base, cmd = [], entrypoint = [], labels = [], layers = [], tag = None):
-    """Create an OCI container
+def container_image(name, base, cmd = [], entrypoint = [], labels = [], layers = [], tag = None):
+    """Create a OCI container image
 
-    See documentation about the OCI format: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
+    See documentation about the OCI format: https://github.com/opencontainers/image-spec
 
     Args:
         name: A name for the target.
@@ -23,7 +23,7 @@ def container(name, base, cmd = [], entrypoint = [], labels = [], layers = [], t
         labels: TODO
         tag: TODO
     """
-    _container(
+    _container_image(
         name =  name,
         base = base,
         cmd = cmd,

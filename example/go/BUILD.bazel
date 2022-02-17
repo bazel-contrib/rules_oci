@@ -1,17 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary")
 load("//container:image.bzl", "container_image")
 load("//container:runfiles.bzl", "expand_runfiles")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@aspect_rules_js//js:nodejs_binary.bzl", "nodejs_binary")
 
-nodejs_binary(
-    name = "bin",
-    data = ["@npm_acorn-8.4.0"],
-    entry_point = "main.js",
+go_binary(
+    name = "main",
+    srcs = ["main.go"],
+    pure = "on",
 )
 
 expand_runfiles(
     name = "runfiles",
-    binary = ":bin",
+    binary = ":main",
 )
 
 pkg_tar(
@@ -25,8 +25,8 @@ pkg_tar(
 container_image(
     name = "image",
     base = "@debian//:linux_amd64",
-    cmd = ["/example/js/_bin_launcher.sh"],
-    entrypoint = ["bash"],
+    # TODO: this layout does not seem right
+    cmd = ["/example/go/main_/main.runfiles/aspect_rules_container/example/go/main_/main"],
     layers = [
         ":entrypoint",
     ],

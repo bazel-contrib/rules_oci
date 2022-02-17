@@ -15,6 +15,7 @@ rules_container_dependencies()
 container_register_toolchains(
     name = "container",
     umoci_version = "v0.4.7",
+    crane_version = "v0.8.0"
 )
 
 load("//container:pull.bzl", "container_pull")
@@ -22,14 +23,14 @@ load("//container:pull.bzl", "container_pull")
 # Fetch debian:latest incrementally
 # We already have node fetched for us by bazel. we prefer to use it instead.
 container_pull(
-    name = "node_base",
-    base = "library/debian:latest"
+    name = "debian",
+    reference = "library/debian:latest"
 )
 
-# Fetch node:latest incrementally
+# Fetch python:latest incrementally
 container_pull(
     name = "py_base",
-    base = "library/python:latest"
+    reference = "library/python:latest"
 )
 
 

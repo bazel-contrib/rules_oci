@@ -3,11 +3,14 @@ load(
     "@my_deps//:requirements.bzl",
     "requirement",
 )
-load("//container:container.bzl", "container")
+load("//container:image.bzl", "container_image")
 load("//container:runfiles.bzl", "expand_runfiles")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
-exports_files(["requirements.txt"], visibility = ["//visibilty:public"])
+exports_files(
+    ["requirements.txt"],
+    visibility = ["//visibilty:public"],
+)
 
 py_binary(
     name = "main",
@@ -19,22 +22,22 @@ py_binary(
 
 expand_runfiles(
     name = "runfiles",
-    binary = ":main"
+    binary = ":main",
 )
 
 pkg_tar(
     name = "entrypoint",
-    strip_prefix = ".",
     srcs = [
         ":runfiles",
     ],
+    strip_prefix = ".",
 )
 
-container(
+container_image(
     name = "image",
-    base = "@py_base//:image",
+    base = "@py_base//:linux_amd64",
     cmd = ["/example/py/main"],
     layers = [
-        ":entrypoint"
-    ]
+        ":entrypoint",
+    ],
 )
