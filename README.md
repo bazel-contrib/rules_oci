@@ -14,6 +14,8 @@ We start from first principles and plan to avoid some pitfalls learned in mainta
 - Use our toolchain hermetically: don't assume there is a docker pre-installed on the machine.
 - Keep a tight complexity budget for the project so we are able to commit to effective maintenance.
 
+_Need help?_ This ruleset has support provided by https://aspect.dev.
+
 ## Installation
 
 From the release you wish to use: <https://github.com/aspect-build/rules_container/releases>
