@@ -4,11 +4,13 @@ load(
     "requirement",
 )
 load("//language:runfiles.bzl", "expand_runfiles")
-load("//container:container.bzl", "container")
-load("//language:runfiles.bzl", "expand_runfiles")
+load("//oci:container.bzl", "container")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
-exports_files(["requirements.txt"], visibility = ["//visibilty:public"])
+exports_files(
+    ["requirements.txt"],
+    visibility = ["//visibilty:public"],
+)
 
 py_binary(
     name = "main",
@@ -20,15 +22,15 @@ py_binary(
 
 expand_runfiles(
     name = "runfiles",
-    binary = ":main"
+    binary = ":main",
 )
 
 pkg_tar(
     name = "entrypoint",
-    strip_prefix = ".",
     srcs = [
         ":runfiles",
     ],
+    strip_prefix = ".",
 )
 
 container(
@@ -36,6 +38,6 @@ container(
     base = "python:latest",
     cmd = ["/example/py/main"],
     layers = [
-        ":entrypoint"
-    ]
+        ":entrypoint",
+    ],
 )

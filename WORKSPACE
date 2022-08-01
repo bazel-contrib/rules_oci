@@ -1,18 +1,18 @@
 # Declare the local Bazel workspace.
 # This is *not* included in the published distribution.
-workspace(name = "aspect_rules_container")
+workspace(name = "aspect_rules_oci")
 
-load(":internal_deps.bzl", "rules_container_internal_deps")
+load(":internal_deps.bzl", "rules_oci_internal_deps")
 
 # Fetch deps needed only locally for development
-rules_container_internal_deps()
+rules_oci_internal_deps()
 
-load("//container:repositories.bzl", "container_register_toolchains", "rules_container_dependencies")
+load("//oci:repositories.bzl", "oci_register_toolchains", "rules_oci_dependencies")
 
 # Fetch our "runtime" dependencies which users need as well
-rules_container_dependencies()
+rules_oci_dependencies()
 
-container_register_toolchains(
+oci_register_toolchains(
     name = "container",
     crane_version = "v0.7.1-thesayyn",
 )

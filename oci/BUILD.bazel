@@ -17,7 +17,7 @@ filegroup(
         "*.bzl",
         "*.bazel",
     ]) + [
-        "//container/private:package_content",
+        "//oci/private:package_content",
     ],
     visibility = ["//:__pkg__"],
 )
@@ -27,8 +27,8 @@ bzl_library(
     srcs = ["repositories.bzl"],
     visibility = ["//visibility:public"],
     deps = [
-        "//container/private:toolchains_repo",
-        "//container/private:versions",
+        "//oci/private:toolchains_repo",
+        "//oci/private:versions",
         "@bazel_tools//tools/build_defs/repo:http.bzl",
         "@bazel_tools//tools/build_defs/repo:utils.bzl",
     ],
@@ -37,10 +37,10 @@ bzl_library(
 bzl_library(
     name = "container",
     srcs = ["container.bzl"],
-    deps = [
-        "//container/private:container"
-    ],
     visibility = ["//visibility:public"],
+    deps = [
+        "//oci/private:container",
+    ],
 )
 
 bzl_library(

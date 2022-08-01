@@ -1,4 +1,4 @@
-load("//container:container.bzl", "container")
+load("//oci:container.bzl", "container")
 load("//language:runfiles.bzl", "expand_runfiles")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@aspect_rules_js//js:nodejs_binary.bzl", "nodejs_binary")
@@ -11,15 +11,15 @@ nodejs_binary(
 
 expand_runfiles(
     name = "runfiles",
-    binary = ":bin"
+    binary = ":bin",
 )
 
 pkg_tar(
     name = "entrypoint",
-    strip_prefix = ".",
     srcs = [
         ":runfiles",
     ],
+    strip_prefix = ".",
 )
 
 container(
@@ -28,6 +28,6 @@ container(
     cmd = ["/example/js/_bin_launcher.sh"],
     entrypoint = ["bash"],
     layers = [
-        ":entrypoint"
-    ]
+        ":entrypoint",
+    ],
 )
