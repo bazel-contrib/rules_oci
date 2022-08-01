@@ -22,7 +22,7 @@ Run `bazel run //:gazelle` to keep them up-to-date.
 ## Using this as a development dependency of other rules
 
 You'll commonly find that you develop in another WORKSPACE, such as
-some other ruleset that depends on rules_container, or in a nested
+some other ruleset that depends on rules_oci, or in a nested
 WORKSPACE in the integration_tests folder.
 
 To always tell Bazel to use this directory rather than some release
@@ -30,12 +30,12 @@ artifact or a version fetched from the internet, run this from this
 directory:
 
 ```sh
-OVERRIDE="--override_repository=aspect_rules_container=$(pwd)/rules_container"
+OVERRIDE="--override_repository=aspect_rules_oci=$(pwd)/rules_oci"
 echo "build $OVERRIDE" >> ~/.bazelrc
 echo "query $OVERRIDE" >> ~/.bazelrc
 ```
 
-This means that any usage of `@aspect_rules_container` on your system will point to this folder.
+This means that any usage of `@aspect_rules_oci` on your system will point to this folder.
 
 ## Releasing
 

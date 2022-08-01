@@ -1,13 +1,12 @@
 "Public API re-exports"
 
-load("//container/private:container.bzl", _container_lib = "container")
+load("//oci/private:container.bzl", _container_lib = "container")
 
 _container = rule(
     implementation = _container_lib.implementation,
     attrs = _container_lib.attrs,
-    toolchains = _container_lib.toolchains
+    toolchains = _container_lib.toolchains,
 )
-
 
 def container(name, base, cmd = [], entrypoint = [], labels = [], layers = [], tag = None):
     """Create an OCI container
@@ -24,11 +23,11 @@ def container(name, base, cmd = [], entrypoint = [], labels = [], layers = [], t
         tag: TODO
     """
     _container(
-        name =  name,
+        name = name,
         base = base,
         cmd = cmd,
         entrypoint = entrypoint,
         labels = labels,
         layers = layers,
-        tag = tag
+        tag = tag,
     )

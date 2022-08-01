@@ -1,7 +1,7 @@
 """This module implements the language-specific toolchain rule.
 """
 
-ContainerInfo = provider(
+OciInfo = provider(
     doc = "Information about how to invoke the tool executable.",
     fields = {
         "crane_path": "Path to the tool executable for the target platform.",
@@ -18,7 +18,7 @@ def _to_manifest_path(ctx, file):
     else:
         return ctx.workspace_name + "/" + file.short_path
 
-def _container_toolchain_impl(ctx):
+def _oci_toolchain_impl(ctx):
     if ctx.attr.crane and ctx.attr.crane_path:
         fail("Can only set one of crane or crane_path but both were set.")
     if not ctx.attr.crane and not ctx.attr.crane_path:
@@ -40,7 +40,7 @@ def _container_toolchain_impl(ctx):
         files = depset(crane_files),
         runfiles = ctx.runfiles(files = crane_files),
     )
-    containerinfo = ContainerInfo(
+    oci_info = OciInfo(
         crane_path = crane_path,
         crane_files = crane_files,
     )
@@ -48,7 +48,7 @@ def _container_toolchain_impl(ctx):
     # Export all the providers inside our ToolchainInfo
     # so the resolved_toolchain rule can grab and re-export them.
     toolchain_info = platform_common.ToolchainInfo(
-        containerinfo = containerinfo,
+        oci_info = oci_info,
         template_variables = template_variables,
         default = default,
     )
@@ -58,8 +58,8 @@ def _container_toolchain_impl(ctx):
         template_variables,
     ]
 
-container_toolchain = rule(
-    implementation = _container_toolchain_impl,
+oci_toolchain = rule(
+    implementation = _oci_toolchain_impl,
     attrs = {
         "crane": attr.label(
             doc = "A hermetically downloaded executable target for the target platform.",
