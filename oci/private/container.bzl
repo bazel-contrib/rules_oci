@@ -16,7 +16,7 @@ def _strip_external(path):
     return path[len("external/"):] if path.startswith("external/") else path
 
 def _impl(ctx):
-    toolchain = ctx.toolchains["@aspect_rules_oci//oci:crane_toolchain_type"]
+    toolchain = ctx.toolchains["@contrib_rules_oci//oci:crane_toolchain_type"]
 
     launcher = ctx.actions.declare_file("crane.sh")
 
@@ -100,5 +100,5 @@ set -euo pipefail
 container = struct(
     implementation = _impl,
     attrs = _attrs,
-    toolchains = ["@aspect_rules_oci//oci:crane_toolchain_type"],
+    toolchains = ["@contrib_rules_oci//oci:crane_toolchain_type"],
 )

@@ -1,6 +1,6 @@
 # Declare the local Bazel workspace.
 # This is *not* included in the published distribution.
-workspace(name = "aspect_rules_oci")
+workspace(name = "contrib_rules_oci")
 
 load(":internal_deps.bzl", "rules_oci_internal_deps")
 
