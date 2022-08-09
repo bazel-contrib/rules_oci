@@ -12,11 +12,11 @@ load("//oci:dependencies.bzl", "rules_oci_dependencies")
 # Fetch our "runtime" dependencies which users need as well
 rules_oci_dependencies()
 
-load("//oci:repositories.bzl", "oci_register_toolchains")
+load("//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
 
 oci_register_toolchains(
     name = "container",
-    crane_version = "v0.11.0",
+    crane_version = LATEST_CRANE_VERSION,
 )
 
 # For running our own unit tests
