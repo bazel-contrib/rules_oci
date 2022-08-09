@@ -7,14 +7,16 @@ load(":internal_deps.bzl", "rules_oci_internal_deps")
 # Fetch deps needed only locally for development
 rules_oci_internal_deps()
 
-load("//oci:repositories.bzl", "oci_register_toolchains", "rules_oci_dependencies")
+load("//oci:dependencies.bzl", "rules_oci_dependencies")
 
 # Fetch our "runtime" dependencies which users need as well
 rules_oci_dependencies()
 
+load("//oci:repositories.bzl", "oci_register_toolchains")
+
 oci_register_toolchains(
     name = "container",
-    crane_version = "v0.7.1-thesayyn",
+    crane_version = "v0.11.0",
 )
 
 # For running our own unit tests

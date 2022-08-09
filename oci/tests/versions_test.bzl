@@ -3,11 +3,11 @@ See https://docs.bazel.build/versions/main/skylark/testing.html#for-testing-star
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load("//oci/private:versions.bzl", "TOOL_VERSIONS")
+load("//oci/private:versions.bzl", "CRANE_VERSIONS")
 
 def _smoke_test_impl(ctx):
     env = unittest.begin(ctx)
-    asserts.equals(env, "v0.7.1-thesayyn", TOOL_VERSIONS.keys()[0])
+    asserts.equals(env, "v0.11.0", CRANE_VERSIONS.keys()[0])
     return unittest.end(env)
 
 # The unittest library requires that we export the test cases as named test rules,

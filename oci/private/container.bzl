@@ -16,7 +16,7 @@ def _strip_external(path):
     return path[len("external/"):] if path.startswith("external/") else path
 
 def _impl(ctx):
-    toolchain = ctx.toolchains["@aspect_rules_oci//oci:toolchain_type"]
+    toolchain = ctx.toolchains["@aspect_rules_oci//oci:crane_toolchain_type"]
 
     launcher = ctx.actions.declare_file("crane.sh")
 
@@ -26,7 +26,7 @@ def _impl(ctx):
         """#!/usr/bin/env bash
 set -euo pipefail
 {crane} $@""".format(
-            crane = toolchain.oci_info.crane_path,
+            crane = toolchain.crane_info.crane_path,
         ),
         is_executable = True,
     )
@@ -48,7 +48,7 @@ set -euo pipefail
 
     inputs = list()
 
-    inputs.extend(toolchain.oci_info.crane_files)
+    inputs.extend(toolchain.crane_info.crane_files)
 
     if ctx.attr.layers:
         pull.add("--new_layer")
@@ -84,7 +84,7 @@ set -euo pipefail
         mutate.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
 
     ctx.actions.run(
-        inputs = [tar] + toolchain.oci_info.crane_files,
+        inputs = [tar] + toolchain.crane_info.crane_files,
         arguments = [mutate],
         outputs = [result_tar],
         executable = launcher,
@@ -100,5 +100,5 @@ set -euo pipefail
 container = struct(
     implementation = _impl,
     attrs = _attrs,
-    toolchains = ["@aspect_rules_oci//oci:toolchain_type"],
+    toolchains = ["@aspect_rules_oci//oci:crane_toolchain_type"],
 )
