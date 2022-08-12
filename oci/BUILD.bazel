@@ -45,11 +45,10 @@ bzl_library(
 )
 
 bzl_library(
-    name = "container",
-    srcs = ["container.bzl"],
+    name = "image",
     visibility = ["//visibility:public"],
     deps = [
-        "//oci/private:container",
+        "//oci/private:image",
     ],
 )
 

@@ -3,8 +3,8 @@
 load("@aspect_bazel_lib//lib:docs.bzl", "stardoc_with_diff_test", "update_docs")
 
 stardoc_with_diff_test(
-    name = "container",
-    bzl_library_target = "//oci:container",
+    name = "image",
+    bzl_library_target = "//oci/private:image",
 )
 
 stardoc_with_diff_test(

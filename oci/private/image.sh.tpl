@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+set -o pipefail -o errexit -o nounset
+
+# A wrapper for crane. It starts a registry instance by calling start_registry function exported by %registry_launcher_path%.
+# Then invokes crane with arguments provided after substituting `oci:registry` with REGISTRY variable exported by start_registry.
+# NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
+
+readonly STDERR=$(mktemp)
+
+silent_on_success() {
+    CODE=$?
+    if [ "${CODE}" -ne 0 ]; then
+        cat "${STDERR}" >&1
+    fi
+}
+trap "silent_on_success" EXIT
+
+# this will redirect stderr(2) to stderr file.
+{
+
+function get_option() {
+    local name=$1
+    shift
+    for ARG in "$@"; do
+        case "$ARG" in
+            ($name=*) echo ${ARG#$name=};; 
+        esac
+    done
+}
+
+
+function empty_base() {
+    local ref="$REGISTRY/oci/empty_base:latest"
+    ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f <(tar -cf tarfilename.tar -T /dev/null))"
+    # TODO(thesayyn): this is a gross way to remove the empty layer from the image. fix this upstream so that -f is variadic.
+    ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
+    ref=$("${CRANE}" manifest "${ref}" | "${JQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
+
+    local raw_platform=$(get_option --platform $@)
+    IFS='/' read -r -a platform <<< "$raw_platform"
+
+    local filter='.os = $os | .architecture = $arch'
+    local -a args=( "--arg" "os" "${platform[0]}" "--arg" "arch" "${platform[1]}" )
+
+    if [ -n "${platform[2]:-}" ]; then
+        filter+=' | .variant = $variant'
+        args+=("--arg" "variant" "${platform[2]}")
+    fi
+    "${CRANE}" config "${ref}" | "${JQ}" ${args[@]} "${filter}" | "${CRANE}" edit config "${ref}"
+}
+
+function base_from_layout() {
+    # TODO: fix crane to print digest to stdout
+    local refs=$(mktemp)
+    local oci_layout_path=$1
+    "${CRANE}" push "${oci_layout_path}" "${REGISTRY}/oci/layout:latest" --image-refs "${refs}"
+    cat "${refs}"
+}
+
+readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
+readonly CRANE="{{crane_path}}"
+readonly JQ="{{jq_path}}"
+readonly STORAGE_DIR="{{storage_dir}}"
+
+source "${REGISTRY_LAUNCHER}"
+mkdir -p "${STORAGE_DIR}"
+start_registry "${STORAGE_DIR}" "${STDERR}"
+
+OUTPUT=""
+WORKDIR=""
+FIXED_ARGS=()
+ENV_EXPANSIONS=()
+
+for ARG in "$@"; do
+    case "$ARG" in
+        (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
+        (oci:empty_base) FIXED_ARGS+=("$(empty_base $@)") ;;
+        (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/})") ;;
+        (--env=*\${*}* | --env=*\$*) ENV_EXPANSIONS+=(${ARG#--env=}) ;;
+        (--output=*) OUTPUT="${ARG#--output=}" ;;
+        (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
+        (*) FIXED_ARGS+=( "${ARG}" )
+    esac
+done
+
+REF=$("${CRANE}" "${FIXED_ARGS[@]}")
+
+if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
+    env_expansion_filter=\
+'[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | reduce .[] as $match (
+    {parts: [], prev: 0}; 
+    {parts: (.parts + [$raw[.prev:$match.offset], $envs[$match.captures[0].string]]), prev: ($match.offset + $match.length)}
+) | .parts + [$raw[.prev:]] | join("")'
+    base_config=$("${CRANE}" config "${REF}")
+    base_env=$("${JQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
+    environment_args=()
+    for expansion in "${ENV_EXPANSIONS[@]}"
+    do
+        IFS="=" read -r key value <<< "${expansion}"
+        value_from_base=$("${JQ}" -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
+        environment_args+=( --env "${key}=${value_from_base}" )
+    done
+    REF=$("${CRANE}" mutate "${REF}" ${environment_args[@]})
+fi
+
+# TODO(thesayyn): support --workdir upstream
+if [ -n "${WORKDIR}" ]; then 
+    REF=$("${CRANE}" config "${REF}" | "${JQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
+fi
+
+if [ -n "$OUTPUT" ]; then
+    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
+fi
+
+
+} 2>"${STDERR}"
