@@ -16,7 +16,6 @@ JQ_FILTER=\
 INFO="$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/project-zot/zot/releases?per_page=1 | jq "$JQ_FILTER")"
 
 
-
 # TODO: remove this for loop once https://github.com/project-zot/zot/issues/715 is fixed.
 for VERSION in $(jq -r 'keys | join("\n")' <<< $INFO); do 
     for PLATFORM in $(jq -r ".[\"$VERSION\"] | keys | join(\"\n\")" <<< $INFO); do 

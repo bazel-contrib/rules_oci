@@ -20,7 +20,8 @@ crane_toolchain(
 """
 
 def _crane_repo_impl(repository_ctx):
-    url = "https://github.com/google/go-containerregistry/releases/download/{version}/go-containerregistry_{platform}.tar.gz".format(
+    # TODO(thesayyn): remove this after a new release of go-containerregistry cut.
+    url = "https://github.com/thesayyn/go-containerregistry/releases/download/{version}/go-containerregistry_{platform}.tar.gz".format(
         version = repository_ctx.attr.crane_version,
         platform = repository_ctx.attr.platform[:1].upper() + repository_ctx.attr.platform[1:],
     )
