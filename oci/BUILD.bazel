@@ -3,11 +3,16 @@ load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
 # For stardoc to reference the files
 exports_files(["container.bzl"])
 
-# This is the target rule authors should put in their "toolchains"
-# attribute in order to get a runtime for the correct platform.
+# These are the targets rule authors should put in their "toolchains"
+# attribute in order to get a crane/zot executable for the correct platform.
 # See https://docs.bazel.build/versions/main/toolchains.html#writing-rules-that-use-toolchains
 toolchain_type(
     name = "crane_toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
+toolchain_type(
+    name = "registry_toolchain_type",
     visibility = ["//visibility:public"],
 )
 
