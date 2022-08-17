@@ -27,8 +27,8 @@ jobs:
         uses: actions/cache@v2
         with:
           path: |
-            "~/.cache/bazel"
-            "~/.cache/bazel-repo"
+            ~/.cache/bazel
+            ~/.cache/bazel-repo
           key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
           restore-keys: bazel-cache-
       - name: bazel test //...
