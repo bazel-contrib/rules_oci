@@ -31,10 +31,6 @@ jobs:
             ~/.cache/bazel-repo
           key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
           restore-keys: bazel-cache-
-      # TODO: make a util rule that creates docker tarball out of OCI image so we don't need skopeo
-      - name: Get skopeo (linux)
-        run: sudo apt-get -y update && sudo apt-get -y install skopeo
-        if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
