@@ -31,12 +31,19 @@ jobs:
             ~/.cache/bazel-repo
           key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
           restore-keys: bazel-cache-
+      - name: install podman
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install podman
+          podman machine init
+          podman machine start
+          echo "DOCKER_HOST=unix:///Users/runner/.local/share/containers/podman/machine/podman-machine-default/podman.sock" >> $GITHUB_ENV
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
-      - name: bazel build //example:image && docker load
+      - name: bazel build //example/... & run with a container runtime
         if: ${{ matrix.os != 'macos-latest' }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.

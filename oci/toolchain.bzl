@@ -16,7 +16,6 @@ May be empty if the crane_path points to a locally installed tool binary.""",
     },
 )
 
-
 def _crane_toolchain_impl(ctx):
     if ctx.attr.crane and ctx.attr.crane_path:
         fail("Can only set one of crane or crane_path but both were set.")
@@ -65,7 +64,7 @@ crane_toolchain = rule(
             mandatory = False,
             allow_single_file = True,
             executable = True,
-            cfg = "exec"
+            cfg = "exec",
         ),
         "crane_path": attr.string(
             doc = "Path to an existing executable for the target platform.",
@@ -77,7 +76,6 @@ crane_toolchain = rule(
 For usage see https://docs.bazel.build/versions/main/toolchains.html#defining-toolchains.
 """,
 )
-
 
 RegistryInfo = provider(
     doc = "Information about how to invoke the registry executable.",
@@ -108,16 +106,16 @@ def _registry_toolchain_impl(ctx):
     # See https://docs.bazel.build/versions/main/be/make-variables.html#custom_variables
     template_variables = platform_common.TemplateVariableInfo({
         "REGISTRY_BIN": registry_path,
-        "LAUNCHER": launcher_path
+        "LAUNCHER": launcher_path,
     })
     default = DefaultInfo(
         files = depset(registry_files),
-        runfiles = ctx.runfiles(files = registry_files)
+        runfiles = ctx.runfiles(files = registry_files),
     )
     registry_info = RegistryInfo(
         registry_path = registry_path,
         registry_files = registry_files,
-        launcher_path = launcher_path
+        launcher_path = launcher_path,
     )
 
     # Export all the providers inside our ToolchainInfo
@@ -144,14 +142,83 @@ registry_toolchain = rule(
         "registry": attr.label(
             doc = "A hermetically downloaded registry executable for the target platform.",
             mandatory = False,
-            allow_single_file = True
+            allow_single_file = True,
         ),
         "registry_path": attr.string(
             doc = "Path to an existing registry executable for the target platform.",
             mandatory = False,
-        )
+        ),
     },
     doc = """Defines a registry toolchain.
+
+For usage see https://docs.bazel.build/versions/main/toolchains.html#defining-toolchains.
+""",
+)
+
+StructureTestInfo = provider(
+    doc = "Information about how to invoke the container-structure-test executable.",
+    fields = {
+        "structure_test_path": "Path to the container-structure-test executable for the target platform.",
+        "structure_test_files": """Files required in runfiles to make the structure_test executable available.
+
+May be empty if the structure_test_path points to a locally installed tool binary.""",
+    },
+)
+
+def _structure_test_toolchain_impl(ctx):
+    if ctx.attr.structure_test and ctx.attr.structure_test_path:
+        fail("Can only set one of structure_test or structure_test_path but both were set.")
+    if not ctx.attr.structure_test and not ctx.attr.structure_test_path:
+        fail("Must set one of structure_test or structure_test_path.")
+
+    structure_test_files = []
+    structure_test_path = ctx.attr.structure_test_path
+
+    if ctx.attr.structure_test:
+        structure_test_files.append(ctx.file.structure_test)
+        structure_test_path = _to_manifest_path(ctx, ctx.file.structure_test)
+
+    # Make the $(REGISTRY_BIN) variable available in places like genrules.
+    # See https://docs.bazel.build/versions/main/be/make-variables.html#custom_variables
+    template_variables = platform_common.TemplateVariableInfo({
+        "STRUCTURE_TEST_BIN": structure_test_path,
+    })
+    default = DefaultInfo(
+        files = depset(structure_test_files),
+        runfiles = ctx.runfiles(files = structure_test_files),
+    )
+    st_info = StructureTestInfo(
+        structure_test_path = structure_test_path,
+        structure_test_files = structure_test_files,
+    )
+
+    # Export all the providers inside our ToolchainInfo
+    # so the resolved_toolchain rule can grab and re-export them.
+    toolchain_info = platform_common.ToolchainInfo(
+        st_info = st_info,
+        template_variables = template_variables,
+        default = default,
+    )
+    return [
+        default,
+        toolchain_info,
+        template_variables,
+    ]
+
+structure_test_toolchain = rule(
+    implementation = _structure_test_toolchain_impl,
+    attrs = {
+        "structure_test": attr.label(
+            doc = "A hermetically downloaded structure_test executable for the target platform.",
+            mandatory = False,
+            allow_single_file = True,
+        ),
+        "structure_test_path": attr.string(
+            doc = "Path to an existing structure_test executable for the target platform.",
+            mandatory = False,
+        ),
+    },
+    doc = """Defines a structure_test structure_test toolchain.
 
 For usage see https://docs.bazel.build/versions/main/toolchains.html#defining-toolchains.
 """,
