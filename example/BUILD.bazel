@@ -32,6 +32,10 @@ genrule(
         },
         no_match_error = "Please build on a arm64 or amd64 host",
     ),
+    message = select({
+        "@platforms//cpu:arm64": "Pulling base image for linux/arm64",
+        "@platforms//cpu:x86_64": "Pulling base image for linux/amd64",
+    }),
     output_to_bindir = True,
     toolchains = [
         "@oci_crane_toolchains//:resolved_toolchain",

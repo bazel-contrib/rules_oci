@@ -12,4 +12,9 @@ stardoc_with_diff_test(
     bzl_library_target = "//oci/private:tarball",
 )
 
+stardoc_with_diff_test(
+    name = "index",
+    bzl_library_target = "//oci/private:index",
+)
+
 update_docs(name = "update")
