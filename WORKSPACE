@@ -20,6 +20,10 @@ oci_register_toolchains(
     zot_version = LATEST_ZOT_VERSION,
 )
 
+load("//cosign:repositories.bzl", "cosign_register_toolchains")
+
+cosign_register_toolchains(name = "oci_cosign")
+
 # For running our own unit tests
 load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
 

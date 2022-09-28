@@ -15,7 +15,7 @@ filegroup(
     name = "package_content",
     srcs = glob([
         "*.bzl",
-        "*.bazel",
+        "*.sh.tpl",
     ]),
     visibility = ["//oci:__pkg__"],
 )
@@ -24,16 +24,10 @@ bzl_library(
     name = "tarball",
     srcs = ["tarball.bzl"],
     visibility = [
-        "//docs:__subpackages__",
+        "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
     deps = ["@rules_pkg//pkg:bzl_srcs"],
-)
-
-bzl_library(
-    name = "toolchains_repo",
-    srcs = ["toolchains_repo.bzl"],
-    visibility = ["//oci:__subpackages__"],
 )
 
 bzl_library(
@@ -55,9 +49,16 @@ bzl_library(
 )
 
 bzl_library(
-    name = "versions",
-    srcs = ["versions.bzl"],
+    name = "toolchains_repo",
+    srcs = ["toolchains_repo.bzl"],
     visibility = [
+        "//cosign:__subpackages__",
         "//oci:__subpackages__",
     ],
+)
+
+bzl_library(
+    name = "versions",
+    srcs = ["versions.bzl"],
+    visibility = ["//oci:__subpackages__"],
 )

@@ -112,7 +112,7 @@ BUILD_HEADER_TMPL = """\
 
 load(":defs.bzl", "resolved_toolchain")
 
-resolved_toolchain(name = "resolved_toolchain", visibility = ["//visibility:public"])
+resolved_toolchain(name = "current_toolchain", visibility = ["//visibility:public"])
 """
 
 def _toolchains_repo_impl(repository_ctx):
