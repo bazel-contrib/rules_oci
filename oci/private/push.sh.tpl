@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -o pipefail -o errexit -o nounset
+
+readonly CRANE="{{crane_path}}"
+readonly YQ="{{yq_path}}"
+readonly IMAGE_DIR="{{image_dir}}"
+readonly FIXED_ARGS=({{fixed_args}})
+
+# set $@ to be FIXED_ARGS+$@
+ALL_ARGS=(${FIXED_ARGS[@]} $@)
+set -- ${ALL_ARGS[@]}
+
+REPOSITORY="{{repository}}"
+TAGS=()
+ARGS=()
+
+while (( $# > 0 )); do
+  case $1 in
+    (-t|--tag)
+      TAGS+=( "$2" )
+      shift
+      shift;;
+    (--tag=*) 
+      TAGS+=( "${1#--tag=}" )
+      shift;;
+    (--repository=*)
+      REPOSITORY="${1#--repository=}"
+      shift;;
+    (-r|--repository)
+      REPOSITORY="$2"
+      shift
+      shift;;
+    (*) 
+      ARGS+=( "$1" )
+      shift;;
+  esac
+done
+
+DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
+
+REFS=$(mktemp)
+"${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
+
+for tag in "${TAGS[@]+"${TAGS[@]}"}"
+do
+  "${CRANE}" tag $(cat "${REFS}") "${tag}"
+done
