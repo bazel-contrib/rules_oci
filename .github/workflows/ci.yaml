@@ -31,6 +31,10 @@ jobs:
             ~/.cache/bazel-repo
           key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
           restore-keys: bazel-cache-
+      # TODO: make a util rule that creates docker tarball out of OCI image so we don't need skopeo
+      - name: Get skopeo (linux)
+        run: sudo apt-get -y update && sudo apt-get -y install skopeo
+        if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: bazel test //...
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
@@ -42,8 +46,7 @@ jobs:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: |
-          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:image //example/py:image
-          docker load -i bazel-bin/example/js/image.tar
-          docker run --rm image:latest
-          docker load -i bazel-bin/example/py/image.tar
-          docker run --rm image:latest
+          bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:image
+          skopeo copy oci:bazel-bin/example/js/image docker-archive:js_tarball.tar --additional-tag example/js:latest
+          docker load --input js_tarball.tar
+          docker run --rm example/js:latest

@@ -3,102 +3,79 @@ _attrs = {
     "base": attr.string(
         mandatory = True,
     ),
-
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
     "entrypoint": attr.string_list(),
     "cmd": attr.string_list(),
     "labels": attr.string_list(),
     "tag": attr.string_list(),
     "layers": attr.label_list(),
+    "_container_sh_tpl": attr.label(default = "container.sh.tpl", allow_single_file = True),
 }
 
-def _strip_external(path):
-    return path[len("external/"):] if path.startswith("external/") else path
-
 def _impl(ctx):
-    toolchain = ctx.toolchains["@contrib_rules_oci//oci:crane_toolchain_type"]
+    crane = ctx.toolchains["@contrib_rules_oci//oci:crane_toolchain_type"]
+    registry = ctx.toolchains["@contrib_rules_oci//oci:registry_toolchain_type"]
 
-    launcher = ctx.actions.declare_file("crane.sh")
-
-    # TODO: dynamically get --platform from toolchain
-    ctx.actions.write(
-        launcher,
-        """#!/usr/bin/env bash
-set -euo pipefail
-{crane} $@""".format(
-            crane = toolchain.crane_info.crane_path,
-        ),
+    launcher = ctx.actions.declare_file("container_{}.sh".format(ctx.label.name))
+    ctx.actions.expand_template(
+        template = ctx.file._container_sh_tpl,
+        output = launcher,
         is_executable = True,
+        substitutions = {
+            "%registry_launcher_path%": registry.registry_info.launcher_path,
+            "%crane_path%": crane.crane_info.crane_path,
+            "%storage_dir%": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name])
+        }
     )
 
-    # Pull the image
-    pull = ctx.actions.args()
+    inputs_depsets = []
 
-    tar = ctx.actions.declare_file("base_%s.tar" % ctx.label.name)
-
-    pull.add_all([
-        "append",
-        "--base",
+    args = ctx.actions.args()
+    args.add_all([
+        "mutate",
         ctx.attr.base,
-        "--output",
-        tar,
-        "--new_tag",
-        ctx.label.name,
+        "--tag",
+        "oci:registry/{}".format(ctx.label.name)
     ])
-
-    inputs = list()
-
-    inputs.extend(toolchain.crane_info.crane_files)
 
     if ctx.attr.layers:
-        pull.add("--new_layer")
+        args.add("--append")
         for layer in ctx.attr.layers:
-            inputs.extend(layer[DefaultInfo].files.to_list())
-            pull.add_all(layer[DefaultInfo].files)
+            # TODO(thesayyn): allow only .tar files
+            inputs_depsets.append(layer[DefaultInfo].files)
+            args.add_all(layer[DefaultInfo].files)
 
-    ctx.actions.run(
-        inputs = inputs,
-        arguments = [pull],
-        outputs = [tar],
-        executable = launcher,
-        progress_message = "Pulling base image and appending new layers (%s)" % ctx.attr.base,
-    )
-
-    # Mutate it
-    mutate = ctx.actions.args()
-    result_tar = ctx.actions.declare_file("%s.tar" % ctx.label.name)
-
-    mutate.add_all([
-        "mutate",
-        "--tag",
-        ctx.label.name,
-        tar,
-        "--output",
-        result_tar,
-    ])
 
     if ctx.attr.entrypoint:
-        mutate.add_joined("--entrypoint", ctx.attr.entrypoint, join_with = ",")
+        args.add_joined("--entrypoint", ctx.attr.entrypoint, join_with = ",")
 
     if ctx.attr.cmd:
-        mutate.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
+        args.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
+
+
+    output = ctx.actions.declare_directory("image")
+    args.add(output.path, format = "--output=%s")
 
     ctx.actions.run(
-        inputs = [tar] + toolchain.crane_info.crane_files,
-        arguments = [mutate],
-        outputs = [result_tar],
+        inputs = depset(transitive = inputs_depsets),
+        arguments = [args],
+        outputs = [output],
         executable = launcher,
-        progress_message = "Mutating base image (%s)" % ctx.attr.base,
+        tools = crane.crane_info.crane_files + registry.registry_info.registry_files,
+        progress_message = "Building OCI Image",
     )
 
     return [
         DefaultInfo(
-            files = depset([result_tar]),
+            files = depset([output]),
         ),
     ]
 
 container = struct(
     implementation = _impl,
     attrs = _attrs,
-    toolchains = ["@contrib_rules_oci//oci:crane_toolchain_type"],
+    toolchains = [
+        "@contrib_rules_oci//oci:crane_toolchain_type",
+        "@contrib_rules_oci//oci:registry_toolchain_type"
+    ],
 )

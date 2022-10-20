@@ -24,7 +24,9 @@ pkg_tar(
 
 container(
     name = "image",
-    base = "debian:latest",
+    # TODO(thesayyn): remove this and use the ocifier command once https://github.com/google/go-containerregistry/pull/1293 lands.
+    # Context: debian:latest is docker specific image therefore rejected by vendor neutral registries like zot
+    base = "thesayyn/debian:oci",
     cmd = ["/example/js/_bin_launcher.sh"],
     entrypoint = ["bash"],
     layers = [
