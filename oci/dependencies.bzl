@@ -30,8 +30,15 @@ def rules_oci_dependencies():
     http_archive(
         name = "rules_pkg",
         urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.5.1/rules_pkg-0.5.1.tar.gz",
-            "https://github.com/bazelbuild/rules_pkg/releases/download/0.5.1/rules_pkg-0.5.1.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.1.tar.gz",
+            "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.1/rules_pkg-0.7.1.tar.gz",
         ],
-        sha256 = "a89e203d3cf264e564fcb96b6e06dd70bc0557356eb48400ce4b5d97c2c3720d",
+        sha256 = "451e08a4d78988c06fa3f9306ec813b836b1d076d0f055595444ba4ff22b867f",
+    )
+
+    http_archive(
+        name = "aspect_bazel_lib",
+        sha256 = "e00a57d37a8d8b629951e43d1af9b079429b6ea9710752f08910f13afdb825f0",
+        strip_prefix = "bazel-lib-1.10.1",
+        url = "https://github.com/aspect-build/bazel-lib/archive/refs/tags/v1.10.1.tar.gz",
     )
