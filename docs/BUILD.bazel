@@ -3,11 +3,13 @@
 load("@aspect_bazel_lib//lib:docs.bzl", "stardoc_with_diff_test", "update_docs")
 
 stardoc_with_diff_test(
+    name = "container",
     bzl_library_target = "//oci:container",
-    out_label = "//docs:container.md",
 )
 
-update_docs(
-    name = "update",
-    docs_folder = "docs",
+stardoc_with_diff_test(
+    name = "tarball",
+    bzl_library_target = "//oci/private:tarball",
 )
+
+update_docs(name = "update")

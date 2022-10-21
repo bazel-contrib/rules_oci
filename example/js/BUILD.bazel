@@ -1,4 +1,5 @@
 load("//oci:container.bzl", "container")
+load("//oci:defs.bzl", "oci_tarball")
 load("//language:runfiles.bzl", "expand_runfiles")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@aspect_rules_js//js:nodejs_binary.bzl", "nodejs_binary")
@@ -32,4 +33,10 @@ container(
     layers = [
         ":entrypoint",
     ],
+)
+
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repotags = ["example/js:latest"],
 )
