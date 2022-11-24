@@ -3,7 +3,7 @@
 load("@rules_pkg//:providers.bzl", "PackageFilegroupInfo", "PackageFilesInfo", "PackageSymlinkInfo")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@bazel_skylib//rules:paths.bzl", "paths")
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@aspect_bazel_lib//lib:paths.bzl", "to_manifest_path")
 load("@rules_python//python:defs.bzl", "py_binary")
 
