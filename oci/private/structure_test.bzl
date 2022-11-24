@@ -18,12 +18,7 @@ _attrs = {
 
 CMD = """\
 #!/usr/bin/env bash
-set -o pipefail -o errexit -o nounset
-
-readonly ST_PATH="{st_path}"
-readonly FIXED_ARGS="{fixed_args}"
-
-"$ST_PATH" test --test-report="$XML_OUTPUT_FILE" --output=junit $FIXED_ARGS $@
+exec "{st_path}" test {fixed_args} "$@"
 """
 
 def _structure_test_impl(ctx):

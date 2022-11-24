@@ -3,6 +3,7 @@
 load("@rules_pkg//:providers.bzl", "PackageFilegroupInfo", "PackageFilesInfo", "PackageSymlinkInfo")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@bazel_skylib//rules:paths.bzl", "paths")
 load("@aspect_bazel_lib//lib:paths.bzl", "to_manifest_path")
 load("@rules_python//python:defs.bzl", "py_binary")
 
@@ -27,7 +28,7 @@ def _write_laucher(ctx, executable_path):
     return launcher
 
 def _runfile_path(ctx, file, runfiles_dir):
-    return "/".join([runfiles_dir, to_manifest_path(ctx, file)])
+    return paths.join(runfiles_dir, to_manifest_path(ctx, file))
 
 # Tests whether the destination string should be included
 # When exclude is "" it is noop.
@@ -45,7 +46,7 @@ def _runfiles_impl(ctx):
     default_info = ctx.attr.binary[DefaultInfo]
 
     executable = default_info.files_to_run.executable
-    executable_path = "/".join([ctx.attr.root, executable.short_path])
+    executable_path = paths.join(ctx.attr.root, executable.short_path)
     original_executable_path = executable_path.replace(".sh", "_.sh")
     launcher = _write_laucher(ctx, original_executable_path)
 
@@ -58,7 +59,7 @@ def _runfiles_impl(ctx):
         file_map[executable_path] = launcher
 
     manifest = default_info.files_to_run.runfiles_manifest
-    runfiles_dir = "/".join([ctx.attr.root, manifest.short_path.replace(manifest.basename, "")[:-1]])
+    runfiles_dir = paths.join(ctx.attr.root, manifest.short_path.replace(manifest.basename, "")[:-1])
 
     files = depset(transitive = [default_info.files, default_info.default_runfiles.files])
 
@@ -72,26 +73,26 @@ def _runfiles_impl(ctx):
     # NOTE: symlinks is different than root_symlinks. See: https://bazel.build/rules/rules#runfiles_symlinks for distinction between
     # root_symlinks and symlinks and why they have to be handled differently.
     for symlink in default_info.data_runfiles.symlinks.to_list():
-        destination = "/".join([runfiles_dir, ctx.workspace_name, symlink.path])
+        destination = paths.join(runfiles_dir, ctx.workspace_name, symlink.path)
         if not _should_include(destination, ctx.attr.include, ctx.attr.exclude):
             continue
         if hasattr(file_map, destination):
             file_map.pop(destination)
         info = PackageSymlinkInfo(
-            target = "/%s" % _runfile_path(ctx, symlink.target_file, runfiles_dir),
+            target = "/{}".format(_runfile_path(ctx, symlink.target_file, runfiles_dir)),
             destination = destination,
             attributes = {"mode": "0777"},
         )
         symlinks.append([info, symlink.target_file.owner])
 
     for symlink in default_info.data_runfiles.root_symlinks.to_list():
-        destination = "/".join([runfiles_dir, symlink.path])
+        destination = paths.join(runfiles_dir, symlink.path)
         if not _should_include(destination, ctx.attr.include, ctx.attr.exclude):
             continue
         if hasattr(file_map, destination):
             file_map.pop(destination)
         info = PackageSymlinkInfo(
-            target = "/%s" % _runfile_path(ctx, symlink.target_file, runfiles_dir),
+            target = "/{}".format(_runfile_path(ctx, symlink.target_file, runfiles_dir)),
             destination = destination,
             attributes = {"mode": "0777"},
         )
@@ -224,7 +225,8 @@ def js_image_layer(name, binary, root = None, **kwargs):
 
     pkg_tar_kwargs = dict(
         kwargs,
-        # Be careful with this option. Leave it as is if you don't know what you are doing
+        # WARNING: Changing the strip_prefix tag might lead to unexpected behaviors.
+        # See: https://github.com/bazelbuild/rules_pkg/issues?q=strip_prefix
         strip_prefix = kwargs.pop("strip_prefix", "."),
         build_tar = "%s.build_tar" % name,
         **common_kwargs
