@@ -11,3 +11,10 @@ build --repository_cache=~/.cache/bazel-repo
 test --test_output=errors
 # Allows tests to run bazelisk-in-bazel, since this is the cache folder used
 test --test_env=XDG_CACHE_HOME
+
+# Allow DOCKER_HOST to leak into test actions
+test --test_env=DOCKER_HOST
+
+# try to import platform specific overrides
+try-import %workspace%/.github/workflows/darwin.bazelrc
+

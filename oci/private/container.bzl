@@ -8,7 +8,7 @@ _attrs = {
     "cmd": attr.string_list(),
     "labels": attr.string_list(),
     "tag": attr.string_list(),
-    "layers": attr.label_list(),
+    "layers": attr.label_list(allow_files = True),
     "_container_sh_tpl": attr.label(default = "container.sh.tpl", allow_single_file = True),
 }
 
@@ -24,8 +24,8 @@ def _impl(ctx):
         substitutions = {
             "%registry_launcher_path%": registry.registry_info.launcher_path,
             "%crane_path%": crane.crane_info.crane_path,
-            "%storage_dir%": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name])
-        }
+            "%storage_dir%": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
+        },
     )
 
     inputs_depsets = []
@@ -35,7 +35,7 @@ def _impl(ctx):
         "mutate",
         ctx.attr.base,
         "--tag",
-        "oci:registry/{}".format(ctx.label.name)
+        "oci:registry/{}".format(ctx.label.name),
     ])
 
     if ctx.attr.layers:
@@ -45,13 +45,11 @@ def _impl(ctx):
             inputs_depsets.append(layer[DefaultInfo].files)
             args.add_all(layer[DefaultInfo].files)
 
-
     if ctx.attr.entrypoint:
         args.add_joined("--entrypoint", ctx.attr.entrypoint, join_with = ",")
 
     if ctx.attr.cmd:
         args.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
-
 
     output = ctx.actions.declare_directory("image")
     args.add(output.path, format = "--output=%s")
@@ -76,6 +74,6 @@ container = struct(
     attrs = _attrs,
     toolchains = [
         "@contrib_rules_oci//oci:crane_toolchain_type",
-        "@contrib_rules_oci//oci:registry_toolchain_type"
+        "@contrib_rules_oci//oci:registry_toolchain_type",
     ],
 )

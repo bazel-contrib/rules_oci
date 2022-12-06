@@ -16,6 +16,11 @@ toolchain_type(
     visibility = ["//visibility:public"],
 )
 
+toolchain_type(
+    name = "st_toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
 filegroup(
     name = "package_content",
     srcs = glob([

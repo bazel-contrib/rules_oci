@@ -1,26 +1,16 @@
 load("//oci:container.bzl", "container")
-load("//oci:defs.bzl", "oci_tarball")
-load("//language:runfiles.bzl", "expand_runfiles")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@aspect_rules_js//js:nodejs_binary.bzl", "nodejs_binary")
+load("//oci:defs.bzl", "oci_tarball", "structure_test")
+load("@aspect_rules_js//js:defs.bzl", "js_binary")
+load(":js_image_layer.bzl", "js_image_layer")
 
-nodejs_binary(
-    name = "bin",
-    data = ["@npm_acorn-8.4.0"],
+js_binary(
+    name = "main",
     entry_point = "main.js",
 )
 
-expand_runfiles(
-    name = "runfiles",
-    binary = ":bin",
-)
-
-pkg_tar(
-    name = "entrypoint",
-    srcs = [
-        ":runfiles",
-    ],
-    strip_prefix = ".",
+js_image_layer(
+    name = "layers",
+    binary = ":main",
 )
 
 container(
@@ -28,10 +18,10 @@ container(
     # TODO(thesayyn): remove this and use the ocifier command once https://github.com/google/go-containerregistry/pull/1293 lands.
     # Context: debian:latest is docker specific image therefore rejected by vendor neutral registries like zot
     base = "thesayyn/debian:oci",
-    cmd = ["/example/js/_bin_launcher.sh"],
+    cmd = ["/example/js/main.sh"],
     entrypoint = ["bash"],
     layers = [
-        ":entrypoint",
+        ":layers/app.tar",
     ],
 )
 
@@ -39,4 +29,13 @@ oci_tarball(
     name = "tarball",
     image = ":image",
     repotags = ["example/js:latest"],
+)
+
+structure_test(
+    name = "test",
+    config = ["test.yaml"],
+    image = ":image",
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
 )
