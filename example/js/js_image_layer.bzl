@@ -7,6 +7,17 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@aspect_bazel_lib//lib:paths.bzl", "to_manifest_path")
 load("@rules_python//python:defs.bzl", "py_binary")
 
+def _js_image_layer_transition_impl(settings, attr):
+    return {
+        "//command_line_option:platforms": str(attr.platform),
+    }
+
+_js_image_layer_transition = transition(
+    implementation = _js_image_layer_transition_impl,
+    inputs = [],
+    outputs = ["//command_line_option:platforms"],
+)
+
 # BAZEL_BINDIR has to be set to '.' so that js_binary preserves the PWD when running inside container.
 # See https://github.com/aspect-build/rules_js/tree/dbb5af0d2a9a2bb50e4cf4a96dbc582b27567155#running-nodejs-programs
 # for why this is needed.
@@ -43,7 +54,10 @@ def _should_include(destination, include, exclude):
     return included and not excluded
 
 def _runfiles_impl(ctx):
-    default_info = ctx.attr.binary[DefaultInfo]
+    if len(ctx.attr.binary) != 1:
+        fail("binary attribute has more than one transition")
+
+    default_info = ctx.attr.binary[0][DefaultInfo]
 
     executable = default_info.files_to_run.executable
     executable_path = paths.join(ctx.attr.root, executable.short_path)
@@ -115,7 +129,11 @@ def _runfiles_impl(ctx):
 runfiles = rule(
     implementation = _runfiles_impl,
     attrs = {
-        "binary": attr.label(mandatory = True),
+        "_allowlist_function_transition": attr.label(
+            default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+        ),
+        "platform": attr.label(),
+        "binary": attr.label(mandatory = True, cfg = _js_image_layer_transition),
         "root": attr.string(),
         "include": attr.string(),
         "exclude": attr.string(),
@@ -174,7 +192,7 @@ r = subprocess.run([build_tar_path] + sys.argv[1:])
 sys.exit(r.returncode)
 """
 
-def js_image_layer(name, binary, root = None, **kwargs):
+def js_image_layer(name, binary, root = None, platform = None, **kwargs):
     """Creates two tar files `:<name>/app.tar` and `:<name>/node_modules.tar`
 
     Final directory tree will look like below
@@ -183,6 +201,7 @@ def js_image_layer(name, binary, root = None, **kwargs):
     Args:
         name: name for this target. Not reflected anywhere in the final tar.
         binary: label to js_image target
+        platform: transition the binary to platform
         root: Path where the js_binary will reside inside the final container image.
         **kwargs: Passed to pkg_tar. See: https://github.com/bazelbuild/rules_pkg/blob/main/docs/0.7.0/reference.md#pkg_tar
     """
@@ -235,6 +254,7 @@ def js_image_layer(name, binary, root = None, **kwargs):
     runfiles(
         name = "%s/app/runfiles" % name,
         exclude = "/node_modules/",
+        platform = platform,
         **runfiles_kwargs
     )
 
@@ -247,6 +267,7 @@ def js_image_layer(name, binary, root = None, **kwargs):
     runfiles(
         name = "%s/node_modules/runfiles" % name,
         include = "/node_modules/",
+        platform = platform,
         **runfiles_kwargs
     )
 

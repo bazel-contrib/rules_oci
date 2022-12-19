@@ -44,11 +44,11 @@ jobs:
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
       - name: bazel build //example/... & run with a container runtime
-        if: ${{ matrix.os != 'macos-latest' }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
+          DOCKER_BIN: "${{ matrix.os == 'macos-latest' && 'podman' || 'docker' }}"
         run: |
           bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc build //example/js:tarball
-          docker load --input $(bazel cquery --output=files //example/js:tarball)
-          docker run --rm example/js:latest
+          $DOCKER_BIN load --input $(bazel cquery --output=files //example/js:tarball)
+          $DOCKER_BIN run --rm example/js:latest

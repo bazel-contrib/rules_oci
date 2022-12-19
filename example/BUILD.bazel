@@ -1,0 +1,39 @@
+package(default_visibility = ["//example:__subpackages__"])
+
+platform(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:arm64",
+    ],
+)
+
+platform(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# https://hub.docker.com/r/thesayyn/debian is a debian image with changes made to the media types to make it work with zot.
+# NOTE: thesayyn/debian:oci was created via crane ocify command which hasn't landed yet; https://github.com/google/go-containerregistry/pull/1293
+# In order to create the ocified image, one has to use skopeo since the ocify command isn't available yet.
+# Run: skopeo copy docker://docker.io/library/debian:latest docker://registry.example.com/debian:oci --format oci --all
+CMD = "$(CRANE_BIN) pull thesayyn/debian:oci $@ --format=oci --platform={platform}"
+
+genrule(
+    name = "base",
+    outs = ["layout"],
+    cmd = select(
+        {
+            "@platforms//cpu:arm64": CMD.format(platform = "linux/arm64"),
+            "@platforms//cpu:x86_64": CMD.format(platform = "linux/amd64"),
+        },
+        no_match_error = "Please build on a arm64 or amd64 host",
+    ),
+    output_to_bindir = True,
+    toolchains = [
+        "@oci_crane_toolchains//:resolved_toolchain",
+    ],
+)
