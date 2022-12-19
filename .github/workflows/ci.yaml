@@ -44,7 +44,6 @@ jobs:
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
       - name: bazel build //example/... & run with a container runtime
-        if: ${{ matrix.os != 'macos-latest' }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo

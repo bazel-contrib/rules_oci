@@ -24,6 +24,7 @@ oci_image(
     }),
     base = "//example:base",
     cmd = ["/example/js/main.sh"],
+    entrypoint = ["bash"],
     os = "linux",
     tars = [":layers/app.tar"],
 )
