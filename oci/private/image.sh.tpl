@@ -31,8 +31,8 @@ function get_option() {
 
 function empty_base() {
     local ref="$REGISTRY/oci/empty_base:latest"
+    # TODO: https://github.com/google/go-containerregistry/issues/1513
     ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f <(tar -cf tarfilename.tar -T /dev/null))"
-    # TODO(thesayyn): this is a gross way to remove the empty layer from the image. fix this upstream so that -f is variadic.
     ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
     ref=$("${CRANE}" manifest "${ref}" | "${JQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
 
@@ -50,7 +50,7 @@ function empty_base() {
 }
 
 function base_from_layout() {
-    # TODO: fix crane to print digest to stdout
+    # TODO: https://github.com/google/go-containerregistry/issues/1514
     local refs=$(mktemp)
     local oci_layout_path=$1
     "${CRANE}" push "${oci_layout_path}" "${REGISTRY}/oci/layout:latest" --image-refs "${refs}"
@@ -103,7 +103,7 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
     REF=$("${CRANE}" mutate "${REF}" ${environment_args[@]})
 fi
 
-# TODO(thesayyn): support --workdir upstream
+# TODO: https://github.com/google/go-containerregistry/issues/1515
 if [ -n "${WORKDIR}" ]; then 
     REF=$("${CRANE}" config "${REF}" | "${JQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
 fi

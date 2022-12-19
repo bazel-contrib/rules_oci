@@ -7,13 +7,13 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@aspect_bazel_lib//lib:paths.bzl", "to_manifest_path")
 load("@rules_python//python:defs.bzl", "py_binary")
 
-def _transition_impl(settings, attr):
+def _js_image_layer_transition_impl(settings, attr):
     return {
         "//command_line_option:platforms": str(attr.platform),
     }
 
 _js_image_layer_transition = transition(
-    implementation = _transition_impl,
+    implementation = _js_image_layer_transition_impl,
     inputs = [],
     outputs = ["//command_line_option:platforms"],
 )
@@ -54,6 +54,9 @@ def _should_include(destination, include, exclude):
     return included and not excluded
 
 def _runfiles_impl(ctx):
+    if len(ctx.attr.binary) != 1:
+        fail("binary attribute has more than one transition")
+
     default_info = ctx.attr.binary[0][DefaultInfo]
 
     executable = default_info.files_to_run.executable
