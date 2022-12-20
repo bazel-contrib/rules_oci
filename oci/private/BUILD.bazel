@@ -7,6 +7,7 @@ exports_files(
 
 exports_files([
     "image.sh.tpl",
+    "image_index.sh.tpl",
     "tarball.sh.tpl",
 ])
 
@@ -38,6 +39,15 @@ bzl_library(
 bzl_library(
     name = "image",
     srcs = ["image.bzl"],
+    visibility = [
+        "//docs:__pkg__",
+        "//oci:__subpackages__",
+    ],
+)
+
+bzl_library(
+    name = "image_index",
+    srcs = ["image_index.bzl"],
     visibility = [
         "//docs:__pkg__",
         "//oci:__subpackages__",

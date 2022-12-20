@@ -98,7 +98,6 @@ TOOLCHAIN_TMPL = """\
 toolchain(
     name = "{platform}_toolchain",
     exec_compatible_with = {compatible_with},
-    target_compatible_with = {compatible_with},
     toolchain = "{toolchain}",
     toolchain_type = "{toolchain_type}",
 )
