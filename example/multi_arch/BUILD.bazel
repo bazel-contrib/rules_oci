@@ -1,4 +1,4 @@
-load("//oci:defs.bzl", "oci_image", "oci_index")
+load("//oci:defs.bzl", "oci_image", "oci_image_index")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 load(":transition.bzl", "multi_arch")
 
@@ -29,7 +29,7 @@ multi_arch(
     ],
 )
 
-oci_index(
+oci_image_index(
     name = "index",
     images = [
         ":images",
