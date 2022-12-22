@@ -21,7 +21,7 @@ CMD = """\
 exec "{st_path}" test {fixed_args} "$@"
 """
 
-def _structure_test_impl(ctx):
+def _oci_structure_test_impl(ctx):
     st_info = ctx.toolchains["@contrib_rules_oci//oci:st_toolchain_type"].st_info
 
     default_image_tag = "{workspace}.local/{package}/{name}:latest".format(
@@ -54,8 +54,8 @@ def _structure_test_impl(ctx):
 
     return DefaultInfo(runfiles = runfiles, executable = launcher)
 
-structure_test = rule(
-    implementation = _structure_test_impl,
+oci_structure_test = rule(
+    implementation = _oci_structure_test_impl,
     attrs = _attrs,
     doc = _DOC,
     test = True,

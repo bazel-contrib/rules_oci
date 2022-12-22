@@ -1,5 +1,5 @@
 load("@aspect_rules_js//js:defs.bzl", "js_binary")
-load("//oci:defs.bzl", "oci_image", "oci_tarball", "structure_test")
+load("//oci:defs.bzl", "oci_image", "oci_structure_test", "oci_tarball")
 load(":js_image_layer.bzl", "js_image_layer")
 
 js_binary(
@@ -29,7 +29,7 @@ oci_image(
     tars = [":layers/app.tar"],
 )
 
-structure_test(
+oci_structure_test(
     name = "test",
     config = ["test.yaml"],
     image = ":image",
