@@ -38,6 +38,6 @@ genrule(
     }),
     output_to_bindir = True,
     toolchains = [
-        "@oci_crane_toolchains//:resolved_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
     ],
 )

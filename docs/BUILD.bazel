@@ -17,4 +17,9 @@ stardoc_with_diff_test(
     bzl_library_target = "//oci/private:image_index",
 )
 
+stardoc_with_diff_test(
+    name = "cosign_sign",
+    bzl_library_target = "//cosign/private:sign",
+)
+
 update_docs(name = "update")
