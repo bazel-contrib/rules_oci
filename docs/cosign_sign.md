@@ -26,7 +26,7 @@ cosign_sign(
 )
 ```
 
-`repository` attribute can be overridden using the `--repository` option.
+`repository` attribute can be overridden using the `--repository` flag.
 
 ```starlark
 oci_image(

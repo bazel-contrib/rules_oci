@@ -16,7 +16,7 @@ cosign_sign(
 )
 ```
 
-`repository` attribute can be overridden using the `--repository` option.
+`repository` attribute can be overridden using the `--repository` flag.
 
 ```starlark
 oci_image(
@@ -46,16 +46,16 @@ def _cosign_sign_impl(ctx):
     if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
         fail("repository attribute should not contain digest or tag.")
 
-    executable = ctx.actions.declare_file("cosign_%s" % ctx.label.name)
+    executable = ctx.actions.declare_file("cosign_sign_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
         template = ctx.file._sign_sh_tpl,
         output = executable,
         is_executable = True,
         substitutions = {
-            "{{cosign_path}}": cosign.cosign_info.cosign_path,
-            "{{yq_path}}": yq.yqinfo.bin.path,
+            "{{cosign_path}}": cosign.cosign_info.binary.short_path,
+            "{{yq_path}}": yq.yqinfo.bin.short_path,
             "{{image_dir}}": ctx.file.image.short_path,
-            "{{repository}}": ctx.attr.repository,
+            "{{fixed_args}}": " ".join(["--repository", ctx.attr.repository]),
         },
     )
 
