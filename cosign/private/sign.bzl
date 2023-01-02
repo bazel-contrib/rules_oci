@@ -2,7 +2,7 @@
 
 _DOC = """Sign an oci_image using cosign binary at a remote registry.
 
-It sings the image by its digest determined beforehand.
+It signs the image by its digest determined beforehand.
 
 ```starlark
 oci_image(
