@@ -2,16 +2,17 @@
 
 _DOC = """Push an oci_image or oci_image_index to a remote registry.
 
-Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur 
+Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur;
 
 - Remote registry rejects a tag due to various reasons. eg: forbidden characters, existing tags 
 - Remote registry closes the connection during the tagging
 - Local network outages
 
 In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `default_tags` sequentially at
-remote registry. 
+the remote registry. 
 
 Any failure during pushing or tagging will be reported with non-zero exit code cause remaining steps to be skipped.
+
 
 Push an oci_image to docker registry with latest tag
 
@@ -46,10 +47,14 @@ oci_image_index(
 oci_push(
     image = ":app_image",
     repository = "ghcr.io/<OWNER>/image",
-    default_tags = ["6.4.1-rc1"]
+    default_tags = ["0.0.0"]
 )
 ```
 
+Ideally the semver information is gathered from a vcs, like git, instead of being hardcoded to the BUILD files.
+However, due to nature of BUILD files being static, one has to use `-t|--tag` flag to pass the tag at runtime instead of using `default_tags`.
+
+example `bazel run //target:push -- --tag $(git tag)`
 """
 _attrs = {
     "image": attr.label(allow_single_file = True, doc = "Label to an oci_image or oci_image_index"),
@@ -73,7 +78,7 @@ def _impl(ctx):
 
     fixed_args = ["--tag={}".format(tag) for tag in ctx.attr.default_tags]
     fixed_args.extend(["--repository", ctx.attr.repository])
- 
+
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     ctx.actions.expand_template(
         template = ctx.file._push_sh_tpl,
@@ -84,7 +89,7 @@ def _impl(ctx):
             "{{yq_path}}": jq.yqinfo.bin.short_path,
             "{{image_dir}}": ctx.file.image.short_path,
             "{{fixed_args}}": " ".join(_quote_args(fixed_args)),
-        }
+        },
     )
 
     runfiles = ctx.runfiles(files = [ctx.file.image])
@@ -92,7 +97,6 @@ def _impl(ctx):
     runfiles = runfiles.merge(crane.default.default_runfiles)
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
-
 
 oci_push = rule(
     implementation = _impl,

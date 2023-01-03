@@ -23,12 +23,12 @@ while (( $# > 0 )); do
     (--tag=*) 
       TAGS+=( "${1#--tag=}" )
       shift;;
-    (--repository=*)
-      REPOSITORY="${1#--repository=}"
-      shift;;
     (-r|--repository)
       REPOSITORY="$2"
       shift
+      shift;;
+    (--repository=*)
+      REPOSITORY="${1#--repository=}"
       shift;;
     (*) 
       ARGS+=( "$1" )
