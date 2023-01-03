@@ -62,9 +62,9 @@ oci_push(
 ```
 
 Ideally the semver information is gathered from a vcs, like git, instead of being hardcoded to the BUILD files.
-However, due to nature of BUILD files being static, one has to use `-t|--tag` flag to pass the tag at runtime instead of using `default_tags`.
+However, due to nature of BUILD files being static, one has to use `-t|--tag` flag to pass the tag at runtime instead of using `default_tags`. eg. `bazel run //target:push -- --tag $(git tag)`
 
-example `bazel run //target:push -- --tag $(git tag)`
+Similary, the `repository` attribute can be overridden at runtime with the `-r|--repository` flag. eg. `bazel run //target:push -- --repository index.docker.io/<ORG>/image`
 
 
 **ATTRIBUTES**
