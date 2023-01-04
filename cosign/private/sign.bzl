@@ -35,7 +35,10 @@ run `bazel run :sign -- --repository=index.docker.io/org/test`
 
 _attrs = {
     "image": attr.label(allow_single_file = True, doc = "Label to an oci_image"),
-    "repository": attr.string(mandatory = True, doc = "Repository URL where the image will be signed at. eg: index.docker.io/<user>/image. digests and tags are disallowed."),
+    "repository": attr.string(mandatory = True, doc = """\
+        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
+        Digests and tags are not allowed.
+    """),
     "_sign_sh_tpl": attr.label(default = "sign.sh.tpl", allow_single_file = True),
 }
 

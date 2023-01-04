@@ -75,6 +75,6 @@ Similary, the `repository` attribute can be overridden at runtime with the `-r|-
 | <a id="oci_push-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
 | <a id="oci_push-default_tags"></a>default_tags |  List of tags to apply to the image at remote registry.   | List of strings | optional | [] |
 | <a id="oci_push-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
-| <a id="oci_push-repository"></a>repository |  Repository URL where the image will be signed at. eg: index.docker.io/&lt;user&gt;/image. digests and tags are disallowed.   | String | required |  |
+| <a id="oci_push-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | required |  |
 
 

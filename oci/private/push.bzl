@@ -58,7 +58,10 @@ Similary, the `repository` attribute can be overridden at runtime with the `-r|-
 """
 _attrs = {
     "image": attr.label(allow_single_file = True, doc = "Label to an oci_image or oci_image_index"),
-    "repository": attr.string(mandatory = True, doc = "Repository URL where the image will be signed at. eg: index.docker.io/<user>/image. digests and tags are disallowed."),
+    "repository": attr.string(mandatory = True, doc = """\
+        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
+        Digests and tags are not allowed.
+    """),
     "default_tags": attr.string_list(doc = "List of tags to apply to the image at remote registry."),
     "_push_sh_tpl": attr.label(default = "push.sh.tpl", allow_single_file = True),
 }
