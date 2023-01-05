@@ -50,6 +50,6 @@ run `bazel run :sign -- --repository=index.docker.io/org/test`
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="cosign_sign-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
 | <a id="cosign_sign-image"></a>image |  Label to an oci_image   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
-| <a id="cosign_sign-repository"></a>repository |  Repository URL where the image will be signed at. eg: index.docker.io/&lt;user&gt;/image. digests and tags are disallowed.   | String | required |  |
+| <a id="cosign_sign-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | required |  |
 
 
