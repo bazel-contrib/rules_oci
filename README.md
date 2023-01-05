@@ -1,9 +1,6 @@
 # Bazel rules for OCI containers
 
-**EXPERIMENTAL** This ruleset is highly experimental and not yet fit for production use.
-We might abandon it at any time, there is no guarantee of support or stability.
-
-This is a speculative alternative to rules_docker.
+This is an alternative to [rules_docker](https://github.com/bazelbuild/rules_docker).
 
 We start from first principles and plan to avoid some pitfalls learned in maintaining that repo:
 
