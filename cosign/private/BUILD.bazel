@@ -7,11 +7,21 @@ exports_files(
 
 exports_files([
     "sign.sh.tpl",
+    "attach.sh.tpl",
 ])
 
 bzl_library(
     name = "sign",
     srcs = ["sign.bzl"],
+    visibility = [
+        "//cosign:__subpackages__",
+        "//docs:__pkg__",
+    ],
+)
+
+bzl_library(
+    name = "attach",
+    srcs = ["attach.bzl"],
     visibility = [
         "//cosign:__subpackages__",
         "//docs:__pkg__",
