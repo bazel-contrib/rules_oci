@@ -1,0 +1,43 @@
+load("//cosign:defs.bzl", "cosign_attach")
+load("//oci:defs.bzl", "oci_image")
+
+oci_image(
+    name = "image",
+    architecture = "amd64",
+    cmd = ["noop"],
+    os = "linux",
+)
+
+cosign_attach(
+    name = "attach",
+    attachment = "sbom.spdx",
+    image = ":image",
+    repository = "test",
+    type = "sbom",
+)
+
+sh_test(
+    name = "test",
+    srcs = ["test.bash"],
+    args = [
+        "$(COSIGN_BIN)",
+        "$(CRANE_BIN)",
+        "$(LAUNCHER)",
+        "$(location :attach)",
+        "$(location :image)",
+        "$(location sbom.spdx)",
+    ],
+    data = [
+        "sbom.spdx",
+        ":attach",
+        ":image",
+        "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
+        "@oci_zot_toolchains//:current_toolchain",
+    ],
+    toolchains = [
+        "@oci_zot_toolchains//:current_toolchain",
+        "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
+    ],
+)
