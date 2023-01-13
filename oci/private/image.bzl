@@ -11,7 +11,7 @@ oci_image(
         "rootfs.tar",
         "appfs.tar",
         "libc6.tar",
-        "passwd.tar,
+        "passwd.tar",
     ]
 )
 ```
