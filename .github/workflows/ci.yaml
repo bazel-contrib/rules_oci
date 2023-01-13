@@ -29,8 +29,8 @@ jobs:
           path: |
             ~/.cache/bazel
             ~/.cache/bazel-repo
-          key: bazel-cache-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
-          restore-keys: bazel-cache-
+          key: bazel-cache-${{ matrix.os }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
+          restore-keys: bazel-cache-${{ matrix.os }}
       - name: install podman
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
