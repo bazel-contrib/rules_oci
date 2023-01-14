@@ -44,7 +44,7 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
-    "tars": attr.label_list(allow_files = [".tar"], doc = "List of tar files to add to the image as layers."),
+    "tars": attr.label_list(allow_files = [".tar", ".tar.gz"], doc = "List of tar files to add to the image as layers."),
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
     "entrypoint": attr.string_list(doc = "A list of arguments to use as the `command` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container."),
     "cmd": attr.string_list(doc = "Default arguments to the `entrypoint` of the container. These values act as defaults and may be replaced by any specified when creating a container."),
