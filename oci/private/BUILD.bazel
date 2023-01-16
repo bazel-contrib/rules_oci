@@ -9,7 +9,8 @@ exports_files([
     "image.sh.tpl",
     "image_index.sh.tpl",
     "tarball.sh.tpl",
-    "push.sh.tpl"
+    "push.sh.tpl",
+    "zot_launcher.sh.tpl",
 ])
 
 filegroup(

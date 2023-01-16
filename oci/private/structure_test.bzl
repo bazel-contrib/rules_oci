@@ -44,13 +44,13 @@ def _structure_test_impl(ctx):
     ctx.actions.write(
         launcher,
         content = CMD.format(
-            st_path = st_info.structure_test_path,
+            st_path = st_info.binary.short_path,
             fixed_args = " ".join(fixed_args),
         ),
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.config + st_info.structure_test_files)
+    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.config + [st_info.binary])
 
     return DefaultInfo(runfiles = runfiles, executable = launcher)
 

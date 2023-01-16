@@ -9,41 +9,40 @@ oci_image(
 
 oci_push(
     name = "push_image",
+    default_tags = ["latest"],
     image = ":image",
     repository = "index.docker.io/<ORG>/image",
-    default_tags = ["latest"]
 )
 
 oci_push(
     name = "push_image_wo_tags",
     image = ":image",
-    repository = "index.docker.io/<ORG>/image"
+    repository = "index.docker.io/<ORG>/image",
 )
 
 oci_image_index(
     name = "image_index",
     images = [
-        ":image"
-    ]
+        ":image",
+    ],
 )
 
 oci_push(
     name = "push_image_index",
+    default_tags = ["nightly"],
     image = ":image_index",
     repository = "index.docker.io/<ORG>/image",
-    default_tags = ["nightly"]
 )
-
 
 sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
         "$(CRANE_BIN)",
-        "$(LAUNCHER)",
+        "$(LAUNCHER_WRAPPER)",
         "$(location :push_image)",
         "$(location :push_image_index)",
-        "$(location :push_image_wo_tags)"
+        "$(location :push_image_wo_tags)",
     ],
     data = [
         ":push_image",

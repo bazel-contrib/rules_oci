@@ -91,8 +91,8 @@ def _oci_image_impl(ctx):
         output = launcher,
         is_executable = True,
         substitutions = {
-            "{{registry_launcher_path}}": registry.registry_info.launcher_path,
-            "{{crane_path}}": crane.crane_info.crane_path,
+            "{{registry_launcher_path}}": registry.registry_info.launcher.path,
+            "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
         },
@@ -146,7 +146,8 @@ def _oci_image_impl(ctx):
         arguments = [args],
         outputs = [output],
         executable = launcher,
-        tools = crane.crane_info.crane_files + registry.registry_info.registry_files + [jq.jqinfo.bin],
+        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
     )
 

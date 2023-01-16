@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly COSIGN="$1"
-readonly CRANE="$2"
-readonly REGISTRY_LAUNCHER="$3"
+readonly COSIGN="${1/external\//../}"
+readonly CRANE="${2/external\//../}"
+readonly REGISTRY_LAUNCHER="${3/external\//../}"
 readonly ATTACHER="$4"
 readonly IMAGE_PATH="$5"
 readonly SBOM_PATH="$6"
 
+
 # Launch a registry instance at a random port
 source "${REGISTRY_LAUNCHER}"
-start_registry $TEST_TMPDIR $TEST_TMPDIR/output.log
+REGISTRY=$(start_registry $TEST_TMPDIR $TEST_TMPDIR/output.log)
 echo "Registry is running at ${REGISTRY}"
 
 readonly REPOSITORY="${REGISTRY}/local" 

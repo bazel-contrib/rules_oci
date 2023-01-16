@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly CRANE="$1"
-readonly REGISTRY_LAUNCHER="$2"
+readonly CRANE="${1/external\//../}"
+readonly REGISTRY_LAUNCHER="${2/external\//../}"
 
 # Launch a registry instance at a random port
 source "${REGISTRY_LAUNCHER}"
-start_registry $TEST_TMPDIR $TEST_TMPDIR/output.log
+REGISTRY=$(start_registry $TEST_TMPDIR $TEST_TMPDIR/output.log)
 echo "Registry is running at ${REGISTRY}"
 
 

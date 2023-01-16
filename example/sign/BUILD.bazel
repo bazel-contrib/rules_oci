@@ -31,7 +31,7 @@ sh_test(
     args = [
         "$(CRANE_BIN)",
         "$(COSIGN_BIN)",
-        "$(LAUNCHER)",
+        "$(LAUNCHER_WRAPPER)",
         "$(location :sign)",
         "$(location :image)",
     ],
