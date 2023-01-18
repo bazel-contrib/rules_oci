@@ -22,7 +22,7 @@ sh_test(
     args = [
         "$(COSIGN_BIN)",
         "$(CRANE_BIN)",
-        "$(LAUNCHER)",
+        "$(LAUNCHER_WRAPPER)",
         "$(location :attach)",
         "$(location :image)",
         "$(location sbom.spdx)",

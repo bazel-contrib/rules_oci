@@ -1,6 +1,6 @@
 """Repository rules for fetching external tools"""
 
-load("@aspect_bazel_lib//lib:repositories.bzl", "register_jq_toolchains", "register_yq_toolchains")
+load("@aspect_bazel_lib//lib:repositories.bzl", "register_coreutils_toolchains", "register_jq_toolchains", "register_yq_toolchains")
 load("//oci/private:toolchains_repo.bzl", "PLATFORMS", "toolchains_repo")
 load("//oci/private:versions.bzl", "CRANE_VERSIONS", "ST_VERSIONS", "ZOT_VERSIONS")
 
@@ -49,43 +49,6 @@ registry_toolchain(
 )
 """
 
-ZOT_LAUNCHER_TMPL = """\
-#!/usr/bin/env bash
-set -o errexit -o nounset -o pipefail
-
-SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-ZOT="${SCRIPT_DIR}/zot"
-
-function start_registry() {
-    local CONFIG_PATH="$1/config.json"
-    cat > "${CONFIG_PATH}" <<EOF
-{
-    "storage": {"rootDirectory": "$1" },
-    "http": { "port": "0", "address": "127.0.0.1" },
-    "log": { "level": "info" }
-}
-EOF
-
-    local OUTPUT="$2"
-
-    "${ZOT}" serve "${CONFIG_PATH}" 2>&1 >> "${OUTPUT}" &
-
-    local DEADLINE=5
-    local TIMEOUT=$((SECONDS+${DEADLINE}))
-
-    while [ "${SECONDS}" -lt "${TIMEOUT}" ]; do
-        PORT=$(cat $OUTPUT | sed -nr 's/.+"port":([0-9]+),.+/\\1/p')
-        if [ -n "${PORT}" ]; then
-            break
-        fi
-    done
-    if [ -z "${PORT}" ]; then
-        echo "Exhausted: registry couldn't become ready within ${DEADLINE}s." >> "${OUTPUT}"
-    fi
-    REGISTRY="127.0.0.1:${PORT}"
-}
-"""
-
 def _zot_repo_impl(repository_ctx):
     platform = repository_ctx.attr.platform.replace("x86_64", "amd64").replace("_", "-")
     url = "https://github.com/project-zot/zot/releases/download/{version}/zot-{platform}".format(
@@ -98,7 +61,7 @@ def _zot_repo_impl(repository_ctx):
         executable = True,
         integrity = ZOT_VERSIONS[repository_ctx.attr.zot_version][platform],
     )
-    repository_ctx.file("launcher.sh", ZOT_LAUNCHER_TMPL)
+    repository_ctx.template("launcher.sh", repository_ctx.attr._launcher_tpl)
     repository_ctx.file("BUILD.bazel", ZOT_BUILD_TMPL)
 
 zot_repositories = repository_rule(
@@ -107,6 +70,7 @@ zot_repositories = repository_rule(
     attrs = {
         "zot_version": attr.string(mandatory = True, values = ZOT_VERSIONS.keys()),
         "platform": attr.string(mandatory = True, values = PLATFORMS.keys()),
+        "_launcher_tpl": attr.label(default = "//oci/private:zot_launcher.sh.tpl"),
     },
 )
 
@@ -164,6 +128,7 @@ def oci_register_toolchains(name, crane_version, zot_version):
 
     register_yq_toolchains()
     register_jq_toolchains()
+    register_coreutils_toolchains()
 
     crane_toolchain_name = "{name}_crane_toolchains".format(name = name)
     zot_toolchain_name = "{name}_zot_toolchains".format(name = name)

@@ -19,9 +19,7 @@ def _cosign_toolchain_impl(ctx):
         files = depset([binary]),
         runfiles = ctx.runfiles(files = [binary]),
     )
-    cosign_info = CosignInfo(
-        binary = binary,
-    )
+    cosign_info = CosignInfo(binary = binary)
 
     # Export all the providers inside our ToolchainInfo
     # so the resolved_toolchain rule can grab and re-export them.

@@ -3,6 +3,7 @@
 # Settings that apply only to CI are in .github/workflows/ci.bazelrc
 
 build --incompatible_strict_action_env
+common --nolegacy_external_runfiles
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

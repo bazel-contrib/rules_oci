@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly YQ="%yq%"
-readonly IMAGE_DIR="%image_dir%"
-readonly BLOBS_DIR="%blobs_dir%"
-readonly REPOTAGS='%repotags%'
-readonly TARBALL_MANIFEST_PATH="%manifest_path%"
+readonly YQ="{{yq}}"
+readonly IMAGE_DIR="{{image_dir}}"
+readonly BLOBS_DIR="{{blobs_dir}}"
+readonly REPOTAGS='{{repotags}}'
+readonly TARBALL_MANIFEST_PATH="{{manifest_path}}"
 
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"

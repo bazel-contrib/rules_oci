@@ -2,7 +2,7 @@
 set -o pipefail -o errexit -o nounset
 
 readonly YQ="{{yq_path}}"
-
+readonly COREUTILS="{{coreutils_path}}"
 
 function add_image() {
     local image_path="$1"
@@ -27,13 +27,13 @@ function copy_blob() {
     local output_path="$2"
     local blob_image_relative_path="$3"
     local dest_path="${output_path}/${blob_image_relative_path}"
-    mkdir -p "$(dirname "${dest_path}")"
-    cat "${image_path}/${blob_image_relative_path}" > "${dest_path}"
+    "${COREUTILS}" mkdir -p "$(dirname "${dest_path}")"
+    "${COREUTILS}" cat "${image_path}/${blob_image_relative_path}" > "${dest_path}"
 }
 
 function create_oci_layout() {
     local path="$1"
-    mkdir -p "${path}"
+    "${COREUTILS}" mkdir -p "${path}"
 
     echo '{"imageLayoutVersion": "1.0.0"}' > "${path}/oci-layout" 
     echo '{"schemaVersion": 2, "manifests": []}' > "${path}/index.json"
@@ -53,9 +53,9 @@ for ARG in "$@"; do
 done
 
 
-export checksum=$(shasum -a 256 "${OUTPUT}/manifest_list.json" | cut -f 1 -d " ")
-export size=$(wc -c < "${OUTPUT}/manifest_list.json")
+export checksum=$("${COREUTILS}" sha256sum "${OUTPUT}/manifest_list.json" | "${COREUTILS}" cut -f 1 -d " ")
+export size=$("${COREUTILS}" wc -c < "${OUTPUT}/manifest_list.json")
 
 "${YQ}" --inplace --output-format=json '.manifests += [{"mediaType": "application/vnd.oci.image.index.v1+json", "size": env(size), "digest": "sha256:" + env(checksum)}]' "$OUTPUT/index.json"
 
-mv "${OUTPUT}/manifest_list.json" "$OUTPUT/blobs/sha256/${checksum}"
+"${COREUTILS}" mv "${OUTPUT}/manifest_list.json" "$OUTPUT/blobs/sha256/${checksum}"

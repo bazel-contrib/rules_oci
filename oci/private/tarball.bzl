@@ -68,11 +68,11 @@ def _tarball_impl(ctx):
         output = executable,
         is_executable = True,
         substitutions = {
-            "%yq%": yq_bin.path,
-            "%image_dir%": image.path,
-            "%blobs_dir%": blobs.path,
-            "%manifest_path%": manifest.path,
-            "%repotags%": json.encode(ctx.attr.repotags),
+            "{{yq}}": yq_bin.path,
+            "{{image_dir}}": image.path,
+            "{{blobs_dir}}": blobs.path,
+            "{{manifest_path}}": manifest.path,
+            "{{repotags}}": json.encode(ctx.attr.repotags),
         },
     )
 

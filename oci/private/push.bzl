@@ -88,7 +88,7 @@ def _impl(ctx):
         output = executable,
         is_executable = True,
         substitutions = {
-            "{{crane_path}}": crane.crane_info.crane_path,
+            "{{crane_path}}": crane.crane_info.binary.short_path,
             "{{yq_path}}": jq.yqinfo.bin.short_path,
             "{{image_dir}}": ctx.file.image.short_path,
             "{{fixed_args}}": " ".join(_quote_args(fixed_args)),

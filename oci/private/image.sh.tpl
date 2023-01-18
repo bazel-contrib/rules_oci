@@ -5,6 +5,11 @@ set -o pipefail -o errexit -o nounset
 # Then invokes crane with arguments provided after substituting `oci:registry` with REGISTRY variable exported by start_registry.
 # NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
 
+readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
+readonly CRANE="{{crane_path}}"
+readonly JQ="{{jq_path}}"
+readonly STORAGE_DIR="{{storage_dir}}"
+
 readonly STDERR=$(mktemp)
 
 silent_on_success() {
@@ -14,9 +19,6 @@ silent_on_success() {
     fi
 }
 trap "silent_on_success" EXIT
-
-# this will redirect stderr(2) to stderr file.
-{
 
 function get_option() {
     local name=$1
@@ -30,7 +32,8 @@ function get_option() {
 
 
 function empty_base() {
-    local ref="$REGISTRY/oci/empty_base:latest"
+    local registry=$1
+    local ref="$registry/oci/empty_base:latest"
     # TODO: https://github.com/google/go-containerregistry/issues/1513
     ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f <(tar -cf tarfilename.tar -T /dev/null))"
     ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
@@ -53,18 +56,15 @@ function base_from_layout() {
     # TODO: https://github.com/google/go-containerregistry/issues/1514
     local refs=$(mktemp)
     local oci_layout_path=$1
-    "${CRANE}" push "${oci_layout_path}" "${REGISTRY}/oci/layout:latest" --image-refs "${refs}"
+    local registry=$2
+    "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}"
     cat "${refs}"
 }
 
-readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
-readonly CRANE="{{crane_path}}"
-readonly JQ="{{jq_path}}"
-readonly STORAGE_DIR="{{storage_dir}}"
-
+# this will redirect stderr(2) to stderr file.
+{
 source "${REGISTRY_LAUNCHER}"
-mkdir -p "${STORAGE_DIR}"
-start_registry "${STORAGE_DIR}" "${STDERR}"
+readonly REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
 
 OUTPUT=""
 WORKDIR=""
@@ -74,8 +74,8 @@ ENV_EXPANSIONS=()
 for ARG in "$@"; do
     case "$ARG" in
         (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
-        (oci:empty_base) FIXED_ARGS+=("$(empty_base $@)") ;;
-        (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/})") ;;
+        (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
+        (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
         (--env=*\${*}* | --env=*\$*) ENV_EXPANSIONS+=(${ARG#--env=}) ;;
         (--output=*) OUTPUT="${ARG#--output=}" ;;
         (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
