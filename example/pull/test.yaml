@@ -1,0 +1,6 @@
+schemaVersion: 2.0.0
+commandTests:
+  - name: "hello world"
+    command: "bash"
+    args: ["app.bash"]
+    expectedOutput: ["hello world!"]

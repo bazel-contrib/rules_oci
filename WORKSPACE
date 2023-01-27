@@ -66,3 +66,17 @@ nodejs_register_toolchains(
     name = "nodejs",
     node_version = DEFAULT_NODE_VERSION,
 )
+
+load("//example/pull:pull.bzl", "oci_pull")
+
+oci_pull(
+    name = "debian_arm64",
+    architecture = "arm64",
+    image = "thesayyn/debian:oci",
+)
+
+oci_pull(
+    name = "debian_amd64",
+    architecture = "amd64",
+    image = "thesayyn/debian:oci",
+)

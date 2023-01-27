@@ -1,0 +1,28 @@
+load("//oci:defs.bzl", "oci_image", "structure_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "app",
+    srcs = ["app.bash"],
+)
+
+oci_image(
+    name = "image",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    base = select({
+        "@platforms//cpu:arm64": "@debian_arm64//:image",
+        "@platforms//cpu:x86_64": "@debian_amd64//:image",
+    }),
+    cmd = ["app.bash"],
+    os = "linux",
+    tars = [":app.tar"],
+)
+
+structure_test(
+    name = "test",
+    config = ["test.yaml"],
+    image = ":image",
+)
