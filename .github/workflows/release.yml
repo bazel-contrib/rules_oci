@@ -27,8 +27,8 @@ jobs:
           # Bazelisk will download bazel to here
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
-      - name: Prepare workspace snippet
-        run: .github/workflows/workspace_snippet.sh ${{ env.GITHUB_REF_NAME }} > release_notes.txt
+      - name: Prepare release
+        run: .github/workflows/release_prep.sh ${{ env.GITHUB_REF_NAME }} > release_notes.txt
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
@@ -36,3 +36,5 @@ jobs:
           # Use GH feature to populate the changelog automatically
           generate_release_notes: true
           body_path: release_notes.txt
+          files: rules_oci-*.tar.gz
+          fail_on_unmatched_files: true
