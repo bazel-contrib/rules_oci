@@ -20,5 +20,5 @@ copy the WORKSPACE snippet into your `WORKSPACE` file.
 
 ## Usage
 
-See the API documentation in the [docs](docs/) folder and the example usage in the [example](example/) folder.
+See the API documentation in the [docs](docs/) folder and the example usage in the [examples](examples/) folder.
 Note that the example relies on the setup code in the `/WORKSPACE` file in the root of this repo.

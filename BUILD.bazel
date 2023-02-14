@@ -6,7 +6,7 @@ gazelle_binary(
     languages = ["@bazel_skylib//gazelle/bzl"],
 )
 
-# gazelle:exclude example/**
+# gazelle:exclude examples/**
 gazelle(
     name = "gazelle",
     gazelle = "gazelle_bin",
