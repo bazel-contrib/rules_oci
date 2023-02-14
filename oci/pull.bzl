@@ -1,8 +1,10 @@
 "Pull image layers using Bazel downloader"
 
 _attrs = {
-    "image": attr.string(),
-    "tag": attr.string(),
+    "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static"),
+    "reference": attr.string(doc = "The digest of the manifest"),
+    "os": attr.string(),
+    "architecture": attr.string(),
 }
 
 def _download(rctx, tag, output, type = "manifests"):
@@ -42,7 +44,7 @@ package(default_visibility = ["//visibility:public"])
 
 _oci_image_target = """\
 oci_image(
-    name = "{name}_{os}_{arch}",
+    name = "image",
     tars = {tars},
     os = "{os}",
     architecture = "{arch}",
@@ -53,47 +55,67 @@ _alias_target = """\
 alias(
     name = "{name}",
     actual = select({{
-        "@platforms//cpu:arm64": "{name}_linux_arm64",
-        "@platforms//cpu:x86_64": "{name}_linux_amd64",
+        "@platforms//cpu:arm64": "@{name}_linux_arm64//:image",
+        "@platforms//cpu:x86_64": "@{name}_linux_amd64//:image",
     }}),
 )
 """
 
 def _pull_impl(rctx):
-    if not rctx.attr.tag.startswith("sha256:"):
-        # buildifier: disable=print
-        print("""\
-WARNING: unpinned tag {} may change in future installs.
-To get the digest, you can run
-$ bazel run @oci_crane_darwin_arm64//:crane digest gcr.io/distroless/static:latest
-Then replace the tag with the sha256:... value it prints.
-""".format(rctx.attr.tag))
-
     build_content = [_build_file_header]
 
-    mf = _download(rctx, rctx.attr.tag, rctx.attr.image + ".json")
+    image_mf_file = "{}.json".format(rctx.attr.name)
+    image_mf = _download(rctx, rctx.attr.reference, image_mf_file)
 
-    for m in mf["manifests"]:
-        image_mf_file = "{}_{}.json".format(m["platform"]["os"], m["platform"]["architecture"])
-        image_mf = _download(rctx, m["digest"], image_mf_file)
+    tars = []
+    for layer in image_mf["layers"]:
+        sha256 = layer["digest"].replace("sha256:", "")
+        _download_blobs(rctx, layer["digest"], sha256 + ".tar")
+        tars.append(sha256 + ".tar")
 
-        tars = []
-        for layer in image_mf["layers"]:
-            sha256 = layer["digest"].replace("sha256:", "")
-            _download_blobs(rctx, layer["digest"], sha256 + ".tar")
-            tars.append(sha256 + ".tar")
-
-        build_content.append(_oci_image_target.format(
-            name = rctx.attr.name,
-            os = m["platform"]["os"],
-            arch = m["platform"]["architecture"],
-            tars = tars,
-        ))
+    build_content.append(_oci_image_target.format(
+        name = rctx.attr.name,
+        os = rctx.attr.os,
+        arch = rctx.attr.architecture,
+        tars = tars,
+    ))
 
     build_content.append(_alias_target.format(name = rctx.attr.name))
     rctx.file("BUILD.bazel", content = "\n".join(build_content))
 
-oci_pull = repository_rule(
+oci_pull_rule = repository_rule(
     implementation = _pull_impl,
     attrs = _attrs,
 )
+
+def _alias_impl(rctx):
+    rctx.file("BUILD.bazel", content = _alias_target.format(name = rctx.attr.name))
+
+oci_alias_rule = repository_rule(
+    implementation = _alias_impl,
+    attrs = {},
+)
+
+# Create one external repo per platform, to avoid fetching unneeded layers
+def oci_pull(name, manifest):
+    """Generate an oci_pull rule for each platform.
+
+    Args:
+        name: name of resulting repository
+        manifest: a dictionary matching the manifest list structure, mirrored from remote, see docs
+    """
+    if manifest["mediaType"] != "application/vnd.docker.distribution.manifest.list.v2+json":
+        fail("""Expected image manifest to be a manifest list type, with
+        "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json"
+        Check how you fetched this manifest.""")
+    if not manifest["image"]:
+        fail("The name of the image must be repeated in the manifest")
+    for mf in manifest["manifests"]:
+        oci_pull_rule(
+            name = "_".join([name, mf["platform"]["os"], mf["platform"]["architecture"]]),
+            reference = mf["digest"],
+            image = manifest["image"],
+            os = mf["platform"]["os"],
+            architecture = mf["platform"]["architecture"],
+        )
+    oci_alias_rule(name = name)

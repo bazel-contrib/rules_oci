@@ -68,12 +68,9 @@ nodejs_register_toolchains(
 )
 
 load("//oci:pull.bzl", "oci_pull")
+load("//images/distroless:base.bzl", "MF")
 
 oci_pull(
-    name = "static_debian11",
-    # see https://github.com/GoogleContainerTools/distroless#what-images-are-available
-    image = "gcr.io/distroless/static-debian11",
-    # Pinned the "latest" tag on 13 Feb 2023 by running
-    # bazel run @oci_crane_darwin_arm64//:crane digest gcr.io/distroless/static:latest
-    tag = "sha256:0f29b9f9818cc0371cae6cef4723f0406184547deeb3aee0db831aeea4527605",
+    name = "static",
+    manifest = MF,
 )
