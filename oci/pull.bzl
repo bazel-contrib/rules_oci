@@ -10,14 +10,14 @@ _attrs = {
 def _download(rctx, tag, output, type = "manifests"):
     if type != "blobs" and type != "manifests":
         fail("type must be blobs or manifests")
-    if rctx.attr.image.startswith("gcr.io/"):
-        registry_url = "https://gcr.io/v2/{image}/{type}/{tag}".format(
-            image = rctx.attr.image[len("gcr.io/"):],
-            type = type,
-            tag = tag,
-        )
-    else:
-        fail("Unrecognized registry. We only understand gcr.io currently. File an issue on rules_oci.")
+
+    firstslash = rctx.attr.image.find("/")
+    registry_url = "https://{host}/v2/{image}/{type}/{tag}".format(
+        host = rctx.attr.image[:firstslash],
+        image = rctx.attr.image[firstslash + 1:],
+        type = type,
+        tag = tag,
+    )
 
     sha256 = None
     if tag.startswith("sha256:"):
