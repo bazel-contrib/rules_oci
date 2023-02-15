@@ -17,11 +17,11 @@ CRANE_VERSIONS = {
 }
 
 ZOT_VERSIONS = {
-    "v1.4.3-rc3": {
-        "darwin-amd64": "sha256-AGyGP/DKR5QCrcdzB7P6TjBEAMNMPG0nmY/eUcmxH3I=",
-        "darwin-arm64": "sha256-C7uoK2STgfq9XXXHLSLKu3Fs8XmX94bIb0RHpwoqjzk=",
-        "linux-amd64": "sha256-BdeBe7bBOYCy/VfRHZsz7EC+7b4TC+kSa0g7CI1HKd0=",
-        "linux-arm64": "sha256-57DAO3f8h5ZV3w6zH+nXsD6KpnJI5crywbksLri4RHE=",
+    "v2.0.0-rc2": {
+        "darwin-amd64": "sha256-Hg8vLq46ljO02ogI3l7Z56NCt8n3aEhNjKNTzP3UDwY=",
+        "darwin-arm64": "sha256-cbdVtzbsMG3J9BsvoyWUsd7378wmYu0ZcePbH7NUNMY=",
+        "linux-amd64": "sha256-vxlaTFBvK1Q6hG2VA6uxEHSfezH4GKybEmZXDSkY/o0=",
+        "linux-arm64": "sha256-3DfnqQ9raoIFpR7pF/PVFnYjLE3zRaAnUPt8hUpfYYg=",
     },
 }
 
