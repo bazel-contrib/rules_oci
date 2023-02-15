@@ -1,6 +1,6 @@
 """Repository rules for fetching external tools"""
 
-load("@aspect_bazel_lib//lib:repositories.bzl", "register_coreutils_toolchains", "register_jq_toolchains", "register_yq_toolchains")
+load("@aspect_bazel_lib//lib:repositories.bzl", "register_copy_to_directory_toolchains", "register_coreutils_toolchains", "register_jq_toolchains", "register_yq_toolchains")
 load("//oci/private:toolchains_repo.bzl", "PLATFORMS", "toolchains_repo")
 load("//oci/private:versions.bzl", "CRANE_VERSIONS", "ST_VERSIONS", "ZOT_VERSIONS")
 
@@ -129,6 +129,7 @@ def oci_register_toolchains(name, crane_version, zot_version):
     register_yq_toolchains()
     register_jq_toolchains()
     register_coreutils_toolchains()
+    register_copy_to_directory_toolchains()
 
     crane_toolchain_name = "{name}_crane_toolchains".format(name = name)
     zot_toolchain_name = "{name}_zot_toolchains".format(name = name)
