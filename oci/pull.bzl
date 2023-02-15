@@ -58,6 +58,7 @@ alias(
         "@platforms//cpu:arm64": "@{name}_linux_arm64//:image",
         "@platforms//cpu:x86_64": "@{name}_linux_amd64//:image",
     }}),
+    visibility = ["//visibility:public"],
 )
 """
 

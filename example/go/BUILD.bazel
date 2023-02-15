@@ -18,12 +18,13 @@ go_library(
 pkg_tar(
     name = "app",
     srcs = ["server"],
+    package_dir = "/bin",
 )
 
 oci_image(
     name = "image",
-    base = "@static_debian11",
-    cmd = ["/server"],
+    base = "@distroless_static",
+    entrypoint = ["/bin/server"],
     tars = [":app.tar"],
 )
 

@@ -68,15 +68,15 @@ nodejs_register_toolchains(
 )
 
 load("//oci:pull.bzl", "oci_pull")
-load("//images/distroless:base.bzl", _base_mf = "MF")
+load("//images/distroless:static.bzl", _static_mf = "MF")
 load("//images/distroless:python3.bzl", _python3_mf = "MF")
 
 oci_pull(
-    name = "base",
-    manifest = _base_mf,
+    name = "distroless_static",
+    manifest = _static_mf,
 )
 
 oci_pull(
-    name = "python3",
+    name = "distroless_python3",
     manifest = _python3_mf,
 )
