@@ -13,15 +13,6 @@ exports_files([
     "zot_launcher.sh.tpl",
 ])
 
-filegroup(
-    name = "package_content",
-    srcs = glob([
-        "*.bzl",
-        "*.sh.tpl",
-    ]),
-    visibility = ["//oci:__pkg__"],
-)
-
 bzl_library(
     name = "tarball",
     srcs = ["tarball.bzl"],
