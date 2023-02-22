@@ -83,13 +83,10 @@ oci_pull(
     digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
     image = "gcr.io/distroless/static",
     platforms = [
-        {
-            "architecture": "amd64",
-            "os": "linux",
-        },
-        {
-            "architecture": "arm64",
-            "os": "linux",
-        },
+        "linux/amd64",
+        "linux/arm",
+        "linux/arm64",
+        "linux/ppc64le",
+        "linux/s390x",
     ],
 )

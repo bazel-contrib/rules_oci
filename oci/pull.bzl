@@ -6,6 +6,8 @@ _MANIFEST_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 _MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
 
 # Note: this isn't an exhaustive list, should find the docker spec to know all legal values.
+# This is only used for the oci_alias rule that makes a select() - if a mapping is missing,
+# users can just write their own select() for it.
 _DOCKER_ARCH_TO_BAZEL_CPU = {
     "amd64": "@platforms//cpu:x86_64",
     "arm": "@platforms//cpu:arm",
@@ -70,17 +72,35 @@ write_file(
 )
 
 write_file(
-    name = "raw_index",
-    out = "raw.json",
-    content = [\"\"\"{index_content}\"\"\"],
+    name = "write_index",
+    out = "index.json",
+    content = [
+        "{{",
+        "   \\"schemaVersion\\": 2,",
+        "   \\"manifests\\": [",
+        "      {{",
+        "         \\"mediaType\\": \\"application/vnd.docker.distribution.manifest.v2+json\\",",
+        "         \\"size\\": 1083,",
+        "         \\"digest\\": \\"sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d\\"",
+        "      }}",
+        "   ]",
+        "}}",
+    ],
 )
 
-jq(
-    name = "index",
-    srcs = ["raw.json"],
-    filter = "del(.layers)",
-    args = ["--indent", "4"],
-)
+# jq(
+#     name = "index2",
+#     srcs = ["index1.json"],
+#     filter = ".",
+#     args = ["--indent", "3"],
+# )
+
+# genrule(
+#     name = "strip_newline",
+#     srcs = ["index2.json"],
+#     outs = ["index.json"],
+#     cmd = "",
+# )
 
 copy_to_directory(
     name = "blobs",
@@ -104,44 +124,57 @@ copy_to_directory(
 )
 """
 
+def _trim_hash_algorithm(digest):
+    parts = digest.split(":", 1)
+    if len(parts) != 2:
+        fail("digest {} doesn't contain a colon".format(digest))
+    return parts[1]
+
 def _find_platform_manifest(rctx, image_mf):
     for mf in image_mf["manifests"]:
-        if mf["platform"]["os"] == rctx.attr.os and mf["platform"]["architecture"] == rctx.attr.architecture:
+        plat = "{}/{}".format(mf["platform"]["os"], mf["platform"]["architecture"])
+        if plat == rctx.attr.platform:
             return mf
-    fail("No matching manifest found in image {} for os {} and architecture {}".format(rctx.attr.image, rctx.attr.os, rctx.attr.architecture))
+    fail("No matching manifest found in image {} for platform {}".format(rctx.attr.image, rctx.attr.platform))
 
 def _pull_impl(rctx):
-    image_mf_file = rctx.attr.digest.replace("sha256:", "")
-    image_mf = _download(rctx, rctx.attr.digest, image_mf_file, resource = "manifests")
-    if image_mf["mediaType"] == _MANIFEST_TYPE:
-        if rctx.attr.os:
-            fail("{} is a single-architecture image, so attribute 'os' should not be set.")
-        if rctx.attr.architecture:
-            fail("{} is a single-architecture image, so attribute 'architecture' should not be set.")
-    elif image_mf["mediaType"] == _MANIFEST_LIST_TYPE:
+    mf_file = _trim_hash_algorithm(rctx.attr.digest)
+    mf = _download(rctx, rctx.attr.digest, mf_file, resource = "manifests")
+    if mf["mediaType"] == _MANIFEST_TYPE:
+        if rctx.attr.platform:
+            fail("{} is a single-architecture image, so attribute 'platform' should not be set.")
+        image_mf_file = mf_file
+        image_mf = mf
+    elif mf["mediaType"] == _MANIFEST_LIST_TYPE:
         # extra download to get the manifest for the selected arch
-        if not rctx.attr.os:
-            fail("{} is a multi-architecture image, so attribute 'os' is required.")
-        if not rctx.attr.architecture:
-            fail("{} is a multi-architecture image, so attribute 'architecture' is required.")
-        mf = _find_platform_manifest(rctx, image_mf)
-        image_mf_file = mf["digest"].replace("sha256:", "")
-        image_mf = _download(rctx, mf["digest"], image_mf_file, resource = "manifests")
+        if not rctx.attr.platform:
+            fail("{} is a multi-architecture image, so attribute 'platform' is required.")
+        matching_mf = _find_platform_manifest(rctx, mf)
+        image_mf_file = _trim_hash_algorithm(matching_mf["digest"])
+        image_mf = _download(rctx, matching_mf["digest"], image_mf_file, resource = "manifests")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(image_mf["mediaType"]))
 
-    image_config_file = image_mf["config"]["digest"].replace("sha256:", "")
+    image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
     image_config = _download(rctx, image_mf["config"]["digest"], image_config_file)
     tars = []
     for layer in image_mf["layers"]:
-        sha256 = layer["digest"].replace("sha256:", "")
+        sha256 = _trim_hash_algorithm(layer["digest"])
         _download(rctx, layer["digest"], sha256)
         tars.append(sha256)
 
+    index_mf = {
+        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+        "size": 1083,
+        "digest": "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
+    }
     rctx.file("BUILD.bazel", content = _build_file.format(
         name = rctx.attr.name,
         tars = tars,
-        index_content = image_mf,
+        index = json.encode_indent({
+            "schemaVersion": 2,
+            "manifests": [index_mf],
+        }, indent = "   "),
         manifest_file = image_mf_file,
         config_file = image_config_file,
     ))
@@ -151,8 +184,7 @@ oci_pull_rule = repository_rule(
     attrs = {
         "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
         "digest": attr.string(doc = "The digest of the manifest file", mandatory = True),
-        "os": attr.string(doc = "platform os, for multi-arch images"),
-        "architecture": attr.string(doc = "platform architecture, for multi-arch images"),
+        "platform": attr.string(doc = "platform in `os/arch` format, for multi-arch images"),
     },
 )
 
@@ -184,7 +216,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 jq(
     name = "platforms",
     srcs = ["manifest_list.json"],
-    filter = "[(.manifests // [])[] | .platform]",
+    filter = "[(.manifests // [])[] | .platform | .os + \\"/\\" + .architecture]",
     # Print without newlines because it's too hard to indent that to fit under the generated
     # starlark code below.
     args = ["--compact-output"],
@@ -257,12 +289,14 @@ def oci_pull(name, image, platforms = None, digest = None):
         image: the remote image without a tag, such as gcr.io/bazel-public/bazel
         platforms: for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers.
-        digest: the sha256 digest string, starting with "sha256:". If omitted, instructions for pinning are provided.
+        digest: the digest string, starting with "sha256:", "sha512:", etc.
+            If omitted, instructions for pinning are provided.
     """
 
     if digest == None:
         pull_latest(name = name, image = image)
 
+        # Print a command - in the future we should print a buildozer command or
         # buildifier: disable=print
         print("""
 WARNING: for reproducible builds, a digest is recommended.
@@ -273,20 +307,20 @@ bazel run @{}//:pin
         return
 
     if platforms:
+        select_map = {}
         for plat in platforms:
+            plat_name = "_".join([name] + plat.split("/", 1))
+            os, arch = plat.split("/")
             oci_pull_rule(
-                name = "_".join([name, plat["os"], plat["architecture"]]),
+                name = plat_name,
                 image = image,
                 digest = digest,
-                os = plat["os"],
-                architecture = plat["architecture"],
+                platform = plat,
             )
+            select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
         oci_alias_rule(
             name = name,
-            platforms = {
-                _DOCKER_ARCH_TO_BAZEL_CPU[plat["architecture"]]: "@{}_linux_{}".format(name, plat["architecture"])
-                for plat in platforms
-            },
+            platforms = select_map,
         )
     else:
         oci_pull_rule(

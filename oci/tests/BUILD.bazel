@@ -5,7 +5,10 @@ load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
     genrule(
         name = "pull_{image}".format(image = image),
         outs = [image],
-        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image} $@ --format=oci --platform=linux/amd64".format(image = image),
+        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform=linux/amd64".format(
+            image = image,
+            digest = digest,
+        ),
         local = True,  # needs to run locally to able to use credential helpers
         message = "Pulling gcr.io/distroless/{image} for linux/amd64".format(image = image),
         output_to_bindir = True,
@@ -15,10 +18,10 @@ load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
         ],
         visibility = ["//visibility:public"],
     )
-    for image in [
-        "java17",
-        "static",
-    ]
+    for image, digest in {
+        "java17": "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
+        "static": "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+    }.items()
 ]
 
 diff_test(
