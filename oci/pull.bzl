@@ -32,6 +32,7 @@ def _download(rctx, identifier, output, resource = "blobs"):
         identifier = identifier,
     )
 
+    # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
     if identifier.startswith("sha256:"):
         rctx.download(
             output = output,
@@ -41,7 +42,7 @@ def _download(rctx, identifier, output, resource = "blobs"):
     else:
         # buildifier: disable=print
         print("""
-WARNING: fetching from %s without a sha256 integrity hash. The result will not be cached.""" % registry_url)
+WARNING: fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
         rctx.download(
             output = output,
             url = registry_url,
@@ -80,6 +81,7 @@ write_file(
 
 copy_to_directory(
     name = "blobs",
+    # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
     out = "blobs/sha256",
     include_external_repositories = ["*"],
     srcs = {tars} + [
@@ -136,9 +138,9 @@ def _pull_impl(rctx):
     image_config = _download(rctx, image_mf["config"]["digest"], image_config_file)
     tars = []
     for layer in image_mf["layers"]:
-        sha256 = _trim_hash_algorithm(layer["digest"])
-        _download(rctx, layer["digest"], sha256)
-        tars.append(sha256)
+        hash = _trim_hash_algorithm(layer["digest"])
+        _download(rctx, layer["digest"], hash)
+        tars.append(hash)
 
     # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
     # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
@@ -150,6 +152,7 @@ def _pull_impl(rctx):
         "      {",
         "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",",
         "         \"size\": {},".format(image_mf_len),
+        # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
         "         \"digest\": \"sha256:{}\"".format(image_mf_file),
         "      }",
         "   ]",
@@ -164,6 +167,7 @@ def _pull_impl(rctx):
             "      {",
             "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",",
             "         \"size\": {},".format(image_mf_len),
+            # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
             "         \"digest\": \"sha256:{}\",".format(image_mf_file),
             "         \"platform\": {",
             "            \"architecture\": \"{}\",".format(arch),

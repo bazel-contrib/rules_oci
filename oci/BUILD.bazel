@@ -39,6 +39,7 @@ bzl_library(
     name = "pull",
     srcs = ["pull.bzl"],
     visibility = ["//visibility:public"],
+    deps = ["@aspect_bazel_lib//lib:paths"],
 )
 
 bzl_library(
