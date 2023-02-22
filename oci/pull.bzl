@@ -153,13 +153,15 @@ def _oci_pull_impl(rctx):
         image_mf_file = mf_file
         image_mf = mf
         image_mf_len = mf_len
+        image_digest = rctx.attr.digest
     elif mf["mediaType"] == _MANIFEST_LIST_TYPE:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
             fail("{} is a multi-architecture image, so attribute 'platform' is required.")
         matching_mf = _find_platform_manifest(rctx, mf)
-        image_mf_file = _trim_hash_algorithm(matching_mf["digest"])
-        image_mf, image_mf_len = _download(rctx, matching_mf["digest"], image_mf_file, resource = "manifests")
+        image_digest = matching_mf["digest"]
+        image_mf_file = _trim_hash_algorithm(image_digest)
+        image_mf, image_mf_len = _download(rctx, image_digest, image_mf_file, resource = "manifests")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(image_mf["mediaType"]))
 
@@ -176,38 +178,36 @@ def _oci_pull_impl(rctx):
     # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
     # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
     # json.encode_indent (it re-orders keys in the dictionary).
-    index_mf = "\n".join([
-        "{",
-        "   \"schemaVersion\": 2,",
-        "   \"manifests\": [",
-        "      {",
-        "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",",
-        "         \"size\": {},".format(image_mf_len),
-        # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
-        "         \"digest\": \"sha256:{}\"".format(image_mf_file),
-        "      }",
-        "   ]",
-        "}",
-    ])
     if rctx.attr.platform:
         os, arch = rctx.attr.platform.split("/", 1)
-        index_mf = "\n".join([
-            "{",
-            "   \"schemaVersion\": 2,",
-            "   \"manifests\": [",
-            "      {",
-            "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",",
-            "         \"size\": {},".format(image_mf_len),
-            # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
-            "         \"digest\": \"sha256:{}\",".format(image_mf_file),
-            "         \"platform\": {",
-            "            \"architecture\": \"{}\",".format(arch),
-            "            \"os\": \"{}\"".format(os),
-            "         }",
-            "      }",
-            "   ]",
-            "}",
-        ])
+        index_mf = """\
+{
+   "schemaVersion": 2,
+   "manifests": [
+      {
+         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+         "size": %s,
+         "digest": "%s",
+         "platform": {
+            "architecture": "%s",
+            "os": "%s"
+         }
+      }
+   ]
+}""" % (image_mf_len, image_digest, arch, os)
+    else:
+        index_mf = """\
+{
+   "schemaVersion": 2,
+   "manifests": [
+      {
+         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+         "size": %s,
+         "digest": "%s"
+      }
+   ]
+}""" % (image_mf_len, image_digest)
+
     rctx.file("BUILD.bazel", content = _build_file.format(
         name = rctx.attr.name,
         tars = tars,
