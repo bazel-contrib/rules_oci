@@ -1,0 +1,35 @@
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+
+# Use crane to pull images as a comparison for our oci_pull repository rule
+[
+    genrule(
+        name = "pull_{image}".format(image = image),
+        outs = [image],
+        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image} $@ --format=oci --platform=linux/amd64".format(image = image),
+        local = True,  # needs to run locally to able to use credential helpers
+        message = "Pulling gcr.io/distroless/{image} for linux/amd64".format(image = image),
+        output_to_bindir = True,
+        tags = ["requires-network"],
+        toolchains = [
+            "@oci_crane_toolchains//:current_toolchain",
+        ],
+        visibility = ["//visibility:public"],
+    )
+    for image in [
+        "java17",
+        "static",
+    ]
+]
+
+diff_test(
+    name = "test_java17",
+    file1 = "java17",
+    # This one is declared with an oci_pull rule in /WORKSPACE
+    file2 = "@distroless_java",
+)
+
+diff_test(
+    name = "test_static",
+    file1 = "static",
+    file2 = "@distroless_static",
+)
