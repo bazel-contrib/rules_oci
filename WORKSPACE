@@ -68,9 +68,28 @@ nodejs_register_toolchains(
 )
 
 load("//oci:pull.bzl", "oci_pull")
-load("//images/distroless:static.bzl", _static_mf = "MF")
+# load("//images/distroless:static.bzl", _static_mf = "MF")
 
+# A multi-arch base image
 oci_pull(
     name = "distroless_static",
-    manifest = _static_mf,
+    # bazel run @oci_crane_darwin_arm64//:crane digest gcr.io/distroless/static:latest
+    # sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12
+    # curl -s https://gcr.io/v2/distroless/static/manifests/latest | jq '.manifests[] | .platform'
+
+    #     platforms = {
+
+    #     },
+    digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+    image = "gcr.io/distroless/static",
+    platforms = [
+        {
+            "architecture": "amd64",
+            "os": "linux",
+        },
+        {
+            "architecture": "arm64",
+            "os": "linux",
+        },
+    ],
 )

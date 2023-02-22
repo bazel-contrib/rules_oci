@@ -1,5 +1,7 @@
 """A repository rule (used in WORKSPACE) to pull image layers using Bazel's downloader"""
 
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION")
+
 def _download(rctx, identifier, output, resource = "blobs"):
     "Use the Bazel Downloader to fetch from the remote registry"
 
@@ -16,17 +18,20 @@ def _download(rctx, identifier, output, resource = "blobs"):
         identifier = identifier,
     )
 
-    sha256 = None
     if identifier.startswith("sha256:"):
-        sha256 = identifier[len("sha256:"):]
+        rctx.download(
+            output = output,
+            sha256 = identifier[len("sha256:"):],
+            url = registry_url,
+        )
     else:
         # buildifier: disable=print
-        print("WARNING: fetching from {} without a digest, check your oci_pull configuration")
-    rctx.download(
-        output = output,
-        sha256 = sha256,
-        url = registry_url,
-    )
+        print("WARNING: fetching from {} without a sha256 integrity hash. The result will not be cached".format(registry_url))
+        rctx.download(
+            output = output,
+            url = registry_url,
+        )
+
     if resource == "manifests":
         return json.decode(rctx.read(output))
     return None
@@ -112,9 +117,10 @@ def _pull_impl(rctx):
 oci_pull_rule = repository_rule(
     implementation = _pull_impl,
     attrs = {
-        "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static"),
-        "reference": attr.string(doc = "The digest of the manifest"),
-        "index": attr.string(doc = "content of the index.json file"),
+        "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
+        "reference": attr.string(doc = "The digest of the manifest list", mandatory = True),
+        "os": attr.string(doc = "platform os", mandatory = True),
+        "architecture": attr.string(doc = "platform architecture", mandatory = True),
     },
 )
 
@@ -127,7 +133,7 @@ oci_alias_rule = repository_rule(
 )
 
 # Create one external repo per platform, to avoid fetching unneeded layers
-def oci_pull(name, manifest):
+def oci_pull2(name, manifest):
     """Generate an oci_pull rule for each platform.
 
     Creates repositories like [name]_linux_amd64 containing an :image target.
@@ -154,3 +160,75 @@ def oci_pull(name, manifest):
     oci_alias_rule(
         name = name,
     )
+
+_latest_build = """\
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+
+jq(
+    name = "platforms",
+    srcs = ["manifest_list.json"],
+    filter = ".manifests[] | .platform",
+)
+
+# TODO this isn't finished at all
+write_file(
+    name = "pin_sh",
+    out = "pin.sh",
+    content = [
+        "#!/usr/bin/env bash",
+        \"\"\"{rlocation}\"\"\",
+        "cat $(rlocation {name}/manifest_list.sha256)",
+        "echo oci_pull",
+        "echo digest = sha256:,",
+        "echo platforms = [",
+        "cat $(rlocation {name}/platforms.json)",
+        "echo ]",
+        
+    ],
+)
+
+sh_binary(
+    name = "pin",
+    srcs = ["pin.sh"],
+    data = [
+        "manifest_list.sha256",
+        ":platforms",
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+)
+"""
+
+def _pull_latest_impl(rctx):
+    _download(rctx, "latest", "manifest_list.json", "manifests")
+    result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
+    if result.return_code:
+        msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
+        fail(msg)
+    rctx.file("manifest_list.sha256", result.stdout)
+    rctx.file("BUILD.bazel", _latest_build.format(
+        name = rctx.attr.name,
+        rlocation = BASH_RLOCATION_FUNCTION,
+    ))
+
+    # buildifier: disable=print
+    print("""\
+    WARNING: for reproducible builds, we recommend pinning as follows:
+    bazel run @{}//:pin
+    """.format(rctx.attr.name))
+
+pull_latest = repository_rule(_pull_latest_impl, attrs = {"image": attr.string()})
+
+# buildifier: disable=function-docstring
+def oci_pull(name, image, platforms = None, digest = None):
+    if digest == None:
+        pull_latest(name = name, image = image)
+        return
+    for plat in platforms:
+        oci_pull_rule(
+            name = "_".join([name, plat["os"], plat["architecture"]]),
+            image = image,
+            reference = digest,
+            os = plat["os"],
+            architecture = plat["architecture"],
+        )
