@@ -67,8 +67,7 @@ nodejs_register_toolchains(
     node_version = DEFAULT_NODE_VERSION,
 )
 
-load("//oci:pull.bzl", "oci_pull")
-# load("//images/distroless:static.bzl", _static_mf = "MF")
+load("@contrib_rules_oci//oci:pull.bzl", "oci_pull")
 
 # A single-arch base image
 oci_pull(
