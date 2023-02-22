@@ -48,7 +48,8 @@ WARNING: fetching from %s without a sha256 integrity hash. The result will not b
         )
 
     if resource == "manifests":
-        return json.decode(rctx.read(output))
+        bytes = rctx.read(output)
+        return json.decode(bytes), len(bytes)
     return None
 
 _build_file = """\
@@ -74,33 +75,8 @@ write_file(
 write_file(
     name = "write_index",
     out = "index.json",
-    content = [
-        "{{",
-        "   \\"schemaVersion\\": 2,",
-        "   \\"manifests\\": [",
-        "      {{",
-        "         \\"mediaType\\": \\"application/vnd.docker.distribution.manifest.v2+json\\",",
-        "         \\"size\\": 1083,",
-        "         \\"digest\\": \\"sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d\\"",
-        "      }}",
-        "   ]",
-        "}}",
-    ],
+    content = [\"\"\"{index_content}\"\"\"],
 )
-
-# jq(
-#     name = "index2",
-#     srcs = ["index1.json"],
-#     filter = ".",
-#     args = ["--indent", "3"],
-# )
-
-# genrule(
-#     name = "strip_newline",
-#     srcs = ["index2.json"],
-#     outs = ["index.json"],
-#     cmd = "",
-# )
 
 copy_to_directory(
     name = "blobs",
@@ -139,19 +115,20 @@ def _find_platform_manifest(rctx, image_mf):
 
 def _pull_impl(rctx):
     mf_file = _trim_hash_algorithm(rctx.attr.digest)
-    mf = _download(rctx, rctx.attr.digest, mf_file, resource = "manifests")
+    mf, mf_len = _download(rctx, rctx.attr.digest, mf_file, resource = "manifests")
     if mf["mediaType"] == _MANIFEST_TYPE:
         if rctx.attr.platform:
             fail("{} is a single-architecture image, so attribute 'platform' should not be set.")
         image_mf_file = mf_file
         image_mf = mf
+        image_mf_len = mf_len
     elif mf["mediaType"] == _MANIFEST_LIST_TYPE:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
             fail("{} is a multi-architecture image, so attribute 'platform' is required.")
         matching_mf = _find_platform_manifest(rctx, mf)
         image_mf_file = _trim_hash_algorithm(matching_mf["digest"])
-        image_mf = _download(rctx, matching_mf["digest"], image_mf_file, resource = "manifests")
+        image_mf, image_mf_len = _download(rctx, matching_mf["digest"], image_mf_file, resource = "manifests")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(image_mf["mediaType"]))
 
@@ -163,18 +140,43 @@ def _pull_impl(rctx):
         _download(rctx, layer["digest"], sha256)
         tars.append(sha256)
 
-    index_mf = {
-        "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
-        "size": 1083,
-        "digest": "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
-    }
+    # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
+    # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
+    # json.encode_indent (it re-orders keys in the dictionary).
+    index_mf = "\n".join([
+        "{",
+        "   \"schemaVersion\": 2,",
+        "   \"manifests\": [",
+        "      {",
+        "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",",
+        "         \"size\": {},".format(image_mf_len),
+        "         \"digest\": \"sha256:{}\"".format(image_mf_file),
+        "      }",
+        "   ]",
+        "}",
+    ])
+    if rctx.attr.platform:
+        os, arch = rctx.attr.platform.split("/", 1)
+        index_mf = "\n".join([
+            "{",
+            "   \"schemaVersion\": 2,",
+            "   \"manifests\": [",
+            "      {",
+            "         \"mediaType\": \"application/vnd.docker.distribution.manifest.v2+json\",",
+            "         \"size\": {},".format(image_mf_len),
+            "         \"digest\": \"sha256:{}\",".format(image_mf_file),
+            "         \"platform\": {",
+            "            \"architecture\": \"{}\",".format(arch),
+            "            \"os\": \"{}\"".format(os),
+            "         }",
+            "      }",
+            "   ]",
+            "}",
+        ])
     rctx.file("BUILD.bazel", content = _build_file.format(
         name = rctx.attr.name,
         tars = tars,
-        index = json.encode_indent({
-            "schemaVersion": 2,
-            "manifests": [index_mf],
-        }, indent = "   "),
+        index_content = index_mf,
         manifest_file = image_mf_file,
         config_file = image_config_file,
     ))
@@ -309,8 +311,8 @@ bazel run @{}//:pin
     if platforms:
         select_map = {}
         for plat in platforms:
-            plat_name = "_".join([name] + plat.split("/", 1))
-            os, arch = plat.split("/")
+            plat_name = "_".join([name] + plat.split("/"))
+            os, arch = plat.split("/", 1)
             oci_pull_rule(
                 name = plat_name,
                 image = image,
