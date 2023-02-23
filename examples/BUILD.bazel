@@ -1,4 +1,4 @@
-package(default_visibility = ["//example:__subpackages__"])
+package(default_visibility = ["//examples:__subpackages__"])
 
 platform(
     name = "linux_arm64",

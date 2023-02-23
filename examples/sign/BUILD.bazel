@@ -13,7 +13,7 @@ oci_image(
         "@platforms//cpu:arm64": "arm64",
         "@platforms//cpu:x86_64": "amd64",
     }),
-    base = "//example:base",
+    base = "//examples:base",
     cmd = ["app.bash"],
     os = "linux",
     tars = [":app.tar"],
