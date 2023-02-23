@@ -130,10 +130,11 @@ copy_to_directory(
 )
 """
 
-def _trim_hash_algorithm(digest):
-    parts = digest.split(":", 1)
+def _trim_hash_algorithm(identifier):
+    "Optionally remove the sha256: prefix from identifier, if present"
+    parts = identifier.split(":", 1)
     if len(parts) != 2:
-        fail("digest {} doesn't contain a colon".format(digest))
+        return identifier
     return parts[1]
 
 def _find_platform_manifest(rctx, image_mf):
@@ -144,20 +145,20 @@ def _find_platform_manifest(rctx, image_mf):
     fail("No matching manifest found in image {} for platform {}".format(rctx.attr.image, rctx.attr.platform))
 
 def _oci_pull_impl(rctx):
-    mf_file = _trim_hash_algorithm(rctx.attr.digest)
-    mf, mf_len = _download(rctx, rctx.attr.digest, mf_file, resource = "manifests")
+    mf_file = _trim_hash_algorithm(rctx.attr.identifier)
+    mf, mf_len = _download(rctx, rctx.attr.identifier, mf_file, resource = "manifests")
 
     if mf["mediaType"] == _MANIFEST_TYPE:
         if rctx.attr.platform:
-            fail("{} is a single-architecture image, so attribute 'platform' should not be set.")
+            fail("{} is a single-architecture image, so attribute 'platform' should not be set.".format(rctx.attr.image))
         image_mf_file = mf_file
         image_mf = mf
         image_mf_len = mf_len
-        image_digest = rctx.attr.digest
+        image_digest = rctx.attr.identifier
     elif mf["mediaType"] == _MANIFEST_LIST_TYPE:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
-            fail("{} is a multi-architecture image, so attribute 'platform' is required.")
+            fail("{} is a multi-architecture image, so attribute 'platform' is required.".format(rctx.attr.image))
         matching_mf = _find_platform_manifest(rctx, mf)
         image_digest = matching_mf["digest"]
         image_mf_file = _trim_hash_algorithm(image_digest)
@@ -220,7 +221,7 @@ oci_pull_rule = repository_rule(
     implementation = _oci_pull_impl,
     attrs = {
         "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
-        "digest": attr.string(doc = "The digest of the manifest file", mandatory = True),
+        "identifier": attr.string(doc = "The digest or tag of the manifest file", mandatory = True),
         "platform": attr.string(doc = "platform in `os/arch` format, for multi-arch images"),
     },
 )
@@ -284,11 +285,11 @@ _pin_sh = """\
 {rlocation}
 
 mediaType="$(cat $(rlocation {name}/mediaType.json))"
-echo -e "Replace your '{name}' declaration with the following:\n"
+echo -e "Replace your '{reponame}' declaration with the following:\n"
 
 cat <<EOF
 oci_pull(
-    name = "{name}",
+    name = "{reponame}",
     digest = "sha256:{digest}",
     image = "{image}",
 EOF
@@ -302,15 +303,16 @@ EOF
 echo ")"
 """
 
-def _pull_latest_impl(rctx):
-    """Download the 'latest' tag and create a repository that can produce pinning instructions"""
-    _download(rctx, "latest", "manifest_list.json", "manifests")
+def _pin_tag_impl(rctx):
+    """Download the tag and create a repository that can produce pinning instructions"""
+    _download(rctx, rctx.attr.tag, "manifest_list.json", "manifests")
     result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
     if result.return_code:
         msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
     rctx.file("pin.sh", _pin_sh.format(
         name = rctx.attr.name,
+        reponame = rctx.attr.name.replace("_unpinned", ""),
         digest = result.stdout.split(" ", 1)[0],
         image = rctx.attr.image,
         rlocation = BASH_RLOCATION_FUNCTION,
@@ -318,10 +320,11 @@ def _pull_latest_impl(rctx):
     ), executable = True)
     rctx.file("BUILD.bazel", _latest_build)
 
-pull_latest = repository_rule(
-    _pull_latest_impl,
+pin_tag = repository_rule(
+    _pin_tag_impl,
     attrs = {
-        "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
+        "image": attr.string(doc = "The name of the image we are fetching, e.g. `gcr.io/distroless/static`", mandatory = True),
+        "tag": attr.string(doc = "The tag being used, e.g. `latest`", mandatory = True),
     },
 )
 
@@ -336,7 +339,7 @@ _DOCKER_ARCH_TO_BAZEL_CPU = {
     "s390x": "@platforms//cpu:s390x",
 }
 
-def oci_pull(name, image, platforms = None, digest = None):
+def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     Args:
@@ -346,18 +349,32 @@ def oci_pull(name, image, platforms = None, digest = None):
             This creates a separate external repository for each platform, avoiding fetching layers.
         digest: the digest string, starting with "sha256:", "sha512:", etc.
             If omitted, instructions for pinning are provided.
+        tag: a tag to choose an image from the registry.
+            Exactly one of `tag` and `digest` must be set.
+            Since tags are mutable, this is not reproducible, so a warning is printed.
+        reproducible: Set to False to silence the warning about reproducibility when using `tag`.
     """
 
-    if digest == None:
-        pull_latest(name = name, image = image)
+    if digest and tag:
+        # Users might wish to leave tag=latest as "documentation" however if we just ignore tag
+        # then it's never checked which means the documentation can be wrong.
+        # For now just forbit having both, it's a non-breaking change to allow it later.
+        fail("Only one of 'digest' or 'tag' may be set")
+
+    if not digest and not tag:
+        fail("One of 'digest' or 'tag' must be set")
+
+    if tag and reproducible:
+        pin_tag(name = name + "_unpinned", image = image, tag = tag)
 
         # Print a command - in the future we should print a buildozer command or
         # buildifier: disable=print
         print("""
 WARNING: for reproducible builds, a digest is recommended.
-Run the following command to fix this:
+Either set 'reproducible = False' to silence this warning,
+or run the following command to change oci_pull to use a digest:
 
-bazel run @{}//:pin
+bazel run @{}_unpinned//:pin
 """.format(name))
         return
 
@@ -369,7 +386,7 @@ bazel run @{}//:pin
             oci_pull_rule(
                 name = plat_name,
                 image = image,
-                digest = digest,
+                identifier = digest or tag,
                 platform = plat,
             )
             select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
@@ -381,5 +398,5 @@ bazel run @{}//:pin
         oci_pull_rule(
             name = name,
             image = image,
-            digest = digest,
+            identifier = digest or tag,
         )
