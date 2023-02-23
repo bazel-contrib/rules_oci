@@ -23,6 +23,11 @@ stardoc_with_diff_test(
 )
 
 stardoc_with_diff_test(
+    name = "pull",
+    bzl_library_target = "//oci:pull",
+)
+
+stardoc_with_diff_test(
     name = "cosign_sign",
     bzl_library_target = "//cosign/private:sign",
 )

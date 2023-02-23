@@ -66,3 +66,36 @@ nodejs_register_toolchains(
     name = "nodejs",
     node_version = DEFAULT_NODE_VERSION,
 )
+
+load("@contrib_rules_oci//oci:pull.bzl", "oci_pull")
+
+# A single-arch base image
+oci_pull(
+    name = "distroless_java",
+    digest = "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
+    image = "gcr.io/distroless/java17",
+)
+
+# A multi-arch base image
+oci_pull(
+    name = "distroless_static",
+    digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+    image = "gcr.io/distroless/static",
+    platforms = [
+        "linux/amd64",
+        "linux/arm",
+        "linux/arm64",
+        "linux/ppc64le",
+        "linux/s390x",
+    ],
+)
+
+# Show that the digest is optional.
+oci_pull(
+    name = "distroless_python",
+    image = "gcr.io/distroless/python3",
+    platforms = ["linux/amd64"],
+    # Don't make a distroless_python_unpinned repo and print a warning about the tag
+    reproducible = False,
+    tag = "debug",
+)
