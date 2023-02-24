@@ -24,9 +24,12 @@ exec "{st_path}" test {fixed_args} "$@"
 def _structure_test_impl(ctx):
     st_info = ctx.toolchains["@contrib_rules_oci//oci:st_toolchain_type"].st_info
 
-    default_image_tag = "{workspace}.local/{package}/{name}:latest".format(
-        workspace = ctx.workspace_name,
-        package = ctx.label.package.replace("/", "_"),
+    workspace = "default_workspace" if ctx.workspace_name == "__main__" else ctx.workspace_name
+    package = "{}/".format(ctx.label.package.replace("/", "_")) if ctx.label.package else ""
+
+    default_image_tag = "{workspace}.local/{optional_package}{name}:latest".format(
+        workspace = workspace,
+        optional_package = package,
         name = ctx.label.name,
     )
 
