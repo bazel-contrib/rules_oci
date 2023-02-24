@@ -2,7 +2,7 @@
 
 _DOC = """Build an OCI compatible container image.
 
-It takes number of tar files as layers to create image filesystem. 
+It takes number of tar files as layers to create image filesystem.
 For incrementality, use more fine grained tar files to build up the filesystem.
 
 ```starlark
@@ -27,7 +27,7 @@ oci_image(
 )
 ```
 
-To combine `env` with environment variables from the `base`, bash style variable syntax MAYBE used. 
+To combine `env` with environment variables from the `base`, bash style variable syntax MAYBE used.
 
 ```starlark
 oci_image(
@@ -53,15 +53,16 @@ Default values to the environment variables of the container. These values act a
 To merge entries with keys specified in the base, `${KEY}` or `$KEY` syntax may be used.
 """),
     "user": attr.string(doc = """
-The `username` or `UID` which is a platform-specific structure that allows specific control over which user the process run as. 
-This acts as a default value to use when the value is not specified when creating a container. 
-For Linux based systems, all of the following are valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`. 
+The `username` or `UID` which is a platform-specific structure that allows specific control over which user the process run as.
+This acts as a default value to use when the value is not specified when creating a container.
+For Linux based systems, all of the following are valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
 If `group/gid` is not specified, the default group and supplementary groups of the given `user/uid` in `/etc/passwd` from the container are applied.
 """),
     "workdir": attr.string(doc = "Sets the current working directory of the `entrypoint` process in the container. This value acts as a default and may be replaced by a working directory specified when creating a container."),
     "os": attr.string(doc = "The name of the operating system which the image is built to run on. eg: `linux`, `windows`. See $GOOS documentation for possible values: https://go.dev/doc/install/source#environment"),
     "architecture": attr.string(doc = "The CPU architecture which the binaries in this image are built to run on. eg: `arm64`, `arm`, `amd64`, `s390x`. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment"),
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
+    "labels": attr.string_dict(doc = "Labels for the image config. See https://github.com/opencontainers/image-spec/blob/main/annotations.md."),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
 }
 
@@ -137,6 +138,10 @@ def _oci_image_impl(ctx):
 
     if ctx.attr.env:
         args.add_all(ctx.attr.env.items(), map_each = _format_string_to_string_tuple, format_each = "--env=%s")
+
+    if ctx.attr.labels:
+        # TODO: Support stamping the values
+        args.add_all(ctx.attr.labels.items(), map_each = _format_string_to_string_tuple, format_each = "--label=%s")
 
     output = ctx.actions.declare_directory(ctx.label.name)
     args.add(output.path, format = "--output=%s")

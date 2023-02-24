@@ -6,8 +6,8 @@ load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
         name = "pull_{image}".format(image = image),
         outs = [image],
         cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform=linux/amd64".format(
-            image = image,
             digest = digest,
+            image = image,
         ),
         local = True,  # needs to run locally to able to use credential helpers
         message = "Pulling gcr.io/distroless/{image} for linux/amd64".format(image = image),

@@ -1,0 +1,29 @@
+load("//oci:defs.bzl", "oci_image", "structure_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "app",
+    srcs = ["test.bash"],
+)
+
+oci_image(
+    name = "image",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    base = "//examples:base",
+    cmd = ["test.sh"],
+    labels = {
+        "org.opencontainers.image.version": "xxx",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci",
+    },
+    os = "linux",
+    tars = ["app.tar"],
+)
+
+structure_test(
+    name = "test",
+    config = ["test.yaml"],
+    image = ":image",
+)
