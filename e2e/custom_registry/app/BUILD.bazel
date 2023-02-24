@@ -1,0 +1,47 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@contrib_rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+go_library(
+    name = "app_lib",
+    srcs = ["main.go"],
+    importpath = "example.com/custom_registry/app",
+    visibility = ["//visibility:private"],
+    deps = ["@com_github_google_go_cmp//cmp"],
+)
+
+go_binary(
+    name = "app",
+    embed = [":app_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "tar",
+    srcs = [":app"],
+)
+
+oci_image(
+    name = "image",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    base = "@distroless_base",
+    entrypoint = ["/app"],
+    os = "linux",
+    tars = [":tar"],
+)
+
+# $ bazel build app:tarball
+# $ docker load --input $(bazel cquery --output=files app:tarball)
+# $ docker run --rm gcr.io/example:latest
+#   string(
+# -       "Hello World",
+# +       "Hello Go",
+#   )
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repotags = ["gcr.io/example:latest"],
+)

@@ -73,9 +73,9 @@ rules_pkg_dependencies()
 load("@contrib_rules_oci//oci:pull.bzl", "oci_pull")
 
 oci_pull(
-    name = "distroless_static",
-    digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
-    image = "gcr.io/distroless/static",
+    name = "distroless_base",
+    digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
+    image = "gcr.io/distroless/base",
     platforms = [
         "linux/amd64",
         "linux/arm64",
