@@ -1,23 +1,12 @@
 load("@contrib_rules_oci//oci:defs.bzl", "oci_image")
 
-genrule(
-    name = "base",
-    outs = ["layout"],
-    cmd = "$(CRANE_BIN) pull debian:latest $@ --format=oci --platform=linux/arm64",
-    message = "Pulling base image for linux/arm64",
-    output_to_bindir = True,
-    toolchains = [
-        "@oci_crane_toolchains//:current_toolchain",
-    ],
-)
-
 oci_image(
     name = "image",
     architecture = select({
         "@platforms//cpu:arm64": "arm64",
         "@platforms//cpu:x86_64": "amd64",
     }),
-    base = ":base",
+    base = "@distroless_static",
     cmd = [
         "--arg1",
         "--arg2",

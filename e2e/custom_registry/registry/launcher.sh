@@ -1,5 +1,5 @@
 readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-readonly REGISTRY="${SCRIPT_DIR}/_registry"
+REGISTRY="${SCRIPT_DIR}/_registry"
 
 function start_registry() {
     local output="$2"
