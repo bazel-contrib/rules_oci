@@ -1,6 +1,3 @@
-readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-readonly ZOT="${SCRIPT_DIR}/zot"
-
 function start_registry() {
     local storage_dir="$1"
     local output="$2"
@@ -16,7 +13,7 @@ function start_registry() {
 }
 EOF
 
-    "${ZOT}" serve "${config_path}" >> $output 2>&1 &
+    "{REGISTRY_BIN}" serve "${config_path}" >> $output 2>&1 &
 
     local timeout=$((SECONDS+${deadline}))
 
@@ -27,8 +24,9 @@ EOF
         fi
     done
     if [ -z "${port}" ]; then
-        echo "registry didn't become ready within ${deadline}s."
-        exit 1
+        echo "registry didn't become ready within ${deadline}s." >&2
+        return 1
     fi
     echo "127.0.0.1:${port}"
+    return 0
 }

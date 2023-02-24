@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":0")
+	listener, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
 		log.Fatalln(err)
 	}
 	port := listener.Addr().(*net.TCPAddr).Port
-	fmt.Println(port)
+	fmt.Printf("port:%d\n", port)
 	s := &http.Server{
 		Handler: registry.New(),
 	}
