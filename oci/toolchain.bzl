@@ -82,11 +82,11 @@ registry_toolchain = rule(
     implementation = _registry_toolchain_impl,
     attrs = {
         "launcher": attr.label(
-            doc = "Launcher script defining a bash function `start_registry` that conforms to `start_registry(storage_dir, output, deadline)`",
-            allow_single_file = True,
+            doc = "A bash launcher script defining a bash function named `start_registry` that takes the following arguments `storage_dir, output, deadline`",
+            mandatory = True,
             executable = True,
             cfg = "exec",
-            mandatory = True,
+            allow_single_file = True,
         ),
         "registry": attr.label(
             doc = "A hermetically downloaded registry executable for the target platform.",

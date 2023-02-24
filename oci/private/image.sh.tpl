@@ -113,4 +113,4 @@ if [ -n "$OUTPUT" ]; then
 fi
 
 
-} 2>"${STDERR}"
+} 2>> "${STDERR}"
