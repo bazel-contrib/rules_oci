@@ -186,7 +186,7 @@ def _oci_pull_impl(rctx):
    "schemaVersion": 2,
    "manifests": [
       {
-         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+         "mediaType": "%s",
          "size": %s,
          "digest": "%s",
          "platform": {
@@ -195,19 +195,19 @@ def _oci_pull_impl(rctx):
          }
       }
    ]
-}""" % (image_mf_len, image_digest, arch, os)
+}""" % (image_mf["mediaType"], image_mf_len, image_digest, arch, os)
     else:
         index_mf = """\
 {
    "schemaVersion": 2,
    "manifests": [
       {
-         "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+         "mediaType": "%s",
          "size": %s,
          "digest": "%s"
       }
    ]
-}""" % (image_mf_len, image_digest)
+}""" % (image_mf["mediaType"], image_mf_len, image_digest)
 
     rctx.file("BUILD.bazel", content = _build_file.format(
         name = rctx.attr.name,
