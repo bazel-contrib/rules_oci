@@ -1,8 +1,11 @@
+readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+readonly REGISTRY_BIN="${SCRIPT_DIR}/registry_/registry"
+
 function start_registry() {
     local output="$2"
     local deadline="${3:-5}"
 
-    "{REGISTRY_BIN}" >> $output 2>&1 &
+    "${REGISTRY_BIN}" >> $output 2>&1 &
 
     local timeout=$((SECONDS+${deadline}))
 

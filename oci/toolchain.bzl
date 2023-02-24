@@ -52,30 +52,19 @@ RegistryInfo = provider(
 
 def _registry_toolchain_impl(ctx):
     registry = ctx.executable.registry
-    launcher = ctx.file.launcher
-
-    launcher_expanded = ctx.actions.declare_file("{}_launcher.sh".format(ctx.label.name))
-
-    ctx.actions.expand_template(
-        template = launcher,
-        output = launcher_expanded,
-        substitutions = {
-            "{REGISTRY_BIN}": registry.path,
-        },
-        is_executable = True,
-    )
+    launcher = ctx.executable.launcher
 
     template_variables = platform_common.TemplateVariableInfo({
         "REGISTRY_BIN": registry.path,
-        "LAUNCHER_WRAPPER": launcher_expanded.path,
+        "LAUNCHER_WRAPPER": launcher.path,
     })
     default = DefaultInfo(
-        files = depset([registry, launcher_expanded]),
-        runfiles = ctx.runfiles(files = [registry, launcher_expanded]),
+        files = depset([registry, launcher]),
+        runfiles = ctx.runfiles(files = [registry, launcher]),
     )
     registry_info = RegistryInfo(
         registry = registry,
-        launcher = launcher_expanded,
+        launcher = launcher,
     )
 
     toolchain_info = platform_common.ToolchainInfo(
@@ -93,8 +82,9 @@ registry_toolchain = rule(
     implementation = _registry_toolchain_impl,
     attrs = {
         "launcher": attr.label(
-            doc = "A bash launcher template defining a bash function named `start_registry` that takes the following arguments `start_registry(storage_dir, output, deadline)` and optionally uses `{REGISTRY_BIN}` to locate registry binary.",
+            doc = "A bash launcher script defining a bash function named `start_registry` that takes the following arguments `storage_dir, output, deadline`",
             mandatory = True,
+            executable = True,
             cfg = "exec",
             allow_single_file = True,
         ),

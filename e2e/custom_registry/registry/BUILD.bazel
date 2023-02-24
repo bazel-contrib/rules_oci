@@ -1,9 +1,16 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@contrib_rules_oci//oci:toolchain.bzl", "registry_toolchain")
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+
+copy_file(
+    name = "launcher",
+    src = "launcher.sh",
+    out = "launcher.bash",
+)
 
 registry_toolchain(
     name = "toolchain",
-    launcher = "launcher.sh",
+    launcher = "launcher.bash",
     registry = ":registry",
 )
 

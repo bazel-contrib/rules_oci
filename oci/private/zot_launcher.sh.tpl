@@ -1,3 +1,6 @@
+readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+readonly ZOT="${SCRIPT_DIR}/zot"
+
 function start_registry() {
     local storage_dir="$1"
     local output="$2"
@@ -12,8 +15,7 @@ function start_registry() {
     "log": { "level": "info" }
 }
 EOF
-
-    "{REGISTRY_BIN}" serve "${config_path}" >> $output 2>&1 &
+    "${ZOT}" serve "${config_path}" >> $output 2>&1 &
 
     local timeout=$((SECONDS+${deadline}))
 
