@@ -1,1 +1,5 @@
-docs/*.md
+docs/cosign*.md
+docs/image*.md
+docs/pull.md
+docs/push.md
+docs/tarball.md
