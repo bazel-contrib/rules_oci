@@ -22,3 +22,5 @@ copy the WORKSPACE snippet into your `WORKSPACE` file.
 
 See the API documentation in the [docs](docs/) folder and the example usage in the [examples](examples/) folder.
 Note that the example relies on the setup code in the `/WORKSPACE` file in the root of this repo.
+
+Also, check out the [wasm containers](e2e/wasm/) end to end testing workspace for how to build wasm images.

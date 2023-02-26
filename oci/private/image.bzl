@@ -63,6 +63,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "architecture": attr.string(doc = "The CPU architecture which the binaries in this image are built to run on. eg: `arm64`, `arm`, `amd64`, `s390x`. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment"),
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
     "labels": attr.string_dict(doc = "Labels for the image config. See https://github.com/opencontainers/image-spec/blob/main/annotations.md."),
+    "annotations": attr.string_dict(doc = "Annotations for the image config. See https://github.com/opencontainers/image-spec/blob/main/annotations.md."),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
 }
 
@@ -142,6 +143,9 @@ def _oci_image_impl(ctx):
     if ctx.attr.labels:
         # TODO: Support stamping the values
         args.add_all(ctx.attr.labels.items(), map_each = _format_string_to_string_tuple, format_each = "--label=%s")
+
+    if ctx.attr.annotations:
+        args.add_all(ctx.attr.annotations.items(), map_each = _format_string_to_string_tuple, format_each = "--annotation=%s")
 
     output = ctx.actions.declare_directory(ctx.label.name)
     args.add(output.path, format = "--output=%s")
