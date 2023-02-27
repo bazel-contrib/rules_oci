@@ -27,7 +27,7 @@ http_archive(
 # you should fetch it *before* calling this.
 # Alternatively, you can skip calling this function, so long as you've
 # already fetched all the dependencies.
-load("@contrib_rules_oci//oci:repositories.bzl", "rules_oci_dependencies")
+load("@contrib_rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 rules_oci_dependencies()
 
 \`\`\`
