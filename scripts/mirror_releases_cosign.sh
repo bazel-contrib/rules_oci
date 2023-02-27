@@ -3,24 +3,23 @@
 set -o errexit -o nounset -o pipefail
 
 JQ_FILTER=\
-'map(
-    {
-        "key": .tag_name,
-        "value": .assets
-            | map(select((.name | contains("cosign-")) and (.name | contains(".") | not) and (.name | contains("key") | not) ))
-            | map({
-                "key": .name,
-                "value": .browser_download_url
-            })
-            | from_entries
-    }
+'map(select(.name | contains("-rc") | not)) | map(
+  {
+    "key": .tag_name,
+    "value": .assets
+        | map(select((.name | contains("cosign-")) and (.name | contains(".") | not) and (.name | contains("key") | not) ))
+        | map({
+            "key": .name,
+            "value": .browser_download_url
+        })
+        | from_entries
+  }
 ) | from_entries'
 
 REPOSITORY=${1:-"sigstore/cosign"}
 
 
-# We need v1.6.0 because of https://github.com/sigstore/cosign/pull/1616. remove once https://github.com/sigstore/cosign/pull/2288 lands
-VERSIONS=$(curl --silent  -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/$REPOSITORY/releases?per_page=1&page=12" | jq "$JQ_FILTER")
+VERSIONS=$(curl --silent  -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/$REPOSITORY/releases?per_page=20" | jq "$JQ_FILTER")
 
 
 # Replace URLs with their hash
