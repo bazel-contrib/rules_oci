@@ -7,7 +7,8 @@ Implementation details for image rule
 ## oci_image
 
 <pre>
-oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-architecture">architecture</a>, <a href="#oci_image-base">base</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-os">os</a>, <a href="#oci_image-tars">tars</a>, <a href="#oci_image-user">user</a>, <a href="#oci_image-variant">variant</a>, <a href="#oci_image-workdir">workdir</a>)
+oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-architecture">architecture</a>, <a href="#oci_image-base">base</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-os">os</a>, <a href="#oci_image-tars">tars</a>, <a href="#oci_image-user">user</a>,
+          <a href="#oci_image-variant">variant</a>, <a href="#oci_image-workdir">workdir</a>)
 </pre>
 
 Build an OCI compatible container image.
@@ -59,6 +60,7 @@ oci_image(
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_image-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
+| <a id="oci_image-annotations"></a>annotations |  Annotations for the image config. See https://github.com/opencontainers/image-spec/blob/main/annotations.md.   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | optional | {} |
 | <a id="oci_image-architecture"></a>architecture |  The CPU architecture which the binaries in this image are built to run on. eg: <code>arm64</code>, <code>arm</code>, <code>amd64</code>, <code>s390x</code>. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment   | String | optional | "" |
 | <a id="oci_image-base"></a>base |  Label to an oci_image target to use as the base.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image-cmd"></a>cmd |  Default arguments to the <code>entrypoint</code> of the container. These values act as defaults and may be replaced by any specified when creating a container.   | List of strings | optional | [] |
