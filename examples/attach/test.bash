@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
+export HOME="$TEST_TMPDIR"
+
 readonly COSIGN="${1/external\//../}"
 readonly CRANE="${2/external\//../}"
 readonly REGISTRY_LAUNCHER="${3/external\//../}"

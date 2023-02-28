@@ -1,5 +1,12 @@
 load("//cosign:defs.bzl", "cosign_attach")
 load("//oci:defs.bzl", "oci_image")
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+
+copy_file(
+    name = "sbom",
+    src = "sbom.spdx",
+    out = "sbom_generated.spdx",
+)
 
 oci_image(
     name = "image",
@@ -10,7 +17,7 @@ oci_image(
 
 cosign_attach(
     name = "attach",
-    attachment = "sbom.spdx",
+    attachment = ":sbom_generated.spdx",
     image = ":image",
     repository = "test",
     type = "sbom",
