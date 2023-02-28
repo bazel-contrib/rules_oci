@@ -1,0 +1,35 @@
+load("//cosign:defs.bzl", "cosign_attach")
+
+cosign_attach(
+    name = "attach",
+    attachment = "@example_sbom",
+    image = "@empty_image",
+    repository = "test",
+    type = "sbom",
+)
+
+sh_test(
+    name = "test",
+    srcs = ["test.bash"],
+    args = [
+        "$(COSIGN_BIN)",
+        "$(CRANE_BIN)",
+        "$(LAUNCHER_WRAPPER)",
+        "$(location :attach)",
+        "$(location @empty_image)",
+        "$(location @example_sbom)",
+    ],
+    data = [
+        ":attach",
+        "@empty_image",
+        "@example_sbom",
+        "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
+        "@oci_zot_toolchains//:current_toolchain",
+    ],
+    toolchains = [
+        "@oci_zot_toolchains//:current_toolchain",
+        "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
+    ],
+)
