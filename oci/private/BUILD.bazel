@@ -64,3 +64,12 @@ bzl_library(
     srcs = ["versions.bzl"],
     visibility = ["//oci:__subpackages__"],
 )
+
+bzl_library(
+    name = "structure_test",
+    srcs = ["structure_test.bzl"],
+    visibility = [
+        "//docs:__pkg__",
+        "//oci:__subpackages__",
+    ],
+)
