@@ -28,6 +28,11 @@ stardoc_with_diff_test(
 )
 
 stardoc_with_diff_test(
+    name = "structure_test",
+    bzl_library_target = "//oci/private:structure_test",
+)
+
+stardoc_with_diff_test(
     name = "cosign_sign",
     bzl_library_target = "//cosign/private:sign",
 )
