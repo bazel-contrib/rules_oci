@@ -99,3 +99,10 @@ oci_pull(
     reproducible = False,
     tag = "debug",
 )
+
+# For sign_external test
+new_local_repository(
+    name = "empty_image",
+    build_file = "//examples/sign_external:BUILD.template",
+    path = "examples/sign_external/workspace",
+)
