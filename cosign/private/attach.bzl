@@ -54,11 +54,11 @@ def _cosign_attach_impl(ctx):
     fixed_args = ["--repository", ctx.attr.repository]
 
     if ctx.attr.type == "sbom":
-        fixed_args.extend(["--sbom", ctx.file.attachment.path])
+        fixed_args.extend(["--sbom", ctx.file.attachment.short_path])
     elif ctx.attr.type == "attestation":
-        fixed_args.extend(["--attestation", ctx.file.attachment.path])
+        fixed_args.extend(["--attestation", ctx.file.attachment.short_path])
     else:
-        fixed_args.extend(["--signature", ctx.file.attachment.path])
+        fixed_args.extend(["--signature", ctx.file.attachment.short_path])
 
     executable = ctx.actions.declare_file("cosign_attach_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
@@ -74,7 +74,7 @@ def _cosign_attach_impl(ctx):
         },
     )
 
-    runfiles = ctx.runfiles(files = [ctx.file.image])
+    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.attachment])
     runfiles = runfiles.merge(yq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
 

@@ -1,24 +1,9 @@
 load("//cosign:defs.bzl", "cosign_attach")
-load("//oci:defs.bzl", "oci_image")
-load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
-
-copy_file(
-    name = "sbom",
-    src = "sbom.spdx",
-    out = "sbom_generated.spdx",
-)
-
-oci_image(
-    name = "image",
-    architecture = "amd64",
-    cmd = ["noop"],
-    os = "linux",
-)
 
 cosign_attach(
     name = "attach",
-    attachment = ":sbom_generated.spdx",
-    image = ":image",
+    attachment = "@example_sbom",
+    image = "@empty_image",
     repository = "test",
     type = "sbom",
 )
@@ -31,13 +16,13 @@ sh_test(
         "$(CRANE_BIN)",
         "$(LAUNCHER_WRAPPER)",
         "$(location :attach)",
-        "$(location :image)",
-        "$(location sbom.spdx)",
+        "$(location @empty_image)",
+        "$(location @example_sbom)",
     ],
     data = [
-        "sbom.spdx",
         ":attach",
-        ":image",
+        "@empty_image",
+        "@example_sbom",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
         "@oci_zot_toolchains//:current_toolchain",
