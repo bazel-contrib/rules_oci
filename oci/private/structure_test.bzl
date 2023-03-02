@@ -21,14 +21,19 @@ CMD = """\
 exec "{st_path}" test {fixed_args} "$@"
 """
 
+def _strip_illegal_chars(str):
+    return str.replace("_", "underscore").replace("/", "slash")
+
 def _structure_test_impl(ctx):
     st_info = ctx.toolchains["@contrib_rules_oci//oci:st_toolchain_type"].st_info
 
-    workspace = "default_workspace" if ctx.workspace_name == "__main__" else ctx.workspace_name
-    package = "{}/".format(ctx.label.package.replace("/", "_")) if ctx.label.package else ""
+    workspace = _strip_illegal_chars(ctx.workspace_name)
+    package = _strip_illegal_chars(ctx.label.package) if ctx.label.package else ""
+    tag = _strip_illegal_chars(ctx.label.name)
 
-    default_image_tag = "{workspace}.local/{optional_package}{name}:latest".format(
+    default_image_tag = "{workspace}.local/{optional_package}{optional_package_slash}{name}:latest".format(
         workspace = workspace,
+        optional_package_slash = "/" if package else "",
         optional_package = package,
         name = ctx.label.name,
     )
