@@ -15,9 +15,27 @@ jobs:
   test:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
+
+    # Set defaults for every step
+    defaults:
+      run:
+        working-directory: ${{ matrix.dir }}
+        env:
+          # Bazelisk will download bazel to here, ensure it is cached between runs.
+          XDG_CACHE_HOME: ~/.cache/bazel-repo
+
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
+        dir: [".", "e2e/custom_registry", "e2e/wasm", "e2e/workspace"]
+        exclude:
+          - dir: e2e/custom_registry
+            os: macos-latest
+          - dir: e2e/wasm
+            os: macos-latest
+          - dir: e2e/workspace
+            os: macos-latest
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -29,8 +47,12 @@ jobs:
           path: |
             ~/.cache/bazel
             ~/.cache/bazel-repo
-          key: bazel-cache-${{ matrix.os }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
-          restore-keys: bazel-cache-${{ matrix.os }}
+          key: bazel-cache-${{ matrix.os }}-${{ matrix.dir }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
+          restore-keys: |
+            bazel-cache-${{ matrix.os }}-${{ matrix.dir }}
+            bazel-cache-${{ matrix.os }}
+            bazel-cache-
+
       - name: install podman
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
@@ -38,8 +60,6 @@ jobs:
           podman machine init
           podman machine start
           echo "DOCKER_HOST=unix:///Users/runner/.local/share/containers/podman/machine/podman-machine-default/podman.sock" >> $GITHUB_ENV
+
       - name: bazel test //...
-        env:
-          # Bazelisk will download bazel to here, ensure it is cached between runs.
-          XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
