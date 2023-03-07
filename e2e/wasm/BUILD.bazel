@@ -1,6 +1,7 @@
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@contrib_rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 package(default_visibility = ["//visibility:public"])
@@ -33,6 +34,13 @@ oci_image(
     os = "wasi",
     tars = [
         ":wasi_layer",
+    ],
+)
+
+build_test(
+    name = "build_test",
+    targets = [
+        ":image",
     ],
 )
 
