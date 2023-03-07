@@ -18,23 +18,19 @@ _attrs = {
 
 CMD = """\
 #!/usr/bin/env bash
-exec "{st_path}" test {fixed_args} "$@"
+
+readonly DIGEST=$("{yq_path}" eval '.manifests[0].digest | sub(":"; "-")' "{image_path}/index.json")
+
+exec "{st_path}" test {fixed_args} --default-image-tag "registry.structure_test.oci.local/image:$DIGEST" $@
 """
 
 def _structure_test_impl(ctx):
     st_info = ctx.toolchains["@contrib_rules_oci//oci:st_toolchain_type"].st_info
-
-    default_image_tag = "{workspace}.local/{package}/{name}:latest".format(
-        workspace = ctx.workspace_name,
-        package = ctx.label.package.replace("/", "_"),
-        name = ctx.label.name,
-    )
+    yq_info = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo
 
     fixed_args = [
         "--image-from-oci-layout",
         ctx.file.image.short_path,
-        "--default-image-tag",
-        default_image_tag,
     ]
 
     for arg in ctx.files.config:
@@ -46,11 +42,13 @@ def _structure_test_impl(ctx):
         content = CMD.format(
             st_path = st_info.binary.short_path,
             fixed_args = " ".join(fixed_args),
+            yq_path = yq_info.bin.short_path,
+            image_path = ctx.file.image.short_path,
         ),
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.config + [st_info.binary])
+    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.config + [st_info.binary, yq_info.bin])
 
     return DefaultInfo(runfiles = runfiles, executable = launcher)
 
@@ -61,5 +59,6 @@ structure_test = rule(
     test = True,
     toolchains = [
         "@contrib_rules_oci//oci:st_toolchain_type",
+        "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
 )
