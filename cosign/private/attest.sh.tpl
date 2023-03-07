@@ -6,7 +6,7 @@ readonly YQ="{{yq_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly DIGEST=$("${YQ}" '.manifests[].digest' "${IMAGE_DIR}/index.json")
 readonly FIXED_ARGS=({{fixed_args}})
-readonly TYPE="{{type}}"
+
 
 # set $@ to be FIXED_ARGS+$@
 ARGS=(${FIXED_ARGS[@]} $@)
@@ -23,5 +23,5 @@ while (( $# > 0 )); do
     esac
 done
 
-exec "${COSIGN}" attach "${TYPE}" "${REPOSITORY}@${DIGEST}" ${ARGS[@]+"${ARGS[@]}"}
+exec "${COSIGN}" attest "${REPOSITORY}@${DIGEST}" ${ARGS[@]+"${ARGS[@]}"}
 

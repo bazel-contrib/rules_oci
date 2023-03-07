@@ -1,16 +1,16 @@
-"Implementation details for attach rule"
+"Implementation details for attest rule"
 
-_DOC = """Attach an attachment to an oci_image at a remote registry using cosign.
+_DOC = """Attest an oci_image using cosign binary at a remote registry.
 
 ```starlark
 oci_image(
     name = "image"
 )
 
-cosign_attach(
-    name = "attach_sbom",
-    type = "sbom"
-    attachment = "image.sbom.spdx.json",
+cosign_attest(
+    name = "attest_spdx",
+    type = "spdx"
+    predicate = "image.sbom.spdx.json",
     repository = "index.docker.io/org/image"
 )
 ```
@@ -22,29 +22,29 @@ oci_image(
     name = "image"
 )
 
-cosign_attach(
-    name = "attach_sbom",
-    type = "sbom"
-    attachment = "image.sbom.spdx.json",
+cosign_attest(
+    name = "attest_spdx",
+    type = "spdx"
+    attestment = "image.sbom.spdx.json",
     repository = "index.docker.io/org/image"
 )
 ```
 
-via `bazel run :attach_sbom -- --repository=index.docker.io/org/test`
+via `bazel run :attest_spdx -- --repository=index.docker.io/org/test`
 """
 
 _attrs = {
     "image": attr.label(allow_single_file = True, mandatory = True, doc = "Label to an oci_image"),
-    "type": attr.string(values = ["attestation", "sbom", "signature"], mandatory = True, doc = "Type of attachment. Acceptable values are: `attestation`, `sbom`, and `signature`"),
-    "attachment": attr.label(allow_single_file = True, mandatory = True, doc = "Label to the attachment. Only files are allowed. eg: sbom.spdx, in-toto.json"),
+    "type": attr.string(values = ["slsaprovenance", "link", "spdx", "vuln", "custom"], mandatory = True, doc = "Type of predicate. Acceptable values are (slsaprovenance|link|spdx|vuln|custom)"),
+    "predicate": attr.label(allow_single_file = True, mandatory = True, doc = "Label to the predicate file. Only files are allowed. eg: sbom.spdx, in-toto.json"),
     "repository": attr.string(mandatory = True, doc = """\
         Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
         Digests and tags are not allowed.
     """),
-    "_attach_sh_tpl": attr.label(default = "attach.sh.tpl", allow_single_file = True),
+    "_attest_sh_tpl": attr.label(default = "attest.sh.tpl", allow_single_file = True),
 }
 
-def _cosign_attach_impl(ctx):
+def _cosign_attest_impl(ctx):
     cosign = ctx.toolchains["@contrib_rules_oci//cosign:toolchain_type"]
     yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
 
@@ -53,16 +53,9 @@ def _cosign_attach_impl(ctx):
 
     fixed_args = ["--repository", ctx.attr.repository]
 
-    if ctx.attr.type == "sbom":
-        fixed_args.extend(["--sbom", ctx.file.attachment.short_path])
-    elif ctx.attr.type == "attestation":
-        fixed_args.extend(["--attestation", ctx.file.attachment.short_path])
-    else:
-        fixed_args.extend(["--signature", ctx.file.attachment.short_path])
-
-    executable = ctx.actions.declare_file("cosign_attach_{}.sh".format(ctx.label.name))
+    executable = ctx.actions.declare_file("cosign_attest_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
-        template = ctx.file._attach_sh_tpl,
+        template = ctx.file._attest_sh_tpl,
         output = executable,
         is_executable = True,
         substitutions = {
@@ -74,14 +67,14 @@ def _cosign_attach_impl(ctx):
         },
     )
 
-    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.attachment])
+    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.attestment])
     runfiles = runfiles.merge(yq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
 
-cosign_attach = rule(
-    implementation = _cosign_attach_impl,
+cosign_attest = rule(
+    implementation = _cosign_attest_impl,
     attrs = _attrs,
     doc = _DOC,
     executable = True,
