@@ -16,24 +16,34 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        folder: [".", "e2e/custom_registry", "e2e/wasm", "e2e/workspace"]
+        folder: [".", "e2e/custom_registry", "e2e/wasm", "e2e/smoke"]
+        bzlmodEnabled: [true, false]
         exclude:
           - folder: e2e/custom_registry
             os: macos-latest
           - folder: e2e/wasm
             os: macos-latest
-          - folder: e2e/workspace
+          - folder: e2e/smoke
             os: macos-latest
-
+          # Broken due to stardoc usage, see
+          # https://github.com/bazelbuild/stardoc/issues/117#issuecomment-1380744704
+          - folder: .
+            bzlmodEnabled: true
+          # TODO: fix
+          - folder: e2e/custom_registry
+            bzlmodEnabled: true
+          # TODO: fix
+          - folder: e2e/wasm
+            bzlmodEnabled: true
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - uses: bazelbuild/setup-bazelisk@v1
+      - uses: actions/checkout@v3
       - name: Mount bazel caches
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/bazel
@@ -53,9 +63,16 @@ jobs:
           podman machine start
           echo "DOCKER_HOST=unix:///Users/runner/.local/share/containers/podman/machine/podman-machine-default/podman.sock" >> $GITHUB_ENV
 
+      - name: Set bzlmod flag
+        # Store the --enable_bzlmod flag that we add to the test command below
+        # only when we're running bzlmod in our test matrix.
+        id: set_bzlmod_flag
+        if: matrix.bzlmodEnabled
+        run: echo "bzlmod_flag=--enable_bzlmod" >> $GITHUB_OUTPUT
+
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test //...
+        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...

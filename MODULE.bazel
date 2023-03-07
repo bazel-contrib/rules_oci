@@ -1,0 +1,21 @@
+"bazel-contrib/rules_oci"
+
+module(
+    name = "contrib_rules_oci",
+    compatibility_level = 1,
+    version = "0.0.0",
+)
+
+bazel_dep(name = "aspect_bazel_lib", version = "1.28.0")
+bazel_dep(name = "bazel_skylib", version = "1.4.1")
+bazel_dep(name = "rules_pkg", version = "0.8.1")
+bazel_dep(name = "platforms", version = "0.0.5")
+
+oci = use_extension("//oci:extensions.bzl", "oci")
+oci.toolchains(
+    crane_version = "v0.12.0",
+    zot_version = "v1.4.3-rc3",
+)
+use_repo(oci, "oci_crane_toolchains", "oci_zot_toolchains", "oci_st_toolchains")
+
+register_toolchains("@oci_crane_toolchains//:all", "@oci_zot_toolchains//:all", "@oci_st_toolchains//:all")

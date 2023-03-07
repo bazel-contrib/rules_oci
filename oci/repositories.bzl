@@ -112,7 +112,7 @@ structure_test_repositories = repository_rule(
 )
 
 # Wrapper macro around everything above, this is the primary API
-def oci_register_toolchains(name, crane_version, zot_version):
+def oci_register_toolchains(name, crane_version, zot_version, register = True):
     """Convenience macro for users which does typical setup.
 
     - create a repository for each built-in platform like "container_linux_amd64" -
@@ -124,12 +124,14 @@ def oci_register_toolchains(name, crane_version, zot_version):
         name: base name for all created repos, like "container7"
         crane_version: passed to each crane_repositories call
         zot_version: passed to each zot_repositories call
+        register: whether to call through to native.register_toolchains.
+            Should be True for WORKSPACE users, but false when used under bzlmod extension
     """
 
-    register_yq_toolchains()
-    register_jq_toolchains()
-    register_coreutils_toolchains()
-    register_copy_to_directory_toolchains()
+    register_yq_toolchains(register = register)
+    register_jq_toolchains(register = register)
+    register_coreutils_toolchains(register = register)
+    register_copy_to_directory_toolchains(register = register)
 
     crane_toolchain_name = "{name}_crane_toolchains".format(name = name)
     zot_toolchain_name = "{name}_zot_toolchains".format(name = name)
@@ -141,14 +143,12 @@ def oci_register_toolchains(name, crane_version, zot_version):
             platform = platform,
             crane_version = crane_version,
         )
-        native.register_toolchains("@{}//:{}_toolchain".format(crane_toolchain_name, platform))
 
         zot_repositories(
             name = "{name}_zot_{platform}".format(name = name, platform = platform),
             platform = platform,
             zot_version = zot_version,
         )
-        native.register_toolchains("@{}//:{}_toolchain".format(zot_toolchain_name, platform))
 
         structure_test_repositories(
             name = "{name}_st_{platform}".format(name = name, platform = platform),
@@ -156,7 +156,11 @@ def oci_register_toolchains(name, crane_version, zot_version):
             # There are already too many version attributes. No need to expose this yet.
             st_version = ST_VERSIONS.keys()[0],
         )
-        native.register_toolchains("@%s//:%s_toolchain" % (st_toolchain_name, platform))
+
+        if register:
+            native.register_toolchains("@{}//:{}_toolchain".format(crane_toolchain_name, platform))
+            native.register_toolchains("@{}//:{}_toolchain".format(zot_toolchain_name, platform))
+            native.register_toolchains("@{}//:{}_toolchain".format(st_toolchain_name, platform))
 
     toolchains_repo(
         name = crane_toolchain_name,
