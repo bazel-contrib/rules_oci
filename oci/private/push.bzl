@@ -70,7 +70,7 @@ def _quote_args(args):
     return ["\"{}\"".format(arg) for arg in args]
 
 def _impl(ctx):
-    crane = ctx.toolchains["@contrib_rules_oci//oci:crane_toolchain_type"]
+    crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
 
     if not ctx.file.image.is_directory:
@@ -107,7 +107,7 @@ oci_push = rule(
     doc = _DOC,
     executable = True,
     toolchains = [
-        "@contrib_rules_oci//oci:crane_toolchain_type",
+        "@rules_oci//oci:crane_toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
 )

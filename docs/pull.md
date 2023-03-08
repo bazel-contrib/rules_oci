@@ -5,7 +5,7 @@ A repository rule to pull image layers using Bazel's downloader.
 Typical usage in `WORKSPACE.bazel`:
 
 ```starlark
-load("@contrib_rules_oci//oci:pull.bzl", "oci_pull")
+load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 # A single-arch base image
 oci_pull(

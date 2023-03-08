@@ -1,4 +1,4 @@
-load("@contrib_rules_oci//oci:defs.bzl", "oci_image", "structure_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "structure_test")
 
 oci_image(
     name = "image",

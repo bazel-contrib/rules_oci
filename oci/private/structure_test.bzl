@@ -25,7 +25,7 @@ exec "{st_path}" test {fixed_args} --default-image-tag "registry.structure_test.
 """
 
 def _structure_test_impl(ctx):
-    st_info = ctx.toolchains["@contrib_rules_oci//oci:st_toolchain_type"].st_info
+    st_info = ctx.toolchains["@rules_oci//oci:st_toolchain_type"].st_info
     yq_info = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo
 
     fixed_args = [
@@ -58,7 +58,7 @@ structure_test = rule(
     doc = _DOC,
     test = True,
     toolchains = [
-        "@contrib_rules_oci//oci:st_toolchain_type",
+        "@rules_oci//oci:st_toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
 )

@@ -40,7 +40,7 @@ container_import(
 Now that we know it's `gcr.io/distroless/base` we can pull the same base image by adding to WORKSPACE:
 
 ```
-load("@contrib_rules_oci//oci:pull.bzl", "oci_pull")
+load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 oci_pull(
     name = "distroless_base",
@@ -74,7 +74,7 @@ pkg_tar(
 Finally, add your layer to the base image:
 
 ```
-load("@contrib_rules_oci//oci:defs.bzl", "oci_image")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 
 oci_image(
     name = "image",

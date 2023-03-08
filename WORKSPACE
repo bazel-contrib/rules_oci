@@ -1,6 +1,6 @@
 # Declare the local Bazel workspace.
 # This is *not* included in the published distribution.
-workspace(name = "contrib_rules_oci")
+workspace(name = "rules_oci")
 
 load(":internal_deps.bzl", "rules_oci_internal_deps")
 
@@ -67,7 +67,7 @@ nodejs_register_toolchains(
     node_version = DEFAULT_NODE_VERSION,
 )
 
-load("@contrib_rules_oci//oci:pull.bzl", "oci_pull")
+load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 # A single-arch base image
 oci_pull(

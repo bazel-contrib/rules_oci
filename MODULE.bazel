@@ -1,7 +1,7 @@
 "bazel-contrib/rules_oci"
 
 module(
-    name = "contrib_rules_oci",
+    name = "rules_oci",
     compatibility_level = 1,
     version = "0.0.0",
 )

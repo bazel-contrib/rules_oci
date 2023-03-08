@@ -30,12 +30,12 @@ artifact or a version fetched from the internet, run this from this
 directory:
 
 ```sh
-OVERRIDE="--override_repository=contrib_rules_oci=$(pwd)/rules_oci"
+OVERRIDE="--override_repository=rules_oci=$(pwd)/rules_oci"
 echo "build $OVERRIDE" >> ~/.bazelrc
 echo "query $OVERRIDE" >> ~/.bazelrc
 ```
 
-This means that any usage of `@contrib_rules_oci` on your system will point to this folder.
+This means that any usage of `@rules_oci` on your system will point to this folder.
 
 ## Releasing
 
