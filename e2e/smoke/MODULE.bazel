@@ -1,0 +1,8 @@
+"Bazel dependencies"
+bazel_dep(name = "contrib_rules_oci", dev_dependency = True, version = "0.0.0")
+bazel_dep(name = "platforms", version = "0.0.5")
+
+local_path_override(
+    module_name = "contrib_rules_oci",
+    path = "../..",
+)
