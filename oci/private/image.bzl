@@ -83,8 +83,8 @@ def _oci_image_impl(ctx):
         if not ctx.attr.os or not ctx.attr.architecture:
             fail("os and architecture is mandatory when base in unspecified.")
 
-    crane = ctx.toolchains["@contrib_rules_oci//oci:crane_toolchain_type"]
-    registry = ctx.toolchains["@contrib_rules_oci//oci:registry_toolchain_type"]
+    crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
+    registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
@@ -171,8 +171,8 @@ oci_image = rule(
     attrs = _attrs,
     doc = _DOC,
     toolchains = [
-        "@contrib_rules_oci//oci:crane_toolchain_type",
-        "@contrib_rules_oci//oci:registry_toolchain_type",
+        "@rules_oci//oci:crane_toolchain_type",
+        "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],
 )

@@ -1,5 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
-load("@contrib_rules_oci//oci:toolchain.bzl", "registry_toolchain")
+load("@rules_oci//oci:toolchain.bzl", "registry_toolchain")
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 
 copy_file(
@@ -17,7 +17,7 @@ registry_toolchain(
 toolchain(
     name = "registry_toolchain",
     toolchain = ":toolchain",
-    toolchain_type = "@contrib_rules_oci//oci:registry_toolchain_type",
+    toolchain_type = "@rules_oci//oci:registry_toolchain_type",
 )
 
 go_library(

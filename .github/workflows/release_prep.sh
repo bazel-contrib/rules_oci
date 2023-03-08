@@ -19,7 +19,7 @@ WORKSPACE snippet:
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "contrib_rules_oci",
+    name = "rules_oci",
     sha256 = "${SHA}",
     strip_prefix = "${PREFIX}",
     url = "https://github.com/bazel-contrib/rules_oci/releases/download/${TAG}/${ARCHIVE}",

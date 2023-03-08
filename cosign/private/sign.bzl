@@ -43,7 +43,7 @@ _attrs = {
 }
 
 def _cosign_sign_impl(ctx):
-    cosign = ctx.toolchains["@contrib_rules_oci//cosign:toolchain_type"]
+    cosign = ctx.toolchains["@rules_oci//cosign:toolchain_type"]
     yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
 
     if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
@@ -74,7 +74,7 @@ cosign_sign = rule(
     doc = _DOC,
     executable = True,
     toolchains = [
-        "@contrib_rules_oci//cosign:toolchain_type",
+        "@rules_oci//cosign:toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
 )
