@@ -51,7 +51,14 @@ def _cosign_attest_impl(ctx):
     if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
         fail("repository attribute should not contain digest or tag.")
 
-    fixed_args = ["--repository", ctx.attr.repository]
+    fixed_args = [
+        "--repository",
+        ctx.attr.repository,
+        "--predicate",
+        ctx.file.predicate.short_path,
+        "--type",
+        ctx.attr.type,
+    ]
 
     executable = ctx.actions.declare_file("cosign_attest_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
@@ -67,7 +74,7 @@ def _cosign_attest_impl(ctx):
         },
     )
 
-    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.attestment])
+    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.predicate])
     runfiles = runfiles.merge(yq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
 

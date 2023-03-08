@@ -1,28 +1,30 @@
-load("//cosign:defs.bzl", "cosign_attach")
+load("//cosign:defs.bzl", "cosign_attest")
 
-cosign_attach(
-    name = "attach",
-    attachment = "@example_sbom",
+cosign_attest(
+    name = "attest",
     image = "@empty_image",
+    predicate = "@example_sbom",
     repository = "test",
-    type = "sbom",
+    type = "spdx",
 )
 
 sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
+        "$(JQ_BIN)",
         "$(COSIGN_BIN)",
         "$(CRANE_BIN)",
         "$(LAUNCHER_WRAPPER)",
-        "$(location :attach)",
+        "$(location :attest)",
         "$(location @empty_image)",
         "$(location @example_sbom)",
     ],
     data = [
-        ":attach",
+        ":attest",
         "@empty_image",
         "@example_sbom",
+        "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
         "@oci_zot_toolchains//:current_toolchain",
@@ -31,5 +33,6 @@ sh_test(
         "@oci_zot_toolchains//:current_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
+        "@jq_toolchains//:resolved_toolchain",
     ],
 )

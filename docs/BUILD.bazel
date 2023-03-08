@@ -38,8 +38,8 @@ stardoc_with_diff_test(
 )
 
 stardoc_with_diff_test(
-    name = "cosign_attach",
-    bzl_library_target = "//cosign/private:attach",
+    name = "cosign_attest",
+    bzl_library_target = "//cosign/private:attest",
 )
 
 update_docs(name = "update")

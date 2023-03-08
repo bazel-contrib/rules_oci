@@ -1,4 +1,4 @@
-load("//cosign:defs.bzl", "cosign_attach")
+load("//cosign:defs.bzl", "cosign_attest")
 load("//oci:defs.bzl", "oci_image")
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 
@@ -15,29 +15,31 @@ oci_image(
     os = "linux",
 )
 
-cosign_attach(
-    name = "attach",
-    attachment = ":sbom_generated.spdx",
+cosign_attest(
+    name = "attest",
     image = ":image",
+    predicate = ":sbom_generated.spdx",
     repository = "test",
-    type = "sbom",
+    type = "spdx",
 )
 
 sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
+        "$(JQ_BIN)",
         "$(COSIGN_BIN)",
         "$(CRANE_BIN)",
         "$(LAUNCHER_WRAPPER)",
-        "$(location :attach)",
+        "$(location :attest)",
         "$(location :image)",
         "$(location sbom.spdx)",
     ],
     data = [
         "sbom.spdx",
-        ":attach",
+        ":attest",
         ":image",
+        "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
         "@oci_zot_toolchains//:current_toolchain",
@@ -46,5 +48,6 @@ sh_test(
         "@oci_zot_toolchains//:current_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
+        "@jq_toolchains//:resolved_toolchain",
     ],
 )

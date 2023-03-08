@@ -25,7 +25,7 @@ readonly DIGEST=$("$JQ" -r '.manifests[0].digest' "$IMAGE/index.json")
 COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair 
 
 # Sign the image at remote registry
-echo "y" | COSIGN_PASSWORD=123 "${IMAGE_SIGNER}" --repository="${REPOSITORY}" --key=cosign.key
+COSIGN_PASSWORD=123 "${IMAGE_SIGNER}" --repository="${REPOSITORY}" --key=cosign.key -y
 
 # Now push the image
 REF=$(mktemp)
