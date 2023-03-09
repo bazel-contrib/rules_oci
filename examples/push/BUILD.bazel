@@ -1,4 +1,5 @@
-load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push", "stamped_tags")
+load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
+load(":stamp_tags.bzl", "stamp_tags")
 
 oci_image(
     name = "image",
@@ -27,7 +28,7 @@ oci_image_index(
     ],
 )
 
-stamped_tags(
+stamp_tags(
     name = "stamped",
     image_tags = [
         # With --stamp, use the --embed_label value, otherwise use 0.0.0

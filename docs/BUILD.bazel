@@ -23,7 +23,6 @@ stardoc_with_diff_test(
     symbol_names = [
         "oci_push_rule",
         "oci_push",
-        "stamped_tags",
     ],
 )
 

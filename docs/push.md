@@ -103,40 +103,7 @@ Allows the tags attribute to be a list of strings in addition to a text file.
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  name of resulting oci_push_rule   |  none |
-| <a id="oci_push-image_tags"></a>image_tags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](#stamped_tags) as one example of a way to produce such a file.   |  <code>None</code> |
+| <a id="oci_push-image_tags"></a>image_tags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
 | <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule).   |  none |
-
-
-<a id="#stamped_tags"></a>
-
-## stamped_tags
-
-<pre>
-stamped_tags(<a href="#stamped_tags-name">name</a>, <a href="#stamped_tags-image_tags">image_tags</a>, <a href="#stamped_tags-kwargs">kwargs</a>)
-</pre>
-
-Wrapper macro around the [jq](https://docs.aspect.build/rules/aspect_bazel_lib/docs/jq) rule.
-
-Produces a text file that can be used with the `image_tags` attribute of [`oci_push`](#oci_push).
-
-Each entry in `image_tags` is typically either a constant like `latest`, or a stamp expression.
-The latter can use any key from `bazel-out/stable-status.txt` or `bazel-out/volatile-status.txt`.
-See https://docs.aspect.build/rules/aspect_bazel_lib/docs/stamping/ for details.
-
-The jq `//` default operator is useful for returning an alternative value for unstamped builds.
-
-For example, if you use the expression `($stamp.BUILD_EMBED_LABEL // "0.0.0")`, this resolves to
-"0.0.0" if stamping is not enabled. When built with `--stamp --embed_label=1.2.3` it will
-resolve to `1.2.3`.
-
-
-**PARAMETERS**
-
-
-| Name  | Description | Default Value |
-| :------------- | :------------- | :------------- |
-| <a id="stamped_tags-name"></a>name |  name of the resulting jq target.   |  none |
-| <a id="stamped_tags-image_tags"></a>image_tags |  list of jq expressions which result in a string value, see docs above   |  none |
-| <a id="stamped_tags-kwargs"></a>kwargs |  additional named parameters to the jq rule.   |  none |
 
 

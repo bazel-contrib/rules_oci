@@ -52,7 +52,6 @@ bzl_library(
         "//oci/private:push",
         "//oci/private:structure_test",
         "//oci/private:tarball",
-        "@aspect_bazel_lib//lib:jq",
         "@bazel_skylib//lib:types",
         "@bazel_skylib//rules:write_file",
     ],
