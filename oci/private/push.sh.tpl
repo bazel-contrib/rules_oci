@@ -4,6 +4,7 @@ set -o pipefail -o errexit -o nounset
 readonly CRANE="{{crane_path}}"
 readonly YQ="{{yq_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
+readonly TAGS_FILE="{{tags}}"
 readonly FIXED_ARGS=({{fixed_args}})
 
 # set $@ to be FIXED_ARGS+$@
@@ -45,3 +46,7 @@ for tag in "${TAGS[@]+"${TAGS[@]}"}"
 do
   "${CRANE}" tag $(cat "${REFS}") "${tag}"
 done
+
+if [[ -e "${TAG_FILE}" ]]; then
+  cat "${TAG_FILE}" | xargs "${CRANE}" tag $(cat "${REFS}")
+fi

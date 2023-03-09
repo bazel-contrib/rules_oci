@@ -7,7 +7,7 @@ Implementation details for the push rule
 ## oci_push
 
 <pre>
-oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-default_tags">default_tags</a>, <a href="#oci_push-image">image</a>, <a href="#oci_push-repository">repository</a>)
+oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-image">image</a>, <a href="#oci_push-image_tags">image_tags</a>, <a href="#oci_push-repository">repository</a>)
 </pre>
 
 Push an oci_image or oci_image_index to a remote registry.
@@ -32,7 +32,7 @@ oci_image(name = "image")
 oci_push(
     image = ":image",
     repository = "index.docker.io/<ORG>/image",
-    default_tags = ["latest"]
+    # FIXME default_tags = ["latest"]
 )
 ```
 
@@ -54,17 +54,18 @@ oci_image_index(
     ]
 )
 
+FIXME
+
 oci_push(
     image = ":app_image",
     repository = "ghcr.io/<OWNER>/image",
-    default_tags = ["0.0.0"]
+    metadata = ":FIXME",
 )
 ```
 
-Ideally the semver information is gathered from a vcs, like git, instead of being hardcoded to the BUILD files.
-However, due to nature of BUILD files being static, one has to use `-t|--tag` flag to pass the tag at runtime instead of using `default_tags`. eg. `bazel run //target:push -- --tag $(git tag)`
-
-Similary, the `repository` attribute can be overridden at runtime with the `-r|--repository` flag. eg. `bazel run //target:push -- --repository index.docker.io/<ORG>/image`
+You can pass flags to `crane` to override some attributes when you run the target:
+- `tags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
+- `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
 
 
 **ATTRIBUTES**
@@ -73,8 +74,8 @@ Similary, the `repository` attribute can be overridden at runtime with the `-r|-
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="oci_push-default_tags"></a>default_tags |  List of tags to apply to the image at remote registry.   | List of strings | optional | [] |
-| <a id="oci_push-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
+| <a id="oci_push-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
+| <a id="oci_push-image_tags"></a>image_tags |  txt file containing tags, one per line   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_push-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | required |  |
 
 
