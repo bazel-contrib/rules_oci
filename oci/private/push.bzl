@@ -2,13 +2,15 @@
 
 _DOC = """Push an oci_image or oci_image_index to a remote registry.
 
+Internal rule used by the [oci_push macro](/docs/push.md#oci_push).
+
 Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur;
 
 - Remote registry rejects a tag due to various reasons. eg: forbidden characters, existing tags 
 - Remote registry closes the connection during the tagging
 - Local network outages
 
-In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `default_tags` sequentially at
+In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `image_tags` sequentially at
 the remote registry. 
 
 Any failure during pushing or tagging will be reported with non-zero exit code cause remaining steps to be skipped.
@@ -60,12 +62,20 @@ When running the pusher, you can pass flags:
 - Override `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
 - Additional `image_tags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
 """
+
 _attrs = {
-    "image": attr.label(allow_single_file = True, doc = "Label to an oci_image or oci_image_index", mandatory = True),
-    "repository": attr.string(mandatory = True, doc = """\
+    "image": attr.label(
+        allow_single_file = True,
+        doc = "Label to an oci_image or oci_image_index",
+        mandatory = True,
+    ),
+    "repository": attr.string(
+        doc = """\
         Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
         Digests and tags are not allowed.
-    """),
+        """,
+        mandatory = True,
+    ),
     "image_tags": attr.label(
         doc = """\
         a .txt file containing tags, one per line.
@@ -74,7 +84,10 @@ _attrs = {
         """,
         allow_single_file = [".txt"],
     ),
-    "_push_sh_tpl": attr.label(default = "push.sh.tpl", allow_single_file = True),
+    "_push_sh_tpl": attr.label(
+        default = "push.sh.tpl",
+        allow_single_file = True,
+    ),
 }
 
 def _quote_args(args):
@@ -90,18 +103,13 @@ def _impl(ctx):
     if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
         fail("repository attribute should not contain digest or tag.")
 
-    fixed_args = []
-
-    # fixed_args.extend(["--tag={}".format(tag) for tag in ctx.attr.default_tags])
-    fixed_args.extend(["--repository", ctx.attr.repository])
-
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
     substitutions = {
         "{{crane_path}}": crane.crane_info.binary.short_path,
         "{{yq_path}}": yq.yqinfo.bin.short_path,
         "{{image_dir}}": ctx.file.image.short_path,
-        "{{fixed_args}}": " ".join(_quote_args(fixed_args)),
+        "{{fixed_args}}": " ".join(_quote_args(["--repository", ctx.attr.repository])),
     }
     if ctx.attr.image_tags:
         files.append(ctx.file.image_tags)
@@ -119,13 +127,19 @@ def _impl(ctx):
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
 
-oci_push = rule(
+oci_push_lib = struct(
     implementation = _impl,
     attrs = _attrs,
-    doc = _DOC,
-    executable = True,
     toolchains = [
         "@rules_oci//oci:crane_toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
+)
+
+oci_push = rule(
+    doc = _DOC,
+    implementation = oci_push_lib.implementation,
+    attrs = oci_push_lib.attrs,
+    toolchains = oci_push_lib.toolchains,
+    executable = True,
 )
