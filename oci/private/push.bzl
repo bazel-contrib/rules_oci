@@ -22,11 +22,11 @@ oci_image(name = "image")
 oci_push(
     image = ":image",
     repository = "index.docker.io/<ORG>/image",
-    # FIXME default_tags = ["latest"]
+    image_tags = ["latest"]
 )
 ```
 
-Push an oci_image_index to github container registry with a semver tag
+Push a multi-architecture image to github container registry with a semver tag
 
 ```starlark
 oci_image(name = "app_linux_arm64")
@@ -44,18 +44,21 @@ oci_image_index(
     ]
 )
 
-FIXME
+stamped_tags(
+    name = "stamped",
+    image_tags = [\"\"\"($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
+)
 
 oci_push(
     image = ":app_image",
     repository = "ghcr.io/<OWNER>/image",
-    metadata = ":FIXME",
+    tags = ":stamped",
 )
 ```
 
-You can pass flags to `crane` to override some attributes when you run the target:
-- `tags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
-- `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
+When running the pusher, you can pass flags:
+- Override `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
+- Additional `image_tags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
 """
 _attrs = {
     "image": attr.label(allow_single_file = True, doc = "Label to an oci_image or oci_image_index", mandatory = True),
