@@ -41,7 +41,7 @@ def stamped_tags(name, image_tags, **kwargs):
     jq(
         name = name,
         srcs = [],
-        out = "tags.txt",
+        out = "_{}.tags.txt".format(name),
         args = ["--raw-output"],
         filter = "|".join([
             "$ARGS.named.STAMP as $stamp",
@@ -65,7 +65,7 @@ def oci_push(name, image_tags = None, **kwargs):
         tags_label = "_{}_write_tags".format(name)
         write_file(
             name = tags_label,
-            out = "_{}_tags.txt".format(name),
+            out = "_{}.tags.txt".format(name),
             content = image_tags,
         )
         image_tags = tags_label

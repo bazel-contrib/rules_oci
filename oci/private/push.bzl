@@ -66,7 +66,14 @@ _attrs = {
         Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
         Digests and tags are not allowed.
     """),
-    "image_tags": attr.label(doc = "txt file containing tags, one per line", allow_single_file = [".txt"]),
+    "image_tags": attr.label(
+        doc = """\
+        a .txt file containing tags, one per line.
+        These are passed to [`crane tag`](
+        https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)
+        """,
+        allow_single_file = [".txt"],
+    ),
     "_push_sh_tpl": attr.label(default = "push.sh.tpl", allow_single_file = True),
 }
 

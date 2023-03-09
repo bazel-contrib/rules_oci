@@ -47,6 +47,6 @@ do
   "${CRANE}" tag $(cat "${REFS}") "${tag}"
 done
 
-if [[ -e "${TAG_FILE:-}" ]]; then
-  cat "${TAG_FILE}" | xargs "${CRANE}" tag $(cat "${REFS}")
+if [[ -e "${TAGS_FILE:-}" ]]; then
+  cat "${TAGS_FILE}" | xargs -n1 "${CRANE}" tag $(cat "${REFS}")
 fi

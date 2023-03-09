@@ -32,7 +32,7 @@ stamped_tags(
     image_tags = [
         # With --stamp, use the --embed_label value, otherwise use 0.0.0
         """($stamp.BUILD_EMBED_LABEL // "0.0.0")""",
-        "latest",
+        "nightly",
     ],
 )
 
