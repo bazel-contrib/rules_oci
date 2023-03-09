@@ -14,30 +14,30 @@ oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 structure_test = _structure_test
 
-def oci_push(name, image_tags = None, **kwargs):
+def oci_push(name, repotags = None, **kwargs):
     """Macro wrapper around [oci_push_rule](#oci_push_rule).
 
     Allows the tags attribute to be a list of strings in addition to a text file.
 
     Args:
         name: name of resulting oci_push_rule
-        image_tags: a list of tags to apply to the image after pushing,
+        repotags: a list of tags to apply to the image after pushing,
             or a label of a file containing tags one-per-line.
             See [stamped_tags](/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
         **kwargs: other named arguments to [oci_push_rule](#oci_push_rule).
     """
-    if types.is_list(image_tags):
+    if types.is_list(repotags):
         tags_label = "_{}_write_tags".format(name)
         write_file(
             name = tags_label,
             out = "_{}.tags.txt".format(name),
-            content = image_tags,
+            content = repotags,
         )
-        image_tags = tags_label
+        repotags = tags_label
 
     oci_push_rule(
         name = name,
-        image_tags = image_tags,
+        repotags = repotags,
         **kwargs
     )

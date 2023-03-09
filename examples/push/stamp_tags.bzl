@@ -3,12 +3,12 @@
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@bazel_skylib//lib:types.bzl", "types")
 
-def stamp_tags(name, image_tags, **kwargs):
+def stamp_tags(name, repotags, **kwargs):
     """Wrapper macro around the [jq](https://docs.aspect.build/rules/aspect_bazel_lib/docs/jq) rule.
 
-    Produces a text file that can be used with the `image_tags` attribute of [`oci_push`](#oci_push).
+    Produces a text file that can be used with the `repotags` attribute of [`oci_push`](#oci_push).
 
-    Each entry in `image_tags` is typically either a constant like `latest`, or a stamp expression.
+    Each entry in `repotags` is typically either a constant like `latest`, or a stamp expression.
     The latter can use any key from `bazel-out/stable-status.txt` or `bazel-out/volatile-status.txt`.
     See https://docs.aspect.build/rules/aspect_bazel_lib/docs/stamping/ for details.
 
@@ -20,11 +20,11 @@ def stamp_tags(name, image_tags, **kwargs):
 
     Args:
         name: name of the resulting jq target.
-        image_tags: list of jq expressions which result in a string value, see docs above
+        repotags: list of jq expressions which result in a string value, see docs above
         **kwargs: additional named parameters to the jq rule.
     """
-    if not types.is_list(image_tags):
-        fail("image_tags should be a list")
+    if not types.is_list(repotags):
+        fail("repotags should be a list")
     _maybe_quote = lambda x: x if "\"" in x else "\"{}\"".format(x)
     jq(
         name = name,
@@ -33,7 +33,7 @@ def stamp_tags(name, image_tags, **kwargs):
         args = ["--raw-output"],
         filter = "|".join([
             "$ARGS.named.STAMP as $stamp",
-            ",".join([_maybe_quote(t) for t in image_tags]),
+            ",".join([_maybe_quote(t) for t in repotags]),
         ]),
         **kwargs
     )
