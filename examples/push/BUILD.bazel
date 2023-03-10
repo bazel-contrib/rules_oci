@@ -1,4 +1,5 @@
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
+load(":stamp_tags.bzl", "stamp_tags")
 
 oci_image(
     name = "image",
@@ -9,9 +10,9 @@ oci_image(
 
 oci_push(
     name = "push_image",
-    default_tags = ["latest"],
     image = ":image",
     repository = "index.docker.io/<ORG>/image",
+    repotags = ["latest"],
 )
 
 oci_push(
@@ -27,11 +28,20 @@ oci_image_index(
     ],
 )
 
+stamp_tags(
+    name = "stamped",
+    repotags = [
+        # With --stamp, use the --embed_label value, otherwise use 0.0.0
+        """($stamp.BUILD_EMBED_LABEL // "0.0.0")""",
+        "nightly",
+    ],
+)
+
 oci_push(
     name = "push_image_index",
-    default_tags = ["nightly"],
     image = ":image_index",
     repository = "index.docker.io/<ORG>/image",
+    repotags = ":stamped",
 )
 
 sh_test(

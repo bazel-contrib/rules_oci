@@ -19,7 +19,11 @@ stardoc_with_diff_test(
 
 stardoc_with_diff_test(
     name = "push",
-    bzl_library_target = "//oci/private:push",
+    bzl_library_target = "//oci:defs",
+    symbol_names = [
+        "oci_push_rule",
+        "oci_push",
+    ],
 )
 
 stardoc_with_diff_test(

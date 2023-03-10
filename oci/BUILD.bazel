@@ -49,7 +49,11 @@ bzl_library(
     deps = [
         "//oci/private:image",
         "//oci/private:image_index",
+        "//oci/private:push",
+        "//oci/private:structure_test",
         "//oci/private:tarball",
+        "@bazel_skylib//lib:types",
+        "@bazel_skylib//rules:write_file",
     ],
 )
 
