@@ -27,5 +27,5 @@ structure_test(
     name = "test",
     config = ["test.yaml"],
     driver = "tar",
-    image_tar = ":tar",
+    image = ":tar",
 )

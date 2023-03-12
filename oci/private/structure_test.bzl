@@ -16,12 +16,7 @@ https://github.com/GoogleContainerTools/container-structure-test#running-file-te
 _attrs = {
     "image": attr.label(
         allow_single_file = True,
-        doc = "Label to an oci_image target. Only works when `driver` is `docker`.",
-        # TODO: restrict valid values using providers = ["OciImage"] when we have that.
-    ),
-    "image_tar": attr.label(
-        allow_single_file = [".tar"],
-        doc = "Label of an oci_tarball target. Only one of `image` and `image_tar` should be used.",
+        doc = "Label of an oci_image or oci_tarball target.",
     ),
     "config": attr.label_list(allow_files = True, mandatory = True),
     "driver": attr.string(
@@ -44,20 +39,17 @@ def _structure_test_impl(ctx):
     st_info = ctx.toolchains["@rules_oci//oci:st_toolchain_type"].st_info
     yq_info = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo
 
-    if ctx.attr.image and ctx.attr.image_tar:
-        fail("Only one of 'image' and 'image_tar' attributes should be used.")
-
-    # https://github.com/GoogleContainerTools/container-structure-test/blob/5e347b66fcd06325e3caac75ef7dc999f1a9b614/cmd/container-structure-test/app/cmd/test.go#L110
-    if ctx.attr.image and ctx.attr.driver != "docker":
-        fail("'image' attribute may only be used with 'driver=docker'")
-
     fixed_args = ["--driver", ctx.attr.driver]
-    if ctx.file.image:
-        image_path = ctx.file.image.short_path
-        fixed_args.extend(["--image-from-oci-layout", image_path])
-    else:
-        image_path = ctx.file.image_tar.short_path
+    image_path = ctx.file.image.short_path
+
+    # Prefer to use a tarball if we are given one, as it works with more 'driver' types.
+    if image_path.endswith(".tar"):
         fixed_args.extend(["--image", image_path])
+    else:
+        # https://github.com/GoogleContainerTools/container-structure-test/blob/5e347b66fcd06325e3caac75ef7dc999f1a9b614/cmd/container-structure-test/app/cmd/test.go#L110
+        if ctx.attr.driver != "docker":
+            fail("when the 'driver' attribute is not 'docker', then the image must be a .tar file")
+        fixed_args.extend(["--image-from-oci-layout", image_path])
 
     for arg in ctx.files.config:
         fixed_args.append("--config=%s" % arg.path)
@@ -74,7 +66,7 @@ def _structure_test_impl(ctx):
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.image_tar + ctx.files.config + [st_info.binary, yq_info.bin])
+    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.config + [st_info.binary, yq_info.bin])
 
     return DefaultInfo(runfiles = runfiles, executable = launcher)
 
