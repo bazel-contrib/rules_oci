@@ -87,7 +87,9 @@ def _tarball_impl(ctx):
 
     tarball = _tar_tarball(ctx, blobs, manifest)
 
-    return DefaultInfo(files = depset([tarball]))
+    return [
+        DefaultInfo(files = depset([tarball])),
+    ]
 
 oci_tarball = rule(
     implementation = _tarball_impl,
