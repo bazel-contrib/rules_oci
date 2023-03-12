@@ -18,3 +18,8 @@ oci_register_toolchains(
     crane_version = LATEST_CRANE_VERSION,
     zot_version = LATEST_ZOT_VERSION,
 )
+
+# Optional, for oci_tarball rule
+load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
+
+rules_pkg_dependencies()

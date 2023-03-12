@@ -1,4 +1,4 @@
-load("@rules_oci//oci:defs.bzl", "oci_image", "structure_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball", "structure_test")
 
 oci_image(
     name = "image",
@@ -17,8 +17,15 @@ oci_image(
     os = "linux",
 )
 
+oci_tarball(
+    name = "tar",
+    image = ":image",
+    repotags = [],
+)
+
 structure_test(
     name = "test",
     config = ["test.yaml"],
-    image = ":image",
+    driver = "tar",
+    image_tar = ":tar",
 )
