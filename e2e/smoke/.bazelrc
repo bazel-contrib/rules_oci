@@ -1,1 +1,1 @@
-../../.bazelrc
+test --test_env=DOCKER_HOST
