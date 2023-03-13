@@ -90,6 +90,8 @@ def _stucture_test_repo_impl(repository_ctx):
     # TODO: fix this upstream asking distroless people
     if platform.find("darwin") != -1:
         platform = platform.replace("arm64", "amd64")
+    elif platform.find("windows") != -1:
+        platform = platform + ".exe"
     url = "https://github.com/GoogleContainerTools/container-structure-test/releases/download/{version}/container-structure-test-{platform}".format(
         version = repository_ctx.attr.st_version,
         platform = platform,
