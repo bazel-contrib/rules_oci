@@ -37,11 +37,11 @@ rules_oci does not contain language-specific rules, but we do document how to ac
 
 - **Go**: [Docs](docs/go.md)
 - **JavaScript**: [Docs](docs/javascript.md)
-- [**WASM**](https://docs.docker.com/desktop/wasm/): [Example](e2e/wasm/BUILD.bazel)
+- [**WASM**](https://docs.docker.com/desktop/wasm/): [Example](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/wasm)
 
 > Your language not listed above? See https://github.com/bazel-contrib/rules_oci/issues/55
 
-There are more examples of usage in the [examples](examples/) folder.
+There are more examples of usage in the [examples](https://github.com/bazel-contrib/rules_oci/tree/main/examples) folder.
 Note that the examples rely on the setup code in the `/WORKSPACE` file in the root of this repo.
 
 # Public API
@@ -64,4 +64,4 @@ Note that the examples rely on the setup code in the `/WORKSPACE` file in the ro
 ## Signing
 
 - [cosign_sign](docs/cosign_sign.md) Sign an `oci_image` using `cosign` binary at a remote registry.
-- [cosign_attach](docs/cosign_attach.md) Add an attachment to an `oci_image` at a remote registry using `cosign`.
+- [cosign_attest](docs/cosign_attest.md) Add an attachment to an `oci_image` at a remote registry using `cosign`.
