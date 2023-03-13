@@ -9,7 +9,7 @@ First, you'll need a base image.
 
 It's wise to minimize changes by using the same one your current `go_image` uses.
 The logic for choosing the default base in rules_docker is in
-[https://github.com/bazelbuild/rules_docker/blob/fc729d85f284225cfc0b8c6d1d838f4b3e037749/go/image.bzl#L114](go_image.bzl)
+[go_image.bzl](https://github.com/bazelbuild/rules_docker/blob/fc729d85f284225cfc0b8c6d1d838f4b3e037749/go/image.bzl#L114)
 
 Or, you can just use bazel query to find out:
 

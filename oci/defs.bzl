@@ -23,7 +23,7 @@ def oci_push(name, repotags = None, **kwargs):
         name: name of resulting oci_push_rule
         repotags: a list of tags to apply to the image after pushing,
             or a label of a file containing tags one-per-line.
-            See [stamped_tags](/examples/push/stamp_tags.bzl)
+            See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
         **kwargs: other named arguments to [oci_push_rule](#oci_push_rule).
     """

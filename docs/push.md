@@ -104,7 +104,7 @@ Allows the tags attribute to be a list of strings in addition to a text file.
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  name of resulting oci_push_rule   |  none |
-| <a id="oci_push-repotags"></a>repotags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
+| <a id="oci_push-repotags"></a>repotags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
 | <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule).   |  none |
 
 
