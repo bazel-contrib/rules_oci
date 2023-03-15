@@ -13,7 +13,7 @@ bazel_dep(name = "platforms", version = "0.0.5")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
 oci.toolchains(
-    crane_version = "v0.12.0",
+    crane_version = "v0.14.0",
     zot_version = "v1.4.3-rc3",
 )
 use_repo(oci, "oci_crane_toolchains", "oci_zot_toolchains", "oci_st_toolchains")

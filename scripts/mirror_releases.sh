@@ -6,11 +6,10 @@ RAW=$(mktemp)
 
 REPOSITORY=${1:-"google/go-containerregistry"}
 
+# per_page=1 to just miror the most recent release
 (
   curl --silent \
     --header "Accept: application/vnd.github.v3+json" \
-    # NB: per_page=1 is here to ensure that we only listing releases above v0.12.0
-    # as of writing this there is only v0.12.0. 
     https://api.github.com/repos/${REPOSITORY}/releases?per_page=1 \
     | jq -f $SCRIPT_DIR/filter.jq
 ) > $RAW
