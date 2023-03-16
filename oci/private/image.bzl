@@ -81,7 +81,7 @@ def _platform_str(os, arch, variant = None):
 def _oci_image_impl(ctx):
     if not ctx.attr.base:
         if not ctx.attr.os or not ctx.attr.architecture:
-            fail("os and architecture is mandatory when base in unspecified.")
+            fail("os and architecture is mandatory when base is unspecified.")
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
