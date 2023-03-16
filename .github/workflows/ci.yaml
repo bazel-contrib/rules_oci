@@ -11,6 +11,10 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     # The type of runner that the job will run on
@@ -37,6 +41,9 @@ jobs:
             bzlmodEnabled: true
           # TODO: fix
           - folder: e2e/wasm
+            bzlmodEnabled: true
+          # TODO: fix
+          - folder: e2e/go
             bzlmodEnabled: true
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
