@@ -113,3 +113,12 @@ new_local_repository(
     build_file = "//examples/attest_external:BUILD.template",
     path = "examples/attest_external/workspace",
 )
+
+oci_pull(
+    name = "thesayyn_debian",
+    image = "index.docker.io/library/debian",
+    platforms = ["linux/arm64"],
+    # Don't make a distroless_python_unpinned repo and print a warning about the tag
+    reproducible = False,
+    tag = "latest",
+)
