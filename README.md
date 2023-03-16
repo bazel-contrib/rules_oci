@@ -35,7 +35,7 @@ For example to use commit `abc123`:
 
 rules_oci does not contain language-specific rules, but we do document how to accomplish typical tasks, and migrate from the language-specific rules in rules_docker.
 
-- **Go**: [Docs](docs/go.md)
+- [**Go**](docs/go.md): [Example](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/go)
 - **JavaScript**: [Docs](docs/javascript.md)
 - [**WASM**](https://docs.docker.com/desktop/wasm/): [Example](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/wasm)
 

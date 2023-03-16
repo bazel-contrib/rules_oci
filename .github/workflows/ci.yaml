@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        folder: [".", "e2e/custom_registry", "e2e/wasm", "e2e/smoke"]
+        folder: [".", "e2e/custom_registry", "e2e/wasm", "e2e/smoke", "e2e/go"]
         bzlmodEnabled: [true, false]
         exclude:
           - folder: e2e/custom_registry

@@ -89,4 +89,4 @@ oci_image(
 )
 ```
 
-See the complete example in /e2e/custom_registry.
+See the complete example in /e2e/go.
