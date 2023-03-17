@@ -1,0 +1,31 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball", "structure_test")
+
+oci_image(
+    name = "image",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    cmd = [
+        "--arg1",
+        "--arg2",
+    ],
+    entrypoint = ["/custom_bin"],
+    env = {
+        "ENV": "/test",
+    },
+    os = "linux",
+)
+
+oci_tarball(
+    name = "tar",
+    image = ":image",
+    repotags = [],
+)
+
+structure_test(
+    name = "test",
+    config = ["test.yaml"],
+    driver = "tar",
+    image = ":tar",
+)
