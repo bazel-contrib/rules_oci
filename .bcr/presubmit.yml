@@ -1,5 +1,5 @@
 bcr_test_module:
-  module_path: "e2e/smoke"
+  module_path: "e2e/crane_as_registry"
   matrix:
     platform: ["debian10", "macos", "ubuntu2004", "windows"]
   tasks:
