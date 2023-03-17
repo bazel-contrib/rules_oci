@@ -24,13 +24,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         folder:
-          [
-            ".",
-            "e2e/custom_registry",
-            "e2e/wasm",
-            "e2e/smoke",
-            "e2e/crane_as_registry",
-          ]
+          - .
+          - e2e/custom_registry
+          - e2e/wasm
+          - e2e/smoke
+          - e2e/crane_as_registry
+
         bzlmodEnabled: [true, false]
         exclude:
           - folder: e2e/custom_registry
