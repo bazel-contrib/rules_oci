@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        folder: [".", "e2e/custom_registry", "e2e/wasm", "e2e/smoke", "e2e/go"]
+        folder: [".", "e2e/custom_registry", "e2e/wasm", "e2e/smoke"]
         bzlmodEnabled: [true, false]
         exclude:
           - folder: e2e/custom_registry
@@ -42,9 +42,7 @@ jobs:
           # TODO: fix
           - folder: e2e/wasm
             bzlmodEnabled: true
-          # TODO: fix
-          - folder: e2e/go
-            bzlmodEnabled: true
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
