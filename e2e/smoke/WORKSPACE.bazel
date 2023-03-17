@@ -16,6 +16,7 @@ load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "LATEST_ZOT_VER
 oci_register_toolchains(
     name = "oci",
     crane_version = LATEST_CRANE_VERSION,
+    # If a docker media types compatible registry is desired, just omit `zot_version` and crane registry will be used instead.
     zot_version = LATEST_ZOT_VERSION,
 )
 

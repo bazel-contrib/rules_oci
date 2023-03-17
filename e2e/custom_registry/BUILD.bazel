@@ -1,24 +1,25 @@
-load("@bazel_gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@rules_oci//oci:defs.bzl", "oci_image", "structure_test")
 
-gazelle_binary(
-    name = "gazelle_bin",
-    languages = [
-        "@bazel_gazelle//language/go",
+oci_image(
+    name = "image",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    base = "@distroless_static",
+    cmd = [
+        "--arg1",
+        "--arg2",
     ],
+    entrypoint = ["/custom_bin"],
+    env = {
+        "ENV": "/test",
+    },
+    os = "linux",
 )
 
-# gazelle:prefix example.com/custom_registry
-gazelle(
-    name = "gazelle",
-    gazelle = "gazelle_bin",
-)
-
-gazelle(
-    name = "update-repos",
-    args = [
-        "-from_file=go.mod",
-        "-to_macro=deps.bzl%go_dependencies",
-        "-prune",
-    ],
-    command = "update-repos",
+structure_test(
+    name = "test",
+    config = ["test.yaml"],
+    image = ":image",
 )

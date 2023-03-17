@@ -88,5 +88,3 @@ oci_image(
     os = "linux",
 )
 ```
-
-See the complete example in /e2e/custom_registry.

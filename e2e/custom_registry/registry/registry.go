@@ -1,4 +1,3 @@
-// Workaround https://github.com/google/go-containerregistry/issues/1579
 package main
 
 import (

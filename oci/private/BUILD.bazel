@@ -10,7 +10,6 @@ exports_files([
     "image_index.sh.tpl",
     "tarball.sh.tpl",
     "push.sh.tpl",
-    "zot_launcher.sh.tpl",
 ])
 
 bzl_library(
