@@ -167,7 +167,10 @@ def _oci_pull_impl(rctx):
         fail("Unrecognized mediaType {} in manifest file".format(image_mf["mediaType"]))
 
     image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
-    image_config = _download(rctx, image_mf["config"]["digest"], image_config_file)
+    _download(rctx, image_mf["config"]["digest"], image_config_file)
+
+    # FIXME: hardcoding this to fix CI, but where does the value come from?
+    index_media_type = "application/vnd.oci.image.index.v1+json"
     tars = []
     for layer in image_mf["layers"]:
         hash = _trim_hash_algorithm(layer["digest"])
@@ -184,6 +187,7 @@ def _oci_pull_impl(rctx):
         index_mf = """\
 {
    "schemaVersion": 2,
+   "mediaType": "%s",
    "manifests": [
       {
          "mediaType": "%s",
@@ -195,11 +199,12 @@ def _oci_pull_impl(rctx):
          }
       }
    ]
-}""" % (image_mf["mediaType"], image_mf_len, image_digest, arch, os)
+}""" % (index_media_type, image_mf["mediaType"], image_mf_len, image_digest, arch, os)
     else:
         index_mf = """\
 {
    "schemaVersion": 2,
+   "mediaType": "%s",
    "manifests": [
       {
          "mediaType": "%s",
@@ -207,7 +212,7 @@ def _oci_pull_impl(rctx):
          "digest": "%s"
       }
    ]
-}""" % (image_mf["mediaType"], image_mf_len, image_digest)
+}""" % (index_media_type, image_mf["mediaType"], image_mf_len, image_digest)
 
     rctx.file("BUILD.bazel", content = _build_file.format(
         name = rctx.attr.name,
