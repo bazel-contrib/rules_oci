@@ -12,19 +12,14 @@ CRANE_BUILD_TMPL = """\
 load("@rules_oci//oci:toolchain.bzl", "registry_toolchain")
 load("@rules_oci//oci:toolchain.bzl", "crane_toolchain")
 
-CRANE=select({
-    "@bazel_tools//src/conditions:host_windows": "crane.exe",
-    "//conditions:default": "crane",
-})
-
 crane_toolchain(
     name = "crane_toolchain", 
-    crane = CRANE,
+    crane = "{binary}"
 )
 
 registry_toolchain(
     name = "registry_toolchain", 
-    registry = CRANE,
+    registry = "{binary}",
     launcher = "launcher.sh"
 )
 """
@@ -38,14 +33,18 @@ def _crane_repo_impl(repository_ctx):
         url = url,
         integrity = CRANE_VERSIONS[repository_ctx.attr.crane_version][repository_ctx.attr.platform],
     )
+    binary = "crane.exe" if repository_ctx.attr.platform.startswith("windows_") else "crane"
     repository_ctx.template(
         "launcher.sh",
         repository_ctx.attr._launcher_tpl,
         substitutions = {
-            "{{CRANE}}": "crane.exe" if repository_ctx.attr.platform.startswith("windows_") else "crane",
+            "{{CRANE}}": binary,
         },
     )
-    repository_ctx.file("BUILD.bazel", CRANE_BUILD_TMPL)
+    repository_ctx.file(
+        "BUILD.bazel",
+        CRANE_BUILD_TMPL.format(binary = binary),
+    )
 
 crane_repositories = repository_rule(
     _crane_repo_impl,
