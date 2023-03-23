@@ -29,14 +29,10 @@ diff_test(
     file1 = "java17",
     # This one is declared with an oci_pull rule in /WORKSPACE
     file2 = "@distroless_java",
-    # TODO: https://github.com/bazel-contrib/rules_oci/issues/108
-    tags = ["manual"],
 )
 
 diff_test(
     name = "test_static",
     file1 = "static",
     file2 = "@distroless_static",
-    # TODO: https://github.com/bazel-contrib/rules_oci/issues/108
-    tags = ["manual"],
 )

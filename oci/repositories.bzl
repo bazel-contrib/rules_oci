@@ -25,15 +25,16 @@ registry_toolchain(
 """
 
 def _crane_repo_impl(repository_ctx):
+    platform = repository_ctx.attr.platform.replace("amd64", "x86_64")
     url = "https://github.com/google/go-containerregistry/releases/download/{version}/go-containerregistry_{platform}.tar.gz".format(
         version = repository_ctx.attr.crane_version,
-        platform = repository_ctx.attr.platform[:1].upper() + repository_ctx.attr.platform[1:],
+        platform = platform[:1].upper() + platform[1:],
     )
     repository_ctx.download_and_extract(
         url = url,
-        integrity = CRANE_VERSIONS[repository_ctx.attr.crane_version][repository_ctx.attr.platform],
+        integrity = CRANE_VERSIONS[repository_ctx.attr.crane_version][platform],
     )
-    binary = "crane.exe" if repository_ctx.attr.platform.startswith("windows_") else "crane"
+    binary = "crane.exe" if platform.startswith("windows_") else "crane"
     repository_ctx.template(
         "launcher.sh",
         repository_ctx.attr._launcher_tpl,
@@ -67,7 +68,7 @@ registry_toolchain(
 """
 
 def _zot_repo_impl(repository_ctx):
-    platform = repository_ctx.attr.platform.replace("x86_64", "amd64").replace("_", "-")
+    platform = repository_ctx.attr.platform.replace("_", "-")
     url = "https://github.com/project-zot/zot/releases/download/{version}/zot-{platform}".format(
         version = repository_ctx.attr.zot_version,
         platform = platform,
@@ -101,7 +102,7 @@ structure_test_toolchain(
 """
 
 def _stucture_test_repo_impl(repository_ctx):
-    platform = repository_ctx.attr.platform.replace("x86_64", "amd64").replace("_", "-")
+    platform = repository_ctx.attr.platform.replace("_", "-")
 
     # There is no arm64 version of structure test binary.
     # TODO: fix this upstream asking distroless people
