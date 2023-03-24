@@ -23,7 +23,7 @@ Base name for generated repositories, allowing more than one set of toolchains t
 Overriding the default is only permitted in the root module.
 """, default = "oci"),
     "crane_version": attr.string(doc = "Explicit version of crane.", mandatory = True),
-    "zot_version": attr.string(doc = "Explicit version of zot.", mandatory = True),
+    "zot_version": attr.string(doc = "Explicit version of zot. If not supplied, then only crane is used."),
 })
 
 def _oci_extension(module_ctx):
