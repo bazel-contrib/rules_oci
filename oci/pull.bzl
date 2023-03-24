@@ -292,7 +292,7 @@ copy_to_directory(
 )
 
 copy_to_directory(
-    name = "{name}",
+    name = "{target_name}",
     out = "layout",
     include_external_repositories = ["*"],
     srcs = [
@@ -381,7 +381,7 @@ def _oci_pull_impl(rctx):
 }""" % (index_media_type, image_mf["mediaType"], image_mf_len, image_digest)
 
     rctx.file("BUILD.bazel", content = _build_file.format(
-        name = rctx.attr.name,
+        target_name = rctx.attr.target_name,
         tars = tars,
         index_content = index_mf,
         manifest_file = image_mf_file,
@@ -394,6 +394,7 @@ oci_pull_rule = repository_rule(
         "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
         "identifier": attr.string(doc = "The digest or tag of the manifest file", mandatory = True),
         "platform": attr.string(doc = "platform in `os/arch` format, for multi-arch images"),
+        "target_name": attr.string(doc = "Name given for the image target, e.g. 'image'", mandatory = True),
         "toolchain_name": attr.string(default = "oci", doc = "Value of name attribute to the oci_register_toolchains call in the workspace."),
     },
     environ = [
@@ -409,7 +410,7 @@ oci_pull_rule = repository_rule(
 
 _alias_target = """\
 alias(
-    name = "{name}",
+    name = "{target_name}",
     actual = select(
         {platform_map}
     ),
@@ -419,7 +420,7 @@ alias(
 
 def _oci_alias_impl(rctx):
     rctx.file("BUILD.bazel", content = _alias_target.format(
-        name = rctx.attr.name,
+        target_name = rctx.attr.target_name,
         platform_map = {str(k): v for k, v in rctx.attr.platforms.items()},
     ))
 
@@ -427,6 +428,7 @@ oci_alias = repository_rule(
     implementation = _oci_alias_impl,
     attrs = {
         "platforms": attr.label_keyed_string_dict(),
+        "target_name": attr.string(),
     },
 )
 
@@ -571,17 +573,20 @@ bazel run @{}_unpinned//:pin
                 image = image,
                 identifier = digest or tag,
                 platform = plat,
+                target_name = plat_name,
                 toolchain_name = toolchain_name,
             )
             select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
         oci_alias(
             name = name,
             platforms = select_map,
+            target_name = name,
         )
     else:
         oci_pull_rule(
             name = name,
             image = image,
             identifier = digest or tag,
+            target_name = name,
             toolchain_name = toolchain_name,
         )
