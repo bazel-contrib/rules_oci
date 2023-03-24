@@ -235,7 +235,6 @@ def _download_manifest(rctx, identifier, output):
     _download(rctx, identifier, output, "manifests")
     bytes = rctx.read(output)
     manifest = json.decode(bytes)
-
     if manifest["schemaVersion"] == 1:
         # buildifier: disable=print
         print("""
@@ -247,11 +246,11 @@ See https://github.com/bazelbuild/bazel/issues/17829 for the context.
 
         result = rctx.execute([crane, "manifest", "{}{}{}".format(rctx.attr.image, tag_or_digest, identifier), "--platform=all"])
 
+        # overwrite the file with new manifest downloaded through crane
+        rctx.file(output, result.stdout)
+
         bytes = result.stdout
         manifest = json.decode(bytes)
-
-        # overwrite the file with new manifest downloaded through crane
-        rctx.file(output, bytes)
 
     return manifest, len(bytes)
 
@@ -487,7 +486,7 @@ echo ")"
 
 def _pin_tag_impl(rctx):
     """Download the tag and create a repository that can produce pinning instructions"""
-    _download(rctx, rctx.attr.tag, "manifest_list.json", "manifests")
+    _download_manifest(rctx, rctx.attr.tag, "manifest_list.json")
     result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
     if result.return_code:
         msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
@@ -507,6 +506,7 @@ pin_tag = repository_rule(
     attrs = {
         "image": attr.string(doc = "The name of the image we are fetching, e.g. `gcr.io/distroless/static`", mandatory = True),
         "tag": attr.string(doc = "The tag being used, e.g. `latest`", mandatory = True),
+        "toolchain_name": attr.string(default = "oci", doc = "Value of name attribute to the oci_register_toolchains call in the workspace."),
     },
 )
 
@@ -548,7 +548,7 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
         fail("One of 'digest' or 'tag' must be set")
 
     if tag and reproducible:
-        pin_tag(name = name + "_unpinned", image = image, tag = tag)
+        pin_tag(name = name + "_unpinned", image = image, tag = tag, toolchain_name = toolchain_name)
 
         # Print a command - in the future we should print a buildozer command or
         # buildifier: disable=print
