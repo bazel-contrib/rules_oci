@@ -86,7 +86,7 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 ## pin_tag
 
 <pre>
-pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>)
+pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>, <a href="#pin_tag-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -100,6 +100,7 @@ pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a
 | <a id="pin_tag-image"></a>image |  The name of the image we are fetching, e.g. <code>gcr.io/distroless/static</code>   | String | required |  |
 | <a id="pin_tag-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
 | <a id="pin_tag-tag"></a>tag |  The tag being used, e.g. <code>latest</code>   | String | required |  |
+| <a id="pin_tag-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
 
 
 <a id="#oci_pull"></a>
