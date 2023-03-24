@@ -37,11 +37,155 @@ oci_image(
 """
 
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION")
+load("@aspect_bazel_lib//lib:base64.bzl", "base64")
+load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
+
+def _strip_host(url):
+    # TODO: a principled way of doing this
+    return url.replace("http://", "").replace("https://", "").replace("/v1/", "")
+
+def _file_exists(rctx, path):
+    result = rctx.execute(["stat", path])
+    return result.return_code == 0
+
+# Path of the auth file is determined by the order described here;
+# https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
+def _get_auth_file_path(rctx):
+    # this is the standard path where registry credentials are stored
+    config_path = "{}/.docker/config.json".format(rctx.os.environ["HOME"])
+
+    # set config path to DOCKER_CONFIG env if present
+    if "DOCKER_CONFIG" in rctx.os.environ:
+        config_path = rctx.os.environ["DOCKER_CONFIG"]
+
+    if _file_exists(rctx, config_path):
+        return config_path
+
+    # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
+    XDG_RUNTIME_DIR = "{}/.config".format(rctx.os.environ["HOME"])
+    if "XDG_RUNTIME_DIR" in rctx.os.environ:
+        XDG_RUNTIME_DIR = rctx.os.environ["XDG_RUNTIME_DIR"]
+
+    config_path = "{}/containers/auth.json".format(XDG_RUNTIME_DIR)
+
+    # podman support overriding the standard path for the auth file via this special environment variable.
+    # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
+    if "REGISTRY_AUTH_FILE" in rctx.os.environ:
+        config_path = rctx.os.environ["REGISTRY_AUTH_FILE"]
+
+    if _file_exists(rctx, config_path):
+        return config_path
+
+    return None
+
+def _auth_anonymous(rctx, registry, repository, identifier):
+    """A function that performs anonymous auth for docker registry.
+
+    Args:
+        rctx: repository context
+        registry: registry url
+        repository: image repository
+        identifier: tag or digest
+
+    Returns:
+        A dict for rctx.download#auth
+    """
+    pattern = {}
+    if registry == "index.docker.io":
+        scope = "repository:{}:pull".format(repository)
+        rctx.download(
+            url = ["https://auth.docker.io/token?scope={}&service=registry.docker.io".format(scope)],
+            output = "auth_anonymous.json",
+        )
+        auth_raw = rctx.read("auth_anonymous.json")
+        auth = json.decode(auth_raw)
+        pattern = {
+            "type": "pattern",
+            "pattern": "Bearer <password>",
+            "password": auth["token"],
+        }
+
+    return pattern
+
+def _auth_basic(rctx, registry, repository, identifier):
+    """A function that performs basic auth using docker/config.json
+
+    Args:
+        rctx: repository context
+        registry: registry url
+        repository: image repository
+        identifier: tag or digest
+
+    Returns:
+        A dict for rctx.download#auth
+    """
+
+    config_path = _get_auth_file_path(rctx)
+
+    if not config_path:
+        # buildifier: disable=print
+        print("""
+WARNING: Could not find the `$HOME/.docker/config.json` and `$XDG_RUNTIME_DIR/containers/auth.json` file.
+
+Running one of `podman login`, `docker login`, `crane login` may help.
+        """)
+        return _auth_anonymous(rctx, registry, repository, identifier)
+
+    config_raw = rctx.read(config_path)
+    config = json.decode(config_raw)
+
+    pattern = {}
+
+    for host_raw in config["auths"]:
+        host = _strip_host(host_raw)
+        if host == registry:
+            raw_auth = config["auths"][host_raw]["auth"]
+            (login, password) = base64.decode(raw_auth).split(":")
+            pattern = {
+                "type": "basic",
+                "login": login,
+                "password": password,
+            }
+
+            # Probably other registries send a WWW-Authenticate header too. Unfortunately bazel downloader
+            # only tells us about the http body.
+            if registry == "index.docker.io":
+                scope = "repository:{}:pull".format(repository)
+                auth_url = "https://auth.docker.io/token?scope={}&service=registry.docker.io".format(scope)
+                rctx.download(
+                    url = [auth_url],
+                    output = "auth.json",
+                    auth = {auth_url: pattern},
+                )
+                auth_raw = rctx.read("auth.json")
+                auth = json.decode(auth_raw)
+                pattern = {
+                    "type": "pattern",
+                    "pattern": "Bearer <password>",
+                    "password": auth["token"],
+                }
+    return pattern
 
 # OCI Image Media Types
 # Spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
 _MANIFEST_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 _MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
+
+def _parse_reference(reference):
+    firstslash = reference.find("/")
+    registry = reference[:firstslash]
+    repository = reference[firstslash + 1:]
+    return registry, repository
+
+def _is_tag(str):
+    return str.find(":") == -1
+
+def _trim_hash_algorithm(identifier):
+    "Optionally remove the sha256: prefix from identifier, if present"
+    parts = identifier.split(":", 1)
+    if len(parts) != 2:
+        return identifier
+    return parts[1]
 
 def _download(rctx, identifier, output, resource = "blobs"):
     "Use the Bazel Downloader to fetch from the remote registry"
@@ -49,12 +193,15 @@ def _download(rctx, identifier, output, resource = "blobs"):
     if resource != "blobs" and resource != "manifests":
         fail("resource must be blobs or manifests")
 
+    registry, repository = _parse_reference(rctx.attr.image)
+
+    auth = _auth_basic(rctx, registry, repository, identifier)
+
     # Construct the URL to fetch from remote, see
     # https://github.com/google/go-containerregistry/blob/62f183e54939eabb8e80ad3dbc787d7e68e68a43/pkg/v1/remote/descriptor.go#L234
-    firstslash = rctx.attr.image.find("/")
     registry_url = "https://{registry}/v2/{repository}/{resource}/{identifier}".format(
-        registry = rctx.attr.image[:firstslash],
-        repository = rctx.attr.image[firstslash + 1:],
+        registry = registry,
+        repository = repository,
         resource = resource,
         identifier = identifier,
     )
@@ -65,6 +212,9 @@ def _download(rctx, identifier, output, resource = "blobs"):
             output = output,
             sha256 = identifier[len("sha256:"):],
             url = registry_url,
+            auth = {
+                registry_url: auth,
+            },
         )
     else:
         # buildifier: disable=print
@@ -73,13 +223,36 @@ WARNING: fetching from %s without an integrity hash. The result will not be cach
         rctx.download(
             output = output,
             url = registry_url,
+            auth = {
+                registry_url: auth,
+            },
         )
 
-    if resource == "manifests":
-        bytes = rctx.read(output)
-        return json.decode(bytes), len(bytes)
-    else:
-        return None
+def _crane_label(rctx):
+    return Label("@{}_crane_{}//:crane".format(rctx.attr.toolchain_name, repo_utils.platform(rctx)))
+
+def _download_manifest(rctx, identifier, output):
+    _download(rctx, identifier, output, "manifests")
+    bytes = rctx.read(output)
+    manifest = json.decode(bytes)
+    if manifest["schemaVersion"] == 1:
+        # buildifier: disable=print
+        print("""
+WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set. 
+Falling back to using `crane manifest`. The result will not be cached. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
+""")
+        crane = _crane_label(rctx)
+        tag_or_digest = ":" if _is_tag(identifier) else "@"
+
+        result = rctx.execute([crane, "manifest", "{}{}{}".format(rctx.attr.image, tag_or_digest, identifier), "--platform=all"])
+
+        # overwrite the file with new manifest downloaded through crane
+        rctx.file(output, result.stdout)
+
+        bytes = result.stdout
+        manifest = json.decode(bytes)
+
+    return manifest, len(bytes)
 
 _build_file = """\
 "Generated by oci_pull"
@@ -130,13 +303,6 @@ copy_to_directory(
 )
 """
 
-def _trim_hash_algorithm(identifier):
-    "Optionally remove the sha256: prefix from identifier, if present"
-    parts = identifier.split(":", 1)
-    if len(parts) != 2:
-        return identifier
-    return parts[1]
-
 def _find_platform_manifest(rctx, image_mf):
     for mf in image_mf["manifests"]:
         plat = "{}/{}".format(mf["platform"]["os"], mf["platform"]["architecture"])
@@ -146,7 +312,7 @@ def _find_platform_manifest(rctx, image_mf):
 
 def _oci_pull_impl(rctx):
     mf_file = _trim_hash_algorithm(rctx.attr.identifier)
-    mf, mf_len = _download(rctx, rctx.attr.identifier, mf_file, resource = "manifests")
+    mf, mf_len = _download_manifest(rctx, rctx.attr.identifier, mf_file)
 
     if mf["mediaType"] == _MANIFEST_TYPE:
         if rctx.attr.platform:
@@ -162,9 +328,9 @@ def _oci_pull_impl(rctx):
         matching_mf = _find_platform_manifest(rctx, mf)
         image_digest = matching_mf["digest"]
         image_mf_file = _trim_hash_algorithm(image_digest)
-        image_mf, image_mf_len = _download(rctx, image_digest, image_mf_file, resource = "manifests")
+        image_mf, image_mf_len = _download_manifest(rctx, image_digest, image_mf_file)
     else:
-        fail("Unrecognized mediaType {} in manifest file".format(image_mf["mediaType"]))
+        fail("Unrecognized mediaType {} in manifest file".format(mf["mediaType"]))
 
     image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
     _download(rctx, image_mf["config"]["digest"], image_config_file)
@@ -228,7 +394,17 @@ oci_pull_rule = repository_rule(
         "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
         "identifier": attr.string(doc = "The digest or tag of the manifest file", mandatory = True),
         "platform": attr.string(doc = "platform in `os/arch` format, for multi-arch images"),
+        "toolchain_name": attr.string(default = "oci", doc = "Value of name attribute to the oci_register_toolchains call in the workspace."),
     },
+    environ = [
+        # These environment variables allow standard authorization file path to overridden with something else therefore
+        # needs to be tracked as part of the repository cache key so that bazel refetches these when any of the variables change.
+        # while docker uses DOCKER_CONFIG for the override, podman uses REGISTRY_AUTH_FILE environment variable, and
+        # since rules_oci has no preference over the runtime, it has to support both.
+        # See: https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package for go implementation.
+        "DOCKER_CONFIG",
+        "REGISTRY_AUTH_FILE",
+    ],
 )
 
 _alias_target = """\
@@ -310,7 +486,7 @@ echo ")"
 
 def _pin_tag_impl(rctx):
     """Download the tag and create a repository that can produce pinning instructions"""
-    _download(rctx, rctx.attr.tag, "manifest_list.json", "manifests")
+    _download_manifest(rctx, rctx.attr.tag, "manifest_list.json")
     result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
     if result.return_code:
         msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
@@ -330,6 +506,7 @@ pin_tag = repository_rule(
     attrs = {
         "image": attr.string(doc = "The name of the image we are fetching, e.g. `gcr.io/distroless/static`", mandatory = True),
         "tag": attr.string(doc = "The tag being used, e.g. `latest`", mandatory = True),
+        "toolchain_name": attr.string(default = "oci", doc = "Value of name attribute to the oci_register_toolchains call in the workspace."),
     },
 )
 
@@ -344,7 +521,7 @@ _DOCKER_ARCH_TO_BAZEL_CPU = {
     "s390x": "@platforms//cpu:s390x",
 }
 
-def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True):
+def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True, toolchain_name = "oci"):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     Args:
@@ -358,6 +535,7 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
             Exactly one of `tag` and `digest` must be set.
             Since tags are mutable, this is not reproducible, so a warning is printed.
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
+        toolchain_name: Value of name attribute to the oci_register_toolchains call in the workspace.
     """
 
     if digest and tag:
@@ -370,7 +548,7 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
         fail("One of 'digest' or 'tag' must be set")
 
     if tag and reproducible:
-        pin_tag(name = name + "_unpinned", image = image, tag = tag)
+        pin_tag(name = name + "_unpinned", image = image, tag = tag, toolchain_name = toolchain_name)
 
         # Print a command - in the future we should print a buildozer command or
         # buildifier: disable=print
@@ -393,6 +571,7 @@ bazel run @{}_unpinned//:pin
                 image = image,
                 identifier = digest or tag,
                 platform = plat,
+                toolchain_name = toolchain_name,
             )
             select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
         oci_alias(
@@ -404,4 +583,5 @@ bazel run @{}_unpinned//:pin
             name = name,
             image = image,
             identifier = digest or tag,
+            toolchain_name = toolchain_name,
         )

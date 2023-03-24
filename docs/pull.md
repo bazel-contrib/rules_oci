@@ -63,7 +63,7 @@ oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">pla
 ## oci_pull_rule
 
 <pre>
-oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-identifier">identifier</a>, <a href="#oci_pull_rule-image">image</a>, <a href="#oci_pull_rule-platform">platform</a>, <a href="#oci_pull_rule-repo_mapping">repo_mapping</a>)
+oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-identifier">identifier</a>, <a href="#oci_pull_rule-image">image</a>, <a href="#oci_pull_rule-platform">platform</a>, <a href="#oci_pull_rule-repo_mapping">repo_mapping</a>, <a href="#oci_pull_rule-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -78,6 +78,7 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 | <a id="oci_pull_rule-image"></a>image |  The name of the image we are fetching, e.g. gcr.io/distroless/static   | String | required |  |
 | <a id="oci_pull_rule-platform"></a>platform |  platform in <code>os/arch</code> format, for multi-arch images   | String | optional | "" |
 | <a id="oci_pull_rule-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
+| <a id="oci_pull_rule-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
 
 
 <a id="#pin_tag"></a>
@@ -85,7 +86,7 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 ## pin_tag
 
 <pre>
-pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>)
+pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>, <a href="#pin_tag-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -99,6 +100,7 @@ pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a
 | <a id="pin_tag-image"></a>image |  The name of the image we are fetching, e.g. <code>gcr.io/distroless/static</code>   | String | required |  |
 | <a id="pin_tag-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
 | <a id="pin_tag-tag"></a>tag |  The tag being used, e.g. <code>latest</code>   | String | required |  |
+| <a id="pin_tag-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
 
 
 <a id="#oci_pull"></a>
@@ -106,7 +108,7 @@ pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a
 ## oci_pull
 
 <pre>
-oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>, <a href="#oci_pull-reproducible">reproducible</a>)
+oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>, <a href="#oci_pull-reproducible">reproducible</a>, <a href="#oci_pull-toolchain_name">toolchain_name</a>)
 </pre>
 
 Repository macro to fetch image manifest data from a remote docker registry.
@@ -122,5 +124,6 @@ Repository macro to fetch image manifest data from a remote docker registry.
 | <a id="oci_pull-digest"></a>digest |  the digest string, starting with "sha256:", "sha512:", etc. If omitted, instructions for pinning are provided.   |  <code>None</code> |
 | <a id="oci_pull-tag"></a>tag |  a tag to choose an image from the registry. Exactly one of <code>tag</code> and <code>digest</code> must be set. Since tags are mutable, this is not reproducible, so a warning is printed.   |  <code>None</code> |
 | <a id="oci_pull-reproducible"></a>reproducible |  Set to False to silence the warning about reproducibility when using <code>tag</code>.   |  <code>True</code> |
+| <a id="oci_pull-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   |  <code>"oci"</code> |
 
 

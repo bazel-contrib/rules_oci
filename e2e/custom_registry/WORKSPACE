@@ -26,13 +26,15 @@ oci_register_toolchains(
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 oci_pull(
-    name = "distroless_static",
-    digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
-    image = "gcr.io/distroless/static",
+    name = "debian",
+    image = "index.docker.io/library/debian",
     platforms = [
-        "linux/amd64",
         "linux/arm64",
+        "linux/amd64",
     ],
+    # Don't make a debian_unpinned repo and print a warning about the tag
+    reproducible = False,
+    tag = "latest",
 )
 
 ############################################
