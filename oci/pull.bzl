@@ -48,6 +48,8 @@ def _file_exists(rctx, path):
     result = rctx.execute(["stat", path])
     return result.return_code == 0
 
+# Path of the auth file is determined by the order described here;
+# https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
 def _get_auth_file_path(rctx):
     # this is the standard path where registry credentials are stored
     config_path = "{}/.docker/config.json".format(rctx.os.environ["HOME"])
@@ -65,6 +67,11 @@ def _get_auth_file_path(rctx):
         XDG_RUNTIME_DIR = rctx.os.environ["XDG_RUNTIME_DIR"]
 
     config_path = "{}/containers/auth.json".format(XDG_RUNTIME_DIR)
+
+    # podman support overriding the standard path for the auth file via this special environment variable.
+    # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
+    if "REGISTRY_AUTH_FILE" in rctx.os.environ:
+        config_path = rctx.os.environ["REGISTRY_AUTH_FILE"]
 
     if _file_exists(rctx, config_path):
         return config_path
@@ -235,15 +242,17 @@ def _download_manifest(rctx, identifier, output):
 WARNING: fetching from a registry that requires `Docker-Distribution-API-Version` header to be set. Falling back to using `crane manifest`. The result will not be cached.
 See https://github.com/bazelbuild/bazel/issues/17829 for the context.
 """)
+        crane = _crane_label(rctx)
+        tag_or_digest = ":" if _is_tag(identifier) else "@"
 
-    crane = _crane_label(rctx)
+        result = rctx.execute([crane, "manifest", "{}{}{}".format(rctx.attr.image, tag_or_digest, identifier), "--platform=all"])
 
-    tag_or_digest = ":" if _is_tag(identifier) else "@"
+        bytes = result.stdout
+        manifest = json.decode(bytes)
 
-    result = rctx.execute([crane, "manifest", "{}{}{}".format(rctx.attr.image, tag_or_digest, identifier), "--platform=all"])
-    bytes = result.stdout
-    manifest = json.decode(bytes)
-    rctx.file(output, bytes)
+        # overwrite the file with new manifest downloaded through crane
+        rctx.file(output, bytes)
+
     return manifest, len(bytes)
 
 _build_file = """\
@@ -389,8 +398,13 @@ oci_pull_rule = repository_rule(
         "toolchain_name": attr.string(default = "oci", doc = "Value of name attribute to the oci_register_toolchains call in the workspace."),
     },
     environ = [
+        # These environment variables allow standard authorization file path to overridden with something else therefore
+        # needs to be tracked as part of the repository cache key so that bazel refetches these when any of the variables change.
+        # while docker uses DOCKER_CONFIG for the override, podman uses REGISTRY_AUTH_FILE environment variable, and
+        # since rules_oci has no preference over the runtime, it has to support both.
+        # See: https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package for go implementation.
         "DOCKER_CONFIG",
-        "CONTAINER_CONFIG",
+        "REGISTRY_AUTH_FILE",
     ],
 )
 
