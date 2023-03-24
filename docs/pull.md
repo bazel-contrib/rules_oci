@@ -43,7 +43,7 @@ oci_image(
 ## oci_alias
 
 <pre>
-oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">platforms</a>, <a href="#oci_alias-repo_mapping">repo_mapping</a>)
+oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">platforms</a>, <a href="#oci_alias-repo_mapping">repo_mapping</a>, <a href="#oci_alias-target_name">target_name</a>)
 </pre>
 
 
@@ -56,6 +56,7 @@ oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">pla
 | <a id="oci_alias-name"></a>name |  A unique name for this repository.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
 | <a id="oci_alias-platforms"></a>platforms |  -   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: Label -> String</a> | optional | {} |
 | <a id="oci_alias-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
+| <a id="oci_alias-target_name"></a>target_name |  -   | String | optional | "" |
 
 
 <a id="#oci_pull_rule"></a>
@@ -63,7 +64,7 @@ oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">pla
 ## oci_pull_rule
 
 <pre>
-oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-identifier">identifier</a>, <a href="#oci_pull_rule-image">image</a>, <a href="#oci_pull_rule-platform">platform</a>, <a href="#oci_pull_rule-repo_mapping">repo_mapping</a>, <a href="#oci_pull_rule-toolchain_name">toolchain_name</a>)
+oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-identifier">identifier</a>, <a href="#oci_pull_rule-image">image</a>, <a href="#oci_pull_rule-platform">platform</a>, <a href="#oci_pull_rule-repo_mapping">repo_mapping</a>, <a href="#oci_pull_rule-target_name">target_name</a>, <a href="#oci_pull_rule-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -78,6 +79,7 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 | <a id="oci_pull_rule-image"></a>image |  The name of the image we are fetching, e.g. gcr.io/distroless/static   | String | required |  |
 | <a id="oci_pull_rule-platform"></a>platform |  platform in <code>os/arch</code> format, for multi-arch images   | String | optional | "" |
 | <a id="oci_pull_rule-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
+| <a id="oci_pull_rule-target_name"></a>target_name |  Name given for the image target, e.g. 'image'   | String | required |  |
 | <a id="oci_pull_rule-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
 
 
