@@ -238,8 +238,8 @@ def _download_manifest(rctx, identifier, output):
     if manifest["schemaVersion"] == 1:
         # buildifier: disable=print
         print("""
-WARNING: fetching from a registry that requires `Docker-Distribution-API-Version` header to be set. Falling back to using `crane manifest`. The result will not be cached.
-See https://github.com/bazelbuild/bazel/issues/17829 for the context.
+WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set. 
+Falling back to using `crane manifest`. The result will not be cached. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
 """)
         crane = _crane_label(rctx)
         tag_or_digest = ":" if _is_tag(identifier) else "@"
