@@ -5,7 +5,12 @@ load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
     genrule(
         name = "pull_{image}".format(image = image),
         outs = [image],
-        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform=linux/amd64".format(
+        cmd = """\
+$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform=linux/amd64
+mv $@/index.json $@/indexx.json
+$(JQ_BIN) -Sj '.' $@/indexx.json > $@/index.json
+rm $@/indexx.json
+        """.format(
             digest = digest,
             image = image,
         ),
@@ -15,6 +20,7 @@ load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
         tags = ["requires-network"],
         toolchains = [
             "@oci_crane_toolchains//:current_toolchain",
+            "@jq_toolchains//:resolved_toolchain",
         ],
         visibility = ["//visibility:public"],
     )
@@ -34,5 +40,5 @@ diff_test(
 diff_test(
     name = "test_static",
     file1 = "static",
-    file2 = "@distroless_static",
+    file2 = "@distroless_static_linux_amd64",
 )
