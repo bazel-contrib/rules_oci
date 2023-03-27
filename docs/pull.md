@@ -43,7 +43,8 @@ oci_image(
 ## oci_alias
 
 <pre>
-oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">platforms</a>, <a href="#oci_alias-repo_mapping">repo_mapping</a>, <a href="#oci_alias-target_name">target_name</a>)
+oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-identifier">identifier</a>, <a href="#oci_alias-image">image</a>, <a href="#oci_alias-platforms">platforms</a>, <a href="#oci_alias-repo_mapping">repo_mapping</a>, <a href="#oci_alias-reproducible">reproducible</a>, <a href="#oci_alias-single_platform">single_platform</a>,
+          <a href="#oci_alias-target_name">target_name</a>, <a href="#oci_alias-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -54,9 +55,14 @@ oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">pla
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_alias-name"></a>name |  A unique name for this repository.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
+| <a id="oci_alias-identifier"></a>identifier |  -   | String | optional | "" |
+| <a id="oci_alias-image"></a>image |  The name of the image we are fetching, e.g. gcr.io/distroless/static   | String | required |  |
 | <a id="oci_alias-platforms"></a>platforms |  -   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: Label -> String</a> | optional | {} |
 | <a id="oci_alias-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
+| <a id="oci_alias-reproducible"></a>reproducible |  Set to False to silence the warning about reproducibility when using <code>tag</code>   | Boolean | optional | True |
+| <a id="oci_alias-single_platform"></a>single_platform |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_alias-target_name"></a>target_name |  -   | String | optional | "" |
+| <a id="oci_alias-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
 
 
 <a id="#oci_pull_rule"></a>
@@ -81,28 +87,6 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 | <a id="oci_pull_rule-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
 | <a id="oci_pull_rule-target_name"></a>target_name |  Name given for the image target, e.g. 'image'   | String | required |  |
 | <a id="oci_pull_rule-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
-
-
-<a id="#pin_tag"></a>
-
-## pin_tag
-
-<pre>
-pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>, <a href="#pin_tag-toolchain_name">toolchain_name</a>)
-</pre>
-
-
-
-**ATTRIBUTES**
-
-
-| Name  | Description | Type | Mandatory | Default |
-| :------------- | :------------- | :------------- | :------------- | :------------- |
-| <a id="pin_tag-name"></a>name |  A unique name for this repository.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="pin_tag-image"></a>image |  The name of the image we are fetching, e.g. <code>gcr.io/distroless/static</code>   | String | required |  |
-| <a id="pin_tag-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
-| <a id="pin_tag-tag"></a>tag |  The tag being used, e.g. <code>latest</code>   | String | required |  |
-| <a id="pin_tag-toolchain_name"></a>toolchain_name |  Value of name attribute to the oci_register_toolchains call in the workspace.   | String | optional | "oci" |
 
 
 <a id="#oci_pull"></a>

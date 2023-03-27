@@ -36,7 +36,6 @@ oci_image(
 ```
 """
 
-load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION")
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
 
@@ -395,7 +394,7 @@ oci_pull_rule = repository_rule(
     ],
 )
 
-_alias_target = """\
+_MULTI_PLATFORM_IMAGE_ALIAS = """\
 alias(
     name = "{target_name}",
     actual = select(
@@ -405,97 +404,86 @@ alias(
 )
 """
 
+_SINGLE_PLATFORM_IMAGE_ALIAS = """\
+alias(
+    name = "{target_name}",
+    actual = "@{original}",
+    visibility = ["//visibility:public"],
+)
+"""
+
+def _coreutils_label(rctx):
+    return Label("@coreutils_{}//:coreutils".format(repo_utils.platform(rctx)))
+
+def _sha256(rctx, coreutils_label, path):
+    result = rctx.execute([coreutils_label, "hashsum", "--sha256", path])
+    if result.return_code:
+        msg = "hashsum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
+        fail(msg)
+    return result.stdout.split(" ", 1)[0]
+
 def _oci_alias_impl(rctx):
-    rctx.file("BUILD.bazel", content = _alias_target.format(
-        target_name = rctx.attr.target_name,
-        platform_map = {str(k): v for k, v in rctx.attr.platforms.items()},
-    ))
+    if rctx.attr.platforms and rctx.attr.single_platform:
+        fail("Only one of 'platforms' or 'single_platform' may be set")
+    if not rctx.attr.platforms and not rctx.attr.single_platform:
+        fail("One of 'platforms' or 'single_platform' must be set")
+
+    if _is_tag(rctx.attr.identifier) and rctx.attr.reproducible:
+        manifest, _ = _download_manifest(rctx, rctx.attr.identifier, "mf.json")
+        coreutils = _coreutils_label(rctx)
+        digest = _sha256(rctx, coreutils, "mf.json")
+
+        optional_platforms = ""
+
+        if manifest["mediaType"] == _MANIFEST_LIST_TYPE:
+            platforms = []
+            for submanifest in manifest["manifests"]:
+                parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
+
+                # TODO: https://github.com/bazel-contrib/rules_oci/issues/122 variant, os.features, os.version etc.
+                # if "variant" in submanifest["platform"]:
+                #     parts.append(submanifest["platform"]["variant"])
+                platforms.append('"{}"'.format("/".join(parts)))
+            optional_platforms = "'add platforms {}'".format(" ".join(platforms))
+
+        # buildifier: disable=print
+        print("""
+WARNING: for reproducible builds, a digest is recommended.
+Either set 'reproducible = False' to silence this warning,
+or run the following command to change oci_pull to use a digest:
+
+buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} WORKSPACE:{name}
+    """.format(
+            name = rctx.attr.name,
+            digest = digest,
+            optional_platforms = optional_platforms,
+        ))
+
+    build = ""
+
+    if rctx.attr.platforms:
+        build = _MULTI_PLATFORM_IMAGE_ALIAS.format(
+            target_name = rctx.attr.target_name,
+            platform_map = {str(k): v for k, v in rctx.attr.platforms.items()},
+        )
+    else:
+        build = _SINGLE_PLATFORM_IMAGE_ALIAS.format(
+            target_name = rctx.attr.target_name,
+            original = rctx.attr.single_platform.name,
+        )
+
+    rctx.file("BUILD.bazel", content = build)
 
 oci_alias = repository_rule(
     implementation = _oci_alias_impl,
     attrs = {
         "platforms": attr.label_keyed_string_dict(),
+        "single_platform": attr.label(),
+        "identifier": attr.string(),
+        "image": attr.string(doc = "The name of the image we are fetching, e.g. gcr.io/distroless/static", mandatory = True),
         "target_name": attr.string(),
-    },
-)
-
-_latest_build = """\
-load("@aspect_bazel_lib//lib:jq.bzl", "jq")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-
-jq(
-    name = "platforms",
-    srcs = ["manifest_list.json"],
-    filter = "[(.manifests // [])[] | .platform | .os + \\"/\\" + .architecture]",
-    # Print without newlines because it's too hard to indent that to fit under the generated
-    # starlark code below.
-    args = ["--compact-output"],
-)
-
-jq(
-    name = "mediaType",
-    srcs = ["manifest_list.json"],
-    filter = ".mediaType",
-    args = ["--raw-output"],
-)
-
-sh_binary(
-    name = "pin",
-    srcs = ["pin.sh"],
-    data = [
-        ":mediaType",
-        ":platforms",
-        "@bazel_tools//tools/bash/runfiles",
-    ],
-)
-"""
-
-_pin_sh = """\
-#!/usr/bin/env bash
-{rlocation}
-
-mediaType="$(cat $(rlocation {name}/mediaType.json))"
-echo -e "Replace your '{reponame}' declaration with the following:\n"
-
-cat <<EOF
-oci_pull(
-    name = "{reponame}",
-    digest = "sha256:{digest}",
-    image = "{image}",
-EOF
-
-[[ $mediaType == "{manifestListType}" ]] && cat <<EOF
-    # Listing of all platforms that were found in the image manifest.
-    # You may remove any that you don't use.
-    platforms = $(cat $(rlocation {name}/platforms.json)),
-EOF
-
-echo ")"
-"""
-
-def _pin_tag_impl(rctx):
-    """Download the tag and create a repository that can produce pinning instructions"""
-    _download_manifest(rctx, rctx.attr.tag, "manifest_list.json")
-    result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
-    if result.return_code:
-        msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
-        fail(msg)
-    rctx.file("pin.sh", _pin_sh.format(
-        name = rctx.attr.name,
-        reponame = rctx.attr.name.replace("_unpinned", ""),
-        digest = result.stdout.split(" ", 1)[0],
-        image = rctx.attr.image,
-        rlocation = BASH_RLOCATION_FUNCTION,
-        manifestListType = _MANIFEST_LIST_TYPE,
-    ), executable = True)
-    rctx.file("BUILD.bazel", _latest_build)
-
-pin_tag = repository_rule(
-    _pin_tag_impl,
-    attrs = {
-        "image": attr.string(doc = "The name of the image we are fetching, e.g. `gcr.io/distroless/static`", mandatory = True),
-        "tag": attr.string(doc = "The tag being used, e.g. `latest`", mandatory = True),
         "toolchain_name": attr.string(default = "oci", doc = "Value of name attribute to the oci_register_toolchains call in the workspace."),
+        "reproducible": attr.bool(default = True, doc = "Set to False to silence the warning about reproducibility when using `tag`"),
     },
 )
 
@@ -536,44 +524,40 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
     if not digest and not tag:
         fail("One of 'digest' or 'tag' must be set")
 
-    if tag and reproducible:
-        pin_tag(name = name + "_unpinned", image = image, tag = tag, toolchain_name = toolchain_name)
-
-        # Print a command - in the future we should print a buildozer command or
-        # buildifier: disable=print
-        print("""
-WARNING: for reproducible builds, a digest is recommended.
-Either set 'reproducible = False' to silence this warning,
-or run the following command to change oci_pull to use a digest:
-
-bazel run @{}_unpinned//:pin
-""".format(name))
-        return
+    platform_to_image = None
+    single_platform = None
 
     if platforms:
-        select_map = {}
-        for plat in platforms:
-            plat_name = "_".join([name] + plat.split("/"))
-            os, arch = plat.split("/", 1)
+        platform_to_image = {}
+        for platform in platforms:
+            platform_parts = platform.split("/")
+            platform_name = "_".join([name] + platform_parts)
             oci_pull_rule(
-                name = plat_name,
+                name = platform_name,
                 image = image,
                 identifier = digest or tag,
-                platform = plat,
-                target_name = plat_name,
+                platform = platform,
+                target_name = platform_name,
                 toolchain_name = toolchain_name,
             )
-            select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
-        oci_alias(
-            name = name,
-            platforms = select_map,
-            target_name = name,
-        )
+            platform_to_image[_DOCKER_ARCH_TO_BAZEL_CPU[platform_parts[1]]] = "@" + platform_name
     else:
+        single_platform = "{}_single".format(name)
         oci_pull_rule(
-            name = name,
+            name = single_platform,
             image = image,
             identifier = digest or tag,
-            target_name = name,
+            target_name = single_platform,
             toolchain_name = toolchain_name,
         )
+
+    oci_alias(
+        name = name,
+        platforms = platform_to_image,
+        single_platform = single_platform,
+        identifier = digest or tag,
+        image = image,
+        reproducible = reproducible,
+        toolchain_name = toolchain_name,
+        target_name = name,
+    )

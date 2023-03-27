@@ -32,7 +32,7 @@ oci_pull(
         "linux/arm64",
         "linux/amd64",
     ],
-    # Don't make a debian_unpinned repo and print a warning about the tag
+    # Don't print a warning about the tag
     reproducible = False,
     tag = "latest",
 )

@@ -95,7 +95,7 @@ oci_pull(
     name = "distroless_python",
     image = "gcr.io/distroless/python3",
     platforms = ["linux/amd64"],
-    # Don't make a distroless_python_unpinned repo and print a warning about the tag
+    # Don't print a warning about the tag
     reproducible = False,
     tag = "debug",
 )
