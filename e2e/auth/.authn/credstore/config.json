@@ -1,0 +1,6 @@
+{
+  "auths": {
+    "localhost:1447": {}
+  },
+  "credsStore": "oci"
+}

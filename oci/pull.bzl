@@ -59,33 +59,36 @@ _www_authenticate = {
     },
 }
 
-def _auth_basic(rctx, registry, repository, identifier):
-    """A function that performs basic auth using docker/config.json
+def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
+    executable = "{}.sh".format(helper_name)
+    rctx.file(
+        executable,
+        content = """\
+#!/usr/bin/env bash
+exec "docker-credential-{}" get <<< "$1"
+        """.format(helper_name),
+    )
+    result = rctx.execute([rctx.path(executable), raw_host])
+    if result.return_code:
+        fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
 
-    Args:
-        rctx: repository context
-        registry: registry url
-        repository: image repository
-        identifier: tag or digest
+    response = json.decode(result.stdout)
 
-    Returns:
-        A dict for rctx.download#auth
-    """
+    if response["Username"] == "<token>":
+        fail("Identity tokens are not supported at the moment. See: https://github.com/bazel-contrib/rules_oci/issues/129")
+    return {
+        "type": "basic",
+        "login": response["Username"],
+        "password": response["Secret"],
+    }
+
+def _get_token(rctx, state, registry, repository, identifier):
     pattern = {}
 
-    config = json.decode(rctx.read(rctx.attr.config))
+    # if there's a config found and parsed then try to find the credentials for the registry
+    if state["config"]:
+        pattern = _get_auth(rctx, state, registry)
 
-    if "auths" in config:
-        for host_raw in config["auths"]:
-            host = _strip_host(host_raw)
-            if host == registry:
-                raw_auth = config["auths"][host_raw]["auth"]
-                (login, password) = base64.decode(raw_auth).split(":")
-                pattern = {
-                    "type": "basic",
-                    "login": login,
-                    "password": password,
-                }
 
     if registry in _www_authenticate:
         www_authenticate = _www_authenticate[registry]
@@ -94,9 +97,12 @@ def _auth_basic(rctx, registry, repository, identifier):
             service = www_authenticate["service"],
             scope = www_authenticate["scope"].format(repository = repository),
         )
+        if url in state["token"]:
+            return state["token"][url]
         rctx.download(
             url = [url],
             output = "www-authenticate.json",
+            auth = {url: pattern},
         )
         auth_raw = rctx.read("www-authenticate.json")
         auth = json.decode(auth_raw)
@@ -105,8 +111,50 @@ def _auth_basic(rctx, registry, repository, identifier):
             "pattern": "Bearer <password>",
             "password": auth["token"],
         }
+        state["token"][url] = pattern
 
     return pattern
+
+def _get_auth(rctx, state, registry):
+    # if we have a cached auth for this registry then just return it.
+    if registry in state["auth"]:
+        return state["auth"][registry]
+
+    pattern = {}
+    config = state["config"]
+
+    if "auths" in config:
+        for host_raw in config["auths"]:
+            host = _strip_host(host_raw)
+            if host == registry:
+                auth_val = config["auths"][host_raw]
+                # zero keys indicates that credentials are stored in credsStore helper.
+                if len(auth_val.keys()) == 0:
+                    pattern = _fetch_auth_via_creds_helper(rctx, host_raw, config["credsStore"])
+
+                # base64 encoded plaintext username and password
+                elif "auth" in auth_val:
+                    raw_auth = auth_val["auth"]
+                    (login, password) = base64.decode(raw_auth).split(":")
+                    pattern = {
+                        "type": "basic",
+                        "login": login,
+                        "password": password,
+                    }
+
+                # plain text username and password
+                elif "username" in auth_val and "password" in auth_val:
+                    pattern = {
+                        "type": "basic",
+                        "login": auth_val["username"],
+                        "password": auth_val["password"],
+                    }
+
+                # cache the result so that we don't do this again unnecessarily.
+                state["auth"][registry] = pattern
+
+    return pattern
+
 
 # Supported media types
 # * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
@@ -133,6 +181,7 @@ def _parse_reference(reference):
     firstslash = reference.find("/")
     registry = reference[:firstslash]
     repository = reference[firstslash + 1:]
+    
 
     return registry, repository, protocol
 
@@ -146,7 +195,8 @@ def _trim_hash_algorithm(identifier):
         return identifier
     return parts[1]
 
-def _download(rctx, identifier, output, resource = "blobs", download_fn = download.bazel, headers = {}):
+
+def _download(rctx, state, identifier, output, resource):
     "Use the Bazel Downloader to fetch from the remote registry"
 
     if resource != "blobs" and resource != "manifests":
@@ -154,7 +204,7 @@ def _download(rctx, identifier, output, resource = "blobs", download_fn = downlo
 
     registry, repository, protocol = _parse_reference(rctx.attr.image)
 
-    auth = _auth_basic(rctx, registry, repository, identifier)
+    auth = _get_token(rctx, state, registry, repository, identifier)
 
     # Construct the URL to fetch from remote, see
     # https://github.com/google/go-containerregistry/blob/62f183e54939eabb8e80ad3dbc787d7e68e68a43/pkg/v1/remote/descriptor.go#L234
@@ -218,6 +268,44 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
 
     return manifest, len(bytes)
 
+def _create_downloader(rctx):
+    state = {
+        "config": json.decode(rctx.read(rctx.attr.config)),
+        "auth": {},
+        "token": {},
+    }
+    return struct(
+        download_blob = lambda identifier, output: _download(rctx, state, identifier, output, "blobs"),
+        download_manifest = lambda identifier, output: _download_manifest(rctx, state, identifier, output),
+    )
+
+# OCI Image Media Types
+# Spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
+_MANIFEST_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
+_MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
+
+def _parse_reference(reference):
+    protocol = "https"
+    protocol_idx = reference.find("://")
+    if protocol_idx != -1:
+        protocol = reference[:protocol_idx]
+        reference = reference[protocol_idx + 3:]
+    firstslash = reference.find("/")
+    registry = reference[:firstslash]
+    repository = reference[firstslash + 1:]
+
+    return registry, repository, protocol
+
+def _is_tag(str):
+    return str.find(":") == -1
+
+def _trim_hash_algorithm(identifier):
+    "Optionally remove the sha256: prefix from identifier, if present"
+    parts = identifier.split(":", 1)
+    if len(parts) != 2:
+        return identifier
+    return parts[1]
+
 _build_file = """\
 "Generated by oci_pull"
 
@@ -275,8 +363,10 @@ def _find_platform_manifest(rctx, image_mf):
     fail("No matching manifest found in image {} for platform {}".format(rctx.attr.image, rctx.attr.platform))
 
 def _oci_pull_impl(rctx):
+    downloader = _create_downloader(rctx)
+
     mf_file = _trim_hash_algorithm(rctx.attr.identifier)
-    mf, mf_len = _download_manifest(rctx, rctx.attr.identifier, mf_file)
+    mf, mf_len = downloader.download_manifest(rctx.attr.identifier, mf_file)
 
     if mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
@@ -292,19 +382,19 @@ def _oci_pull_impl(rctx):
         matching_mf = _find_platform_manifest(rctx, mf)
         image_digest = matching_mf["digest"]
         image_mf_file = _trim_hash_algorithm(image_digest)
-        image_mf, image_mf_len = _download_manifest(rctx, image_digest, image_mf_file)
+        image_mf, image_mf_len = downloader.download_manifest(image_digest, image_mf_file)
     else:
         fail("Unrecognized mediaType {} in manifest file".format(mf["mediaType"]))
 
     image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
-    _download(rctx, image_mf["config"]["digest"], image_config_file)
+    downloader.download_blob(image_mf["config"]["digest"], image_config_file)
 
     tars = []
     for layer in image_mf["layers"]:
         hash = _trim_hash_algorithm(layer["digest"])
 
         # TODO: we should avoid eager-download of the layers ("shallow pull")
-        _download(rctx, layer["digest"], hash)
+        downloader.download_blob(layer["digest"], hash)
         tars.append(hash)
 
     # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
@@ -442,7 +532,8 @@ echo ")"
 
 def _pin_tag_impl(rctx):
     """Download the tag and create a repository that can produce pinning instructions"""
-    _download_manifest(rctx, rctx.attr.tag, "manifest_list.json")
+    downloader = _create_downloader(rctx)
+    downloader.download_manifest(rctx.attr.tag, "manifest_list.json")
     result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
     if result.return_code:
         msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)

@@ -1,0 +1,26 @@
+"Bazel dependencies"
+bazel_dep(name = "rules_oci", dev_dependency = True, version = "0.0.0")
+bazel_dep(name = "platforms", version = "0.0.5")
+
+local_path_override(
+    module_name = "rules_oci",
+    path = "../..",
+)
+
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+oci.pull(
+    name = "distroless_static",
+    digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+    image = "http://localhost:1447/distroless/static",
+    platforms = [
+        "linux/amd64",
+        "linux/arm",
+        "linux/arm64",
+        "linux/ppc64le",
+        "linux/s390x",
+    ],
+)
+
+use_repo(oci, "distroless_static")
