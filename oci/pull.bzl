@@ -172,10 +172,18 @@ _MANIFEST_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
 _MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
 
 def _parse_reference(reference):
+    protocol = "https"
+    protocol_idx = reference.find("://")
+    if protocol_idx != -1:
+        protocol = reference[:protocol_idx]
+        reference = reference[protocol_idx + 3:]
+        if protocol != "http" and protocol != "https":
+            fail("`{}` is not an allowed protocol. protocol can be either `http` or `https`".format(protocol))
     firstslash = reference.find("/")
     registry = reference[:firstslash]
     repository = reference[firstslash + 1:]
-    return registry, repository
+
+    return registry, repository, protocol
 
 def _is_tag(str):
     return str.find(":") == -1
@@ -193,13 +201,14 @@ def _download(rctx, identifier, output, resource = "blobs"):
     if resource != "blobs" and resource != "manifests":
         fail("resource must be blobs or manifests")
 
-    registry, repository = _parse_reference(rctx.attr.image)
+    registry, repository, protocol = _parse_reference(rctx.attr.image)
 
     auth = _auth_basic(rctx, registry, repository, identifier)
 
     # Construct the URL to fetch from remote, see
     # https://github.com/google/go-containerregistry/blob/62f183e54939eabb8e80ad3dbc787d7e68e68a43/pkg/v1/remote/descriptor.go#L234
-    registry_url = "https://{registry}/v2/{repository}/{resource}/{identifier}".format(
+    registry_url = "{protocol}://{registry}/v2/{repository}/{resource}/{identifier}".format(
+        protocol = protocol,
         registry = registry,
         repository = repository,
         resource = resource,
@@ -244,7 +253,11 @@ Falling back to using `crane manifest`. The result will not be cached. See https
         crane = _crane_label(rctx)
         tag_or_digest = ":" if _is_tag(identifier) else "@"
 
-        result = rctx.execute([crane, "manifest", "{}{}{}".format(rctx.attr.image, tag_or_digest, identifier), "--platform=all"])
+        registry, repository, protocol = _parse_reference(rctx.attr.image)
+        cmd = [crane, "manifest", "{}/{}{}{}".format(registry, repository, tag_or_digest, identifier), "--platform=all"]
+        if protocol == "http":
+            cmd.append("--insecure")
+        result = rctx.execute(cmd)
 
         # overwrite the file with new manifest downloaded through crane
         rctx.file(output, result.stdout)
