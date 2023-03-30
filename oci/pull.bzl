@@ -412,16 +412,6 @@ alias(
 )
 """
 
-def _coreutils_label(rctx):
-    return Label("@coreutils_{}//:coreutils".format(repo_utils.platform(rctx)))
-
-def _sha256(rctx, coreutils_label, path):
-    result = rctx.execute([coreutils_label, "hashsum", "--sha256", path])
-    if result.return_code:
-        msg = "hashsum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
-        fail(msg)
-    return result.stdout.split(" ", 1)[0]
-
 def _oci_alias_impl(rctx):
     if rctx.attr.platforms and rctx.attr.single_platform:
         fail("Only one of 'platforms' or 'single_platform' may be set")
@@ -430,8 +420,10 @@ def _oci_alias_impl(rctx):
 
     if _is_tag(rctx.attr.identifier) and rctx.attr.reproducible:
         manifest, _ = _download_manifest(rctx, rctx.attr.identifier, "mf.json")
-        coreutils = _coreutils_label(rctx)
-        digest = _sha256(rctx, coreutils, "mf.json")
+        result = rctx.execute(["shasum", "-a", "256", path])
+        if result.return_code:
+            msg = "hashsum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
+            fail(msg)
 
         optional_platforms = ""
 
@@ -455,7 +447,7 @@ or run the following command to change oci_pull to use a digest:
 buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} WORKSPACE:{name}
     """.format(
             name = rctx.attr.name,
-            digest = digest,
+            digest = result.stdout.split(" ", 1)[0],
             optional_platforms = optional_platforms,
         ))
 
