@@ -78,34 +78,20 @@ def _get_auth_file_path(rctx):
 
     return None
 
-def _auth_anonymous(rctx, registry, repository, identifier):
-    """A function that performs anonymous auth for docker registry.
-
-    Args:
-        rctx: repository context
-        registry: registry url
-        repository: image repository
-        identifier: tag or digest
-
-    Returns:
-        A dict for rctx.download#auth
-    """
-    pattern = {}
-    if registry == "index.docker.io":
-        scope = "repository:{}:pull".format(repository)
-        rctx.download(
-            url = ["https://auth.docker.io/token?scope={}&service=registry.docker.io".format(scope)],
-            output = "auth_anonymous.json",
-        )
-        auth_raw = rctx.read("auth_anonymous.json")
-        auth = json.decode(auth_raw)
-        pattern = {
-            "type": "pattern",
-            "pattern": "Bearer <password>",
-            "password": auth["token"],
-        }
-
-    return pattern
+# Unfortunately bazel downloader doesn't let us sniff the WWW-Authenticate header, therefore we need to
+# keep a map of known registries that require us to acquire a temporary token for authentication.
+_www_authenticate = {
+    "index.docker.io": {
+        "realm": "auth.docker.io/token",
+        "scope": "repository:{repository}:pull",
+        "service": "registry.docker.io",
+    },
+    "public.ecr.aws": {
+        "realm": "public.ecr.aws/token",
+        "scope": "repository:{repository}:pull",
+        "service": "public.ecr.aws",
+    },
+}
 
 def _auth_basic(rctx, registry, repository, identifier):
     """A function that performs basic auth using docker/config.json
@@ -119,51 +105,52 @@ def _auth_basic(rctx, registry, repository, identifier):
     Returns:
         A dict for rctx.download#auth
     """
+    pattern = {}
 
     config_path = _get_auth_file_path(rctx)
 
-    if not config_path:
+    if config_path:
+        config_raw = rctx.read(config_path)
+        config = json.decode(config_raw)
+
+        for host_raw in config["auths"]:
+            host = _strip_host(host_raw)
+            if host == registry:
+                raw_auth = config["auths"][host_raw]["auth"]
+                (login, password) = base64.decode(raw_auth).split(":")
+                pattern = {
+                    "type": "basic",
+                    "login": login,
+                    "password": password,
+                }
+    else:
         # buildifier: disable=print
         print("""
 WARNING: Could not find the `$HOME/.docker/config.json` and `$XDG_RUNTIME_DIR/containers/auth.json` file.
 
 Running one of `podman login`, `docker login`, `crane login` may help.
         """)
-        return _auth_anonymous(rctx, registry, repository, identifier)
+        pattern = {}
 
-    config_raw = rctx.read(config_path)
-    config = json.decode(config_raw)
+    if registry in _www_authenticate:
+        www_authenticate = _www_authenticate[registry]
+        url = "https://{realm}?scope={scope}&service={service}".format(
+            realm = www_authenticate["realm"],
+            service = www_authenticate["service"],
+            scope = www_authenticate["scope"].format(repository = repository),
+        )
+        rctx.download(
+            url = [url],
+            output = "www-authenticate.json",
+        )
+        auth_raw = rctx.read("www-authenticate.json")
+        auth = json.decode(auth_raw)
+        pattern = {
+            "type": "pattern",
+            "pattern": "Bearer <password>",
+            "password": auth["token"],
+        }
 
-    pattern = {}
-
-    for host_raw in config["auths"]:
-        host = _strip_host(host_raw)
-        if host == registry:
-            raw_auth = config["auths"][host_raw]["auth"]
-            (login, password) = base64.decode(raw_auth).split(":")
-            pattern = {
-                "type": "basic",
-                "login": login,
-                "password": password,
-            }
-
-            # Probably other registries send a WWW-Authenticate header too. Unfortunately bazel downloader
-            # only tells us about the http body.
-            if registry == "index.docker.io":
-                scope = "repository:{}:pull".format(repository)
-                auth_url = "https://auth.docker.io/token?scope={}&service=registry.docker.io".format(scope)
-                rctx.download(
-                    url = [auth_url],
-                    output = "auth.json",
-                    auth = {auth_url: pattern},
-                )
-                auth_raw = rctx.read("auth.json")
-                auth = json.decode(auth_raw)
-                pattern = {
-                    "type": "pattern",
-                    "pattern": "Bearer <password>",
-                    "password": auth["token"],
-                }
     return pattern
 
 # OCI Image Media Types

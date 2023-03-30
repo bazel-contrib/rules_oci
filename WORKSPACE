@@ -113,3 +113,10 @@ new_local_repository(
     build_file = "//examples/attest_external:BUILD.template",
     path = "examples/attest_external/workspace",
 )
+
+oci_pull(
+    name = "aws_lambda_python",
+    # tag = "3.8"
+    digest = "sha256:46b3b8614b31761b24f56be1bb8c7ba191d9b9b4624bbf7f53ed7ddc696c928b",
+    image = "public.ecr.aws/lambda/python",
+)
