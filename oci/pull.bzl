@@ -420,7 +420,7 @@ def _oci_alias_impl(rctx):
 
     if _is_tag(rctx.attr.identifier) and rctx.attr.reproducible:
         manifest, _ = _download_manifest(rctx, rctx.attr.identifier, "mf.json")
-        result = rctx.execute(["shasum", "-a", "256", path])
+        result = rctx.execute(["shasum", "-a", "256", "mf.json"])
         if result.return_code:
             msg = "hashsum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
             fail(msg)
