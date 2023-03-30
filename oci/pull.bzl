@@ -439,7 +439,7 @@ def _oci_alias_impl(rctx):
             optional_platforms = "'add platforms {}'".format(" ".join(platforms))
 
         # buildifier: disable=print
-        print("""
+        fail("""
 WARNING: for reproducible builds, a digest is recommended.
 Either set 'reproducible = False' to silence this warning,
 or run the following command to change oci_pull to use a digest:
