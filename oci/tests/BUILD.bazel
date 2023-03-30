@@ -1,4 +1,5 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
 
 # Use crane to pull images as a comparison for our oci_pull repository rule
 [
@@ -35,4 +36,12 @@ diff_test(
     name = "test_static",
     file1 = "static",
     file2 = "@distroless_static",
+)
+
+# assert than we don't break fetching these
+build_test(
+    name = "pull_test",
+    targets = [
+        "@aws_lambda_python",
+    ],
 )
