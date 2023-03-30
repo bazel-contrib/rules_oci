@@ -166,10 +166,19 @@ Running one of `podman login`, `docker login`, `crane login` may help.
                 }
     return pattern
 
-# OCI Image Media Types
-# Spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
-_MANIFEST_TYPE = "application/vnd.docker.distribution.manifest.v2+json"
-_MANIFEST_LIST_TYPE = "application/vnd.docker.distribution.manifest.list.v2+json"
+# Supported media types
+# * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
+# * Docker spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
+_SUPPORTED_MEDIA_TYPES = {
+    "index": [
+        "application/vnd.docker.distribution.manifest.list.v2+json",
+        "application/vnd.oci.image.index.v1+json",
+    ],
+    "manifest": [
+        "application/vnd.docker.distribution.manifest.v2+json",
+        "application/vnd.oci.image.manifest.v1+json",
+    ],
+}
 
 def _parse_reference(reference):
     firstslash = reference.find("/")
@@ -238,7 +247,7 @@ def _download_manifest(rctx, identifier, output):
     if manifest["schemaVersion"] == 1:
         # buildifier: disable=print
         print("""
-WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set. 
+WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
 Falling back to using `crane manifest`. The result will not be cached. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
 """)
         crane = _crane_label(rctx)
@@ -314,14 +323,14 @@ def _oci_pull_impl(rctx):
     mf_file = _trim_hash_algorithm(rctx.attr.identifier)
     mf, mf_len = _download_manifest(rctx, rctx.attr.identifier, mf_file)
 
-    if mf["mediaType"] == _MANIFEST_TYPE:
+    if mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
             fail("{} is a single-architecture image, so attribute 'platform' should not be set.".format(rctx.attr.image))
         image_mf_file = mf_file
         image_mf = mf
         image_mf_len = mf_len
         image_digest = rctx.attr.identifier
-    elif mf["mediaType"] == _MANIFEST_LIST_TYPE:
+    elif mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
             fail("{} is a multi-architecture image, so attribute 'platform' is required.".format(rctx.attr.image))
@@ -335,8 +344,6 @@ def _oci_pull_impl(rctx):
     image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
     _download(rctx, image_mf["config"]["digest"], image_config_file)
 
-    # FIXME: hardcoding this to fix CI, but where does the value come from?
-    index_media_type = "application/vnd.oci.image.index.v1+json"
     tars = []
     for layer in image_mf["layers"]:
         hash = _trim_hash_algorithm(layer["digest"])
@@ -353,7 +360,7 @@ def _oci_pull_impl(rctx):
         index_mf = """\
 {
    "schemaVersion": 2,
-   "mediaType": "%s",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
    "manifests": [
       {
          "mediaType": "%s",
@@ -365,12 +372,12 @@ def _oci_pull_impl(rctx):
          }
       }
    ]
-}""" % (index_media_type, image_mf["mediaType"], image_mf_len, image_digest, arch, os)
+}""" % (image_mf["mediaType"], image_mf_len, image_digest, arch, os)
     else:
         index_mf = """\
 {
    "schemaVersion": 2,
-   "mediaType": "%s",
+   "mediaType": "application/vnd.oci.image.index.v1+json",
    "manifests": [
       {
          "mediaType": "%s",
@@ -378,7 +385,7 @@ def _oci_pull_impl(rctx):
          "digest": "%s"
       }
    ]
-}""" % (index_media_type, image_mf["mediaType"], image_mf_len, image_digest)
+}""" % (image_mf["mediaType"], image_mf_len, image_digest)
 
     rctx.file("BUILD.bazel", content = _build_file.format(
         target_name = rctx.attr.target_name,
@@ -499,7 +506,7 @@ def _pin_tag_impl(rctx):
         digest = result.stdout.split(" ", 1)[0],
         image = rctx.attr.image,
         rlocation = BASH_RLOCATION_FUNCTION,
-        manifestListType = _MANIFEST_LIST_TYPE,
+        manifestListType = "application/vnd.oci.image.index.v1+json",
     ), executable = True)
     rctx.file("BUILD.bazel", _latest_build)
 
