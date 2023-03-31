@@ -533,6 +533,13 @@ _DOCKER_ARCH_TO_BAZEL_CPU = {
 def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True, toolchain_name = "oci"):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
+    To use the resulting image, you can use the `@wkspc` shorthand label, for example
+    if `name = "distroless_base"`, then you can just use `base = "@distroless_base"`
+    in rules like `oci_image`.
+
+    > This shorthand syntax is broken on the command-line prior to Bazel 6.2.
+    > See https://github.com/bazelbuild/bazel/issues/4385
+
     Args:
         name: repository with this name is created
         image: the remote image without a tag, such as gcr.io/bazel-public/bazel
