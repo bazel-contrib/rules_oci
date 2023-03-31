@@ -115,6 +115,14 @@ oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>,
 
 Repository macro to fetch image manifest data from a remote docker registry.
 
+To use the resulting image, you can use the `@wkspc` shorthand label, for example
+if `name = "distroless_base"`, then you can just use `base = "@distroless_base"`
+in rules like `oci_image`.
+
+> This shorthand syntax is broken on the command-line prior to Bazel 6.2.
+> See https://github.com/bazelbuild/bazel/issues/4385
+
+
 **PARAMETERS**
 
 
