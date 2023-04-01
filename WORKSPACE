@@ -120,3 +120,15 @@ oci_pull(
     digest = "sha256:46b3b8614b31761b24f56be1bb8c7ba191d9b9b4624bbf7f53ed7ddc696c928b",
     image = "public.ecr.aws/lambda/python",
 )
+
+oci_pull(
+    name = "debian",
+    image = "index.docker.io/library/debian",
+    platforms = [
+        "linux/arm64",
+        "linux/amd64",
+    ],
+    # Don't print a warning about the tag
+    reproducible = False,
+    tag = "latest",
+)

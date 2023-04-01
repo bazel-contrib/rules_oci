@@ -43,5 +43,6 @@ build_test(
     name = "pull_test",
     targets = [
         "@aws_lambda_python",
+        "@debian",
     ],
 )
