@@ -64,7 +64,7 @@ oci_alias(<a href="#oci_alias-name">name</a>, <a href="#oci_alias-platforms">pla
 ## oci_pull_rule
 
 <pre>
-oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-identifier">identifier</a>, <a href="#oci_pull_rule-image">image</a>, <a href="#oci_pull_rule-platform">platform</a>, <a href="#oci_pull_rule-repo_mapping">repo_mapping</a>, <a href="#oci_pull_rule-target_name">target_name</a>, <a href="#oci_pull_rule-toolchain_name">toolchain_name</a>)
+oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-config">config</a>, <a href="#oci_pull_rule-identifier">identifier</a>, <a href="#oci_pull_rule-image">image</a>, <a href="#oci_pull_rule-platform">platform</a>, <a href="#oci_pull_rule-repo_mapping">repo_mapping</a>, <a href="#oci_pull_rule-target_name">target_name</a>, <a href="#oci_pull_rule-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -75,6 +75,7 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_pull_rule-name"></a>name |  A unique name for this repository.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
+| <a id="oci_pull_rule-config"></a>config |  Label to a config.json file   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | @oci_config//:config.json |
 | <a id="oci_pull_rule-identifier"></a>identifier |  The digest or tag of the manifest file   | String | required |  |
 | <a id="oci_pull_rule-image"></a>image |  The name of the image we are fetching, e.g. gcr.io/distroless/static   | String | required |  |
 | <a id="oci_pull_rule-platform"></a>platform |  platform in <code>os/arch</code> format, for multi-arch images   | String | optional | "" |
@@ -88,7 +89,7 @@ oci_pull_rule(<a href="#oci_pull_rule-name">name</a>, <a href="#oci_pull_rule-id
 ## pin_tag
 
 <pre>
-pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>, <a href="#pin_tag-toolchain_name">toolchain_name</a>)
+pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-config">config</a>, <a href="#pin_tag-image">image</a>, <a href="#pin_tag-repo_mapping">repo_mapping</a>, <a href="#pin_tag-tag">tag</a>, <a href="#pin_tag-toolchain_name">toolchain_name</a>)
 </pre>
 
 
@@ -99,6 +100,7 @@ pin_tag(<a href="#pin_tag-name">name</a>, <a href="#pin_tag-image">image</a>, <a
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="pin_tag-name"></a>name |  A unique name for this repository.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
+| <a id="pin_tag-config"></a>config |  Label to a config.json file   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | @oci_config//:config.json |
 | <a id="pin_tag-image"></a>image |  The name of the image we are fetching, e.g. <code>gcr.io/distroless/static</code>   | String | required |  |
 | <a id="pin_tag-repo_mapping"></a>repo_mapping |  A dictionary from local repository name to global repository name. This allows controls over workspace dependency resolution for dependencies of this repository.&lt;p&gt;For example, an entry <code>"@foo": "@bar"</code> declares that, for any time this repository depends on <code>@foo</code> (such as a dependency on <code>@foo//some:target</code>, it should actually resolve that dependency within globally-declared <code>@bar</code> (<code>@bar//some:target</code>).   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | required |  |
 | <a id="pin_tag-tag"></a>tag |  The tag being used, e.g. <code>latest</code>   | String | required |  |
