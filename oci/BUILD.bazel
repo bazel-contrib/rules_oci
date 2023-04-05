@@ -42,7 +42,7 @@ bzl_library(
     visibility = ["//visibility:public"],
     deps = [
         "//oci/private:download",
-        "//oci/private:config",
+        "//oci/private:auth_config_locator",
         "@aspect_bazel_lib//lib:base64",
         "@aspect_bazel_lib//lib:paths",
         "@aspect_bazel_lib//lib:repo_utils",

@@ -39,7 +39,7 @@ def _get_auth_file_path(rctx):
 
     return None
 
-def _oci_config_locator_impl(rctx):
+def _oci_auth_config_locator_impl(rctx):
     config_path = _get_auth_file_path(rctx)
     config_path = None
     if not config_path:
@@ -57,8 +57,8 @@ def _oci_config_locator_impl(rctx):
 
     rctx.file("BUILD.bazel", """exports_files(["config.json"])""")
 
-oci_config_locator = repository_rule(
-    implementation = _oci_config_locator_impl,
+oci_auth_config_locator = repository_rule(
+    implementation = _oci_auth_config_locator_impl,
     environ = [
         # These environment variables allow standard authorization file path to overridden with something else therefore
         # needs to be tracked as part of the repository cache key so that bazel refetches the repository when any of the variables change.
