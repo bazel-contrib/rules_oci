@@ -59,28 +59,47 @@ _www_authenticate = {
     },
 }
 
-def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
-    executable = "{}.sh".format(helper_name)
-    rctx.file(
-        executable,
-        content = """\
-#!/usr/bin/env bash
-exec "docker-credential-{}" get <<< "$1"
-        """.format(helper_name),
-    )
-    result = rctx.execute([rctx.path(executable), raw_host])
-    if result.return_code:
-        fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+def _get_auth(rctx, state, registry):
+    # if we have a cached auth for this registry then just return it.
+    # this will prevent repetitive calls to external cred helper binaries.
+    if registry in state["auth"]:
+        return state["auth"][registry]
 
-    response = json.decode(result.stdout)
+    pattern = {}
+    config = state["config"]
 
-    if response["Username"] == "<token>":
-        fail("Identity tokens are not supported at the moment. See: https://github.com/bazel-contrib/rules_oci/issues/129")
-    return {
-        "type": "basic",
-        "login": response["Username"],
-        "password": response["Secret"],
-    }
+    if "auths" in config:
+        for host_raw in config["auths"]:
+            host = _strip_host(host_raw)
+            if host == registry:
+                auth_val = config["auths"][host_raw]
+
+                # zero keys indicates that credentials are stored in credsStore helper.
+                if len(auth_val.keys()) == 0:
+                    pattern = _fetch_auth_via_creds_helper(rctx, host_raw, config["credsStore"])
+
+                # base64 encoded plaintext username and password
+                elif "auth" in auth_val:
+                    raw_auth = auth_val["auth"]
+                    (login, password) = base64.decode(raw_auth).split(":")
+                    pattern = {
+                        "type": "basic",
+                        "login": login,
+                        "password": password,
+                    }
+
+                # plain text username and password
+                elif "username" in auth_val and "password" in auth_val:
+                    pattern = {
+                        "type": "basic",
+                        "login": auth_val["username"],
+                        "password": auth_val["password"],
+                    }
+
+                # cache the result so that we don't do this again unnecessarily.
+                state["auth"][registry] = pattern
+
+    return pattern
 
 def _get_token(rctx, state, registry, repository, identifier):
     pattern = _get_auth(rctx, state, registry)
@@ -117,47 +136,29 @@ def _get_token(rctx, state, registry, repository, identifier):
 
     return pattern
 
-def _get_auth(rctx, state, registry):
-    # if we have a cached auth for this registry then just return it.
-    # this will prevent repetitive calls to external cred helper binaries.
-    if registry in state["auth"]:
-        return state["auth"][registry]
+def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
+    executable = "{}.sh".format(helper_name)
+    rctx.file(
+        executable,
+        content = """\
+#!/usr/bin/env bash
+exec "docker-credential-{}" get <<< "$1"
+        """.format(helper_name),
+    )
+    result = rctx.execute([rctx.path(executable), raw_host])
+    if result.return_code:
+        fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
 
-    pattern = {}
-    config = state["config"]
+    response = json.decode(result.stdout)
 
-    if "auths" in config:
-        for host_raw in config["auths"]:
-            host = _strip_host(host_raw)
-            if host == registry:
-                auth_val = config["auths"][host_raw]
+    if response["Username"] == "<token>":
+        fail("Identity tokens are not supported at the moment. See: https://github.com/bazel-contrib/rules_oci/issues/129")
 
-                # zero keys indicates that credentials are stored in credsStore helper.
-                if len(auth_val.keys()) == 0:
-                    pattern = _fetch_auth_via_creds_helper(rctx, host_raw, config["credsStore"])
-
-                    # base64 encoded plaintext username and password
-                elif "auth" in auth_val:
-                    raw_auth = auth_val["auth"]
-                    (login, password) = base64.decode(raw_auth).split(":")
-                    pattern = {
-                        "type": "basic",
-                        "login": login,
-                        "password": password,
-                    }
-
-                    # plain text username and password
-                elif "username" in auth_val and "password" in auth_val:
-                    pattern = {
-                        "type": "basic",
-                        "login": auth_val["username"],
-                        "password": auth_val["password"],
-                    }
-
-                # cache the result so that we don't do this again unnecessarily.
-                state["auth"][registry] = pattern
-
-    return pattern
+    return {
+        "type": "basic",
+        "login": response["Username"],
+        "password": response["Secret"],
+    }
 
 # Supported media types
 # * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
