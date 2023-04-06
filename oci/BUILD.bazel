@@ -28,6 +28,7 @@ bzl_library(
     srcs = ["repositories.bzl"],
     visibility = ["//visibility:public"],
     deps = [
+        "//oci/private:tarball",
         "//oci/private:toolchains_repo",
         "//oci/private:versions",
         "@bazel_tools//tools/build_defs/repo:http.bzl",
@@ -41,6 +42,7 @@ bzl_library(
     visibility = ["//visibility:public"],
     deps = [
         "//oci/private:download",
+        "//oci/private:auth_config_locator",
         "@aspect_bazel_lib//lib:base64",
         "@aspect_bazel_lib//lib:paths",
         "@aspect_bazel_lib//lib:repo_utils",

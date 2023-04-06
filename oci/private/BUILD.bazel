@@ -80,3 +80,9 @@ bzl_library(
         "//oci:__subpackages__",
     ],
 )
+
+bzl_library(
+    name = "auth_config_locator",
+    srcs = ["auth_config_locator.bzl"],
+    visibility = ["//oci:__subpackages__"],
+)
