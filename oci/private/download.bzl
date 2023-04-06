@@ -21,9 +21,10 @@ def _debug(message):
         print(message)
 
 # Bazel-like downloader using curl
+#  A workaround for https://github.com/bazelbuild/bazel/issues/17829
 #  Features
 #   - Can set custom headers
-#   - Support for http2 out of the box
+#   - Support for http2/3 out-of-the-box
 #  Supports
 #   - bazel repository cache. doesn't do re-fetches if repository rule gets invalidated
 #   - authorization
