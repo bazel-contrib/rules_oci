@@ -83,11 +83,7 @@ exec "docker-credential-{}" get <<< "$1"
     }
 
 def _get_token(rctx, state, registry, repository, identifier):
-    pattern = {}
-
-    # if there's a config found and parsed then try to find the credentials for the registry
-    if state["config"]:
-        pattern = _get_auth(rctx, state, registry)
+    pattern = _get_auth(rctx, state, registry)
 
     if registry in _www_authenticate:
         www_authenticate = _www_authenticate[registry]
@@ -96,8 +92,11 @@ def _get_token(rctx, state, registry, repository, identifier):
             service = www_authenticate["service"],
             scope = www_authenticate["scope"].format(repository = repository),
         )
+
+        # if a token for this repository and registry is acquired, use that instead.
         if url in state["token"]:
             return state["token"][url]
+
         rctx.download(
             url = [url],
             output = "www-authenticate.json",
@@ -112,12 +111,15 @@ def _get_token(rctx, state, registry, repository, identifier):
             "pattern": "Bearer <password>",
             "password": auth["token"],
         }
+
+        # put the token into cache so that we don't do the token exchange again.
         state["token"][url] = pattern
 
     return pattern
 
 def _get_auth(rctx, state, registry):
     # if we have a cached auth for this registry then just return it.
+    # this will prevent repetitive calls to external cred helper binaries.
     if registry in state["auth"]:
         return state["auth"][registry]
 
