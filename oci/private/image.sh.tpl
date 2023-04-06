@@ -55,9 +55,28 @@ function empty_base() {
 function base_from_layout() {
     # TODO: https://github.com/google/go-containerregistry/issues/1514
     local refs=$(mktemp)
+    local output=$(mktemp)
     local oci_layout_path=$1
     local registry=$2
-    "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}"
+
+    "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}" > "${output}" 2>&1
+
+    echo "${output}" >&2
+
+    if grep -q "MANIFEST_INVALID" "${output}"; then
+    cat >&2 << EOF
+
+zot registry does not support docker manifests. 
+
+crane registry does support both oci and docker images, but is more memory hungry.
+
+If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
+
+EOF
+
+        exit 1
+    fi
+
     cat "${refs}"
 }
 
@@ -111,6 +130,5 @@ fi
 if [ -n "$OUTPUT" ]; then
     "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
 fi
-
 
 } 2>> "${STDERR}"
