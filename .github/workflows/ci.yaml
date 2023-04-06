@@ -29,7 +29,6 @@ jobs:
           - e2e/wasm
           - e2e/smoke
           - e2e/crane_as_registry
-          - e2e/auth
 
         bzlmodEnabled: [true, false]
         exclude:
@@ -87,9 +86,29 @@ jobs:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
+  test-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup bats
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: "1.8.2"
 
-      - name: ./test.sh
-        working-directory: ${{ matrix.folder }}
-        # hashFiles returns an empty string if test.sh is absent
-        if: ${{ hashFiles(format('{0}/test.sh', matrix.folder)) != '' }}
-        run: ./test.sh ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }}
+      - name: Setup bats helpers
+        uses: brokenpip3/setup-bats-libs@0.0.3
+        with:
+          support-path: /usr/lib/bats/bats-support
+          support-version: "0.3.0"
+          assert-path: /usr/lib/bats/bats-assert
+          assert-version: "2.1.0"
+
+      - name: bats -r .
+        working-directory: e2e/auth
+        run: bats -r .
+
+      - name: bats -r . --enable_bzlmod
+        working-directory: e2e/auth
+        run: |
+          echo "build --enable_bzlmod" >> .bazelrc.user
+          bats -r .

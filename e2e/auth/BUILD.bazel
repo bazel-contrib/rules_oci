@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 load("@bazel_gazelle//:def.bzl", "gazelle")
-load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
 
 # gazelle:prefix example.com/auth
 gazelle(
@@ -36,10 +36,15 @@ go_binary(
     visibility = ["//visibility:public"],
 )
 
-# a dummy test so that bazel test does not complain
-build_test(
-    name = "build_test",
-    targets = [
-        ":auth",
-    ],
+oci_image(
+    name = "empty",
+    architecture = "arm64",
+    os = "linux",
+)
+
+oci_push(
+    name = "push",
+    image = ":empty",
+    repository = "localhost/empty_image",
+    repotags = ["latest"],
 )
