@@ -52,17 +52,22 @@ def _file_exists(rctx, path):
 # https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
 def _get_auth_file_path(rctx):
     # this is the standard path where registry credentials are stored
-    config_path = "{}/.docker/config.json".format(rctx.os.environ["HOME"])
+    # https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
+    DOCKER_CONFIG = "{}/.docker".format(rctx.os.environ["HOME"])
 
-    # set config path to DOCKER_CONFIG env if present
+    # set DOCKER_CONFIG to $DOCKER_CONFIG env if present
     if "DOCKER_CONFIG" in rctx.os.environ:
-        config_path = rctx.os.environ["DOCKER_CONFIG"]
+        DOCKER_CONFIG = rctx.os.environ["DOCKER_CONFIG"]
+
+    config_path = "{}/config.json".format(DOCKER_CONFIG)
 
     if _file_exists(rctx, config_path):
         return config_path
 
     # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
     XDG_RUNTIME_DIR = "{}/.config".format(rctx.os.environ["HOME"])
+
+    # set XDG_RUNTIME_DIR to $XDG_RUNTIME_DIR env if present
     if "XDG_RUNTIME_DIR" in rctx.os.environ:
         XDG_RUNTIME_DIR = rctx.os.environ["XDG_RUNTIME_DIR"]
 
