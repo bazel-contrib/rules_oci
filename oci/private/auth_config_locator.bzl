@@ -41,7 +41,6 @@ def _get_auth_file_path(rctx):
 
 def _oci_auth_config_locator_impl(rctx):
     config_path = _get_auth_file_path(rctx)
-    config_path = None
     if not config_path:
         # rctx.execute is cached between bazel invocations. prefer it over print
         # to avoid spamming terminal. Also rctx.execute has a nicer output.
