@@ -7,47 +7,66 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  issue_comment:
+    types: [created]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
+  matrix-prep-os:
+    # Prepares the 'os' axis of the test matrix
+    runs-on: ubuntu-latest
+    env:
+      TEST: ${{ github.event.comment.author_association }}
+    steps:
+      - id: test
+        run: echo $TEST
+      - id: ubuntu-latest
+        run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
+        if: ${{ !github.event.issue.pull_request }}
+      - id: windows-latest
+        run: echo "os=windows-latest" >> $GITHUB_OUTPUT
+        if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/ci:windows') }}
+      - id: macos-latest
+        run: echo "os=macos-latest" >> $GITHUB_OUTPUT
+        if: ${{ github.event.issue.pull_request && contains(github.event.comment.body, '/ci:darwin') }}
+    outputs:
+      os: ${{ toJSON(steps.*.outputs.os) }}
+
   test:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
+    needs:
+      - matrix-prep-os
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: ${{ fromJSON(needs.matrix-prep-os.outputs.os) }}
         folder:
           - .
           - e2e/custom_registry
           - e2e/wasm
           - e2e/smoke
           - e2e/crane_as_registry
-
-        bzlmodEnabled: [true, false]
-        exclude:
-          - folder: e2e/custom_registry
-            os: macos-latest
-          - folder: e2e/wasm
-            os: macos-latest
-          - folder: e2e/smoke
-            os: macos-latest
-          # Broken due to stardoc usage, see
-          # https://github.com/bazelbuild/stardoc/issues/117#issuecomment-1380744704
-          - folder: .
-            bzlmodEnabled: true
-          # TODO: fix
-          - folder: e2e/custom_registry
-            bzlmodEnabled: true
-          # TODO: fix
-          - folder: e2e/wasm
-            bzlmodEnabled: true
+        blzmod:
+          - --enable_bzlmod
+          - --noenable_bzlmod
+        # exclude:
+        #   # Broken due to stardoc usage, see
+        #   # https://github.com/bazelbuild/stardoc/issues/117#issuecomment-1380744704
+        #   - folder: .
+        #     blzmod: --enable_bzlmod
+        #   # TODO: fix
+        #   - folder: e2e/custom_registry
+        #     bzlmod: --enable_bzlmod
+        #   # TODO: fix
+        #   - folder: e2e/wasm
+        #     bzlmod: --enable_bzlmod
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -73,16 +92,9 @@ jobs:
           podman machine start
           echo "DOCKER_HOST=unix:///Users/runner/.local/share/containers/podman/machine/podman-machine-default/podman.sock" >> $GITHUB_ENV
 
-      - name: Set bzlmod flag
-        # Store the --enable_bzlmod flag that we add to the test command below
-        # only when we're running bzlmod in our test matrix.
-        id: set_bzlmod_flag
-        if: matrix.bzlmodEnabled
-        run: echo "bzlmod_flag=--enable_bzlmod" >> $GITHUB_OUTPUT
-
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
+        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ matrix.bzlmod }} //...
