@@ -38,7 +38,7 @@ oci_image(
 
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION")
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
-load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
+load("//oci/private:download.bzl", "download")
 
 def _strip_host(url):
     # TODO: a principled way of doing this
@@ -196,7 +196,7 @@ def _trim_hash_algorithm(identifier):
         return identifier
     return parts[1]
 
-def _download(rctx, identifier, output, resource = "blobs"):
+def _download(rctx, identifier, output, resource = "blobs", download_fn = download.bazel, headers = {}):
     "Use the Bazel Downloader to fetch from the remote registry"
 
     if resource != "blobs" and resource != "manifests":
@@ -218,28 +218,29 @@ def _download(rctx, identifier, output, resource = "blobs"):
 
     # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
     if identifier.startswith("sha256:"):
-        rctx.download(
+        download_fn(
+            rctx,
             output = output,
             sha256 = identifier[len("sha256:"):],
             url = registry_url,
             auth = {
                 registry_url: auth,
             },
+            headers = headers,
         )
     else:
         # buildifier: disable=print
         print("""
 WARNING: fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
-        rctx.download(
+        download_fn(
+            rctx,
             output = output,
             url = registry_url,
             auth = {
                 registry_url: auth,
             },
+            headers = headers,
         )
-
-def _crane_label(rctx):
-    return Label("@{}_crane_{}//:crane".format(rctx.attr.toolchain_name, repo_utils.platform(rctx)))
 
 def _download_manifest(rctx, identifier, output):
     _download(rctx, identifier, output, "manifests")
@@ -249,21 +250,20 @@ def _download_manifest(rctx, identifier, output):
         # buildifier: disable=print
         print("""
 WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
-Falling back to using `crane manifest`. The result will not be cached. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
+Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
 """)
-        crane = _crane_label(rctx)
-        tag_or_digest = ":" if _is_tag(identifier) else "@"
-
-        registry, repository, protocol = _parse_reference(rctx.attr.image)
-        cmd = [crane, "manifest", "{}/{}{}{}".format(registry, repository, tag_or_digest, identifier), "--platform=all"]
-        if protocol == "http":
-            cmd.append("--insecure")
-        result = rctx.execute(cmd)
-
-        # overwrite the file with new manifest downloaded through crane
-        rctx.file(output, result.stdout)
-
-        bytes = result.stdout
+        _download(
+            rctx,
+            identifier,
+            output,
+            "manifests",
+            download.curl,
+            headers = {
+                "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
+                "Docker-Distribution-API-Version": "registry/2.0",
+            },
+        )
+        bytes = rctx.read(output)
         manifest = json.decode(bytes)
 
     return manifest, len(bytes)

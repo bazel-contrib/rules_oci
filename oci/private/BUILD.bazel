@@ -72,3 +72,11 @@ bzl_library(
         "//oci:__subpackages__",
     ],
 )
+
+bzl_library(
+    name = "download",
+    srcs = ["download.bzl"],
+    visibility = [
+        "//oci:__subpackages__",
+    ],
+)
