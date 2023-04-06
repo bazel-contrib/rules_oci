@@ -108,25 +108,12 @@ def _download(
 #   - Doesn't support setting custom headers
 def _bazel_download(
         rctx,
-        url,
-        output,
-        sha256 = "",
-        executable = False,
-        allow_fail = False,
-        canonical_id = "",
-        auth = {},
-        integrity = "",
+        # custom features
+        method = "GET",
+        headers = {},
+        # passthrough
         **kwargs):
-    return rctx.download(
-        url = url,
-        output = output,
-        executable = executable,
-        allow_fail = allow_fail,
-        canonical_id = canonical_id,
-        integrity = integrity,
-        sha256 = sha256,
-        auth = auth,
-    )
+    return rctx.download(**kwargs)
 
 download = struct(
     curl = _download,
