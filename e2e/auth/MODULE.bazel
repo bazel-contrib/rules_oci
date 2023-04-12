@@ -1,0 +1,19 @@
+"Bazel dependencies"
+bazel_dep(name = "rules_oci", dev_dependency = True, version = "0.0.0")
+bazel_dep(name = "platforms", version = "0.0.5")
+
+local_path_override(
+    module_name = "rules_oci",
+    path = "../..",
+)
+
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+oci.pull(
+    name = "empty_image",
+    digest = "sha256:2d4595bbc0fabeb1489b1071f56c26f44a2f495afaa9386ad7d24e7b3d8dfd3e",
+    image = "http://localhost:1447/empty_image"
+)
+
+use_repo(oci, "empty_image")
