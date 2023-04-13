@@ -5,13 +5,14 @@ readonly CRANE="{{crane_path}}"
 readonly YQ="{{yq_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly TAGS_FILE="{{tags}}"
-readonly FIXED_ARGS=({{fixed_args}})
 
-# set $@ to be FIXED_ARGS+$@
-ALL_ARGS=(${FIXED_ARGS[@]} $@)
-set -- ${ALL_ARGS[@]}
+REPOSITORY="$(cat {{repository}})"
+if [[ "$REPOSITORY" == *[:@]* ]]; then
+  echo >&2 "ERROR: found ':' or '@' character in $REPOSITORY"
+  echo >&2 "The repository (or repository_file) attribute should not contain a digest or tag."
+  exit 1
+fi
 
-REPOSITORY="{{repository}}"
 TAGS=()
 ARGS=()
 

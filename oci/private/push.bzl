@@ -70,12 +70,14 @@ _attrs = {
         doc = "Label to an oci_image or oci_image_index",
         mandatory = True,
     ),
-    "repository": attr.string(
+    "repository": attr.label(
         doc = """\
-        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
+        a .txt file containing one line, which is the Repository URL where the image will be signed
+        e.g. `index.docker.io/<user>/image`
         Digests and tags are not allowed.
         """,
         mandatory = True,
+        allow_single_file = [".txt"],
     ),
     "repotags": attr.label(
         doc = """\
@@ -101,16 +103,13 @@ def _impl(ctx):
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
 
-    if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
-        fail("repository attribute should not contain digest or tag.")
-
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
-    files = [ctx.file.image]
+    files = [ctx.file.image, ctx.file.repository]
     substitutions = {
         "{{crane_path}}": crane.crane_info.binary.short_path,
         "{{yq_path}}": yq.yqinfo.bin.short_path,
         "{{image_dir}}": ctx.file.image.short_path,
-        "{{fixed_args}}": " ".join(_quote_args(["--repository", ctx.attr.repository])),
+        "{{repository}}": ctx.file.repository.short_path,
     }
     if ctx.attr.repotags:
         files.append(ctx.file.repotags)

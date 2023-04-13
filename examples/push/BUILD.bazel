@@ -1,3 +1,4 @@
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
 load(":stamp_tags.bzl", "stamp_tags")
 
@@ -28,10 +29,24 @@ oci_image_index(
     ],
 )
 
+# Take advantage of jq stamping ability to create a simple text file.
+jq(
+    name = "stamped_repo",
+    srcs = [],
+    out = "repository.txt",
+    args = ["--raw-output"],
+    # With --stamp, insert the current username, otherwise use "nobody"
+    filter = """\
+    $ARGS.named.STAMP as $stamp | (
+        "index.docker.io/" + ($stamp.BUILD_USER // "nobody") + "/my-image"
+    )
+    """,
+)
+
 stamp_tags(
-    name = "stamped",
+    name = "stamped_tags",
     repotags = [
-        # With --stamp, use the --embed_label value, otherwise use 0.0.0
+        # With --stamp, use the --embed_label value, otherwise use "0.0.0"
         """($stamp.BUILD_EMBED_LABEL // "0.0.0")""",
         "nightly",
     ],
@@ -40,8 +55,8 @@ stamp_tags(
 oci_push(
     name = "push_image_index",
     image = ":image_index",
-    repository = "index.docker.io/<ORG>/image",
-    repotags = ":stamped",
+    repository_file = ":stamped_repo",
+    repotags = ":stamped_tags",
 )
 
 sh_test(
