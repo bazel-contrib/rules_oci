@@ -1,9 +1,31 @@
 load("//oci:defs.bzl", "oci_image", "structure_test")
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 pkg_tar(
     name = "app",
     srcs = ["test.bash"],
+)
+
+# We don't actually work with JSON, but the jq rule happens to be stamp-aware so we can (ab)use it
+# to put (non-deterministic) version information in our labels/annotations.
+# You'd typically use that only when building release artifacts, not for testing, as it causes
+# action cache misses.
+jq(
+    name = "labels",
+    srcs = [],
+    out = "labels.txt",
+    args = ["--raw-output"],
+    filter = """\
+        # See docs for jq rule about stamping:
+        # https://docs.aspect.build/rules/aspect_bazel_lib/docs/jq
+        $ARGS.named.STAMP as $stamp |
+
+        # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
+        # value to ensure cache hits for actions that depend on this.
+        "org.opencontainers.image.version=" + ($stamp.BUILD_EMBED_LABEL // "0.0.0"),
+        "org.opencontainers.image.source=https://github.com/bazel-contrib/rules_oci"
+    """,
 )
 
 oci_image(
@@ -14,10 +36,7 @@ oci_image(
     }),
     base = "//examples:base",
     cmd = ["test.sh"],
-    labels = {
-        "org.opencontainers.image.version": "xxx",
-        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci",
-    },
+    labels = ":labels",
     os = "linux",
     tars = ["app.tar"],
 )
@@ -26,4 +45,27 @@ structure_test(
     name = "test",
     config = ["test.yaml"],
     image = ":image",
+)
+
+# Test again, using the macro-provided syntax sugar where labels is a dict.
+oci_image(
+    name = "image_labels_dict",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    base = "//examples:base",
+    cmd = ["test.sh"],
+    labels = {
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci",
+    },
+    os = "linux",
+    tars = ["app.tar"],
+)
+
+structure_test(
+    name = "test2",
+    config = ["test.yaml"],
+    image = ":image_labels_dict",
 )
