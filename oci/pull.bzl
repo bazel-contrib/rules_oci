@@ -57,6 +57,11 @@ _www_authenticate = {
         "scope": "repository:{repository}:pull",
         "service": "public.ecr.aws",
     },
+    "ghcr.io": {
+        "realm": "ghcr.io/token",
+        "scope": "repository:{repository}:pull",
+        "service": "ghcr.io/token",
+    },
 }
 
 def _get_auth(rctx, state, registry):

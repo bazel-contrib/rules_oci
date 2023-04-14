@@ -132,3 +132,14 @@ oci_pull(
     reproducible = False,
     tag = "latest",
 )
+
+oci_pull(
+    name = "apollo_router",
+    # tag = "v1.14.0",
+    digest = "sha256:237c4d6a477b5013bae88549bfc50aaafd68974cab7d2dde2ba5431345e9c95d",
+    image = "ghcr.io/apollographql/router",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+)
