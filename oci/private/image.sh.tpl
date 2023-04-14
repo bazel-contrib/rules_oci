@@ -98,6 +98,17 @@ for ARG in "$@"; do
         (--env=*\${*}* | --env=*\$*) ENV_EXPANSIONS+=(${ARG#--env=}) ;;
         (--output=*) OUTPUT="${ARG#--output=}" ;;
         (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
+        (--labels-file=*)
+          while LANG=C IFS= read -r in || [ -n "$in" ]; do
+            echo "add $in"
+            FIXED_ARGS+=("--label=$in")
+          done <"${ARG#--labels-file=}"
+          ;;
+        (--annotations-file=*)
+          while LANG=C IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--annotation=$in")
+          done <"${ARG#--annotations-file=}"
+          ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
 done

@@ -4,7 +4,11 @@ load("@aspect_bazel_lib//lib:docs.bzl", "stardoc_with_diff_test", "update_docs")
 
 stardoc_with_diff_test(
     name = "image",
-    bzl_library_target = "//oci/private:image",
+    bzl_library_target = "//oci:defs",
+    symbol_names = [
+        "oci_image_rule",
+        "oci_image",
+    ],
 )
 
 stardoc_with_diff_test(
