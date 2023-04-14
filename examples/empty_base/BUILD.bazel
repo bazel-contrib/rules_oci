@@ -19,6 +19,6 @@ oci_image(
 
 structure_test(
     name = "test",
-    config = ["test.yaml"],
+    configs = ["test.yaml"],
     image = ":image",
 )

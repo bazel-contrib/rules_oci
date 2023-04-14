@@ -43,7 +43,7 @@ oci_image(
 
 structure_test(
     name = "test",
-    config = ["test.yaml"],
+    configs = ["test.yaml"],
     image = ":image",
 )
 
@@ -66,6 +66,6 @@ oci_image(
 
 structure_test(
     name = "test2",
-    config = ["test.yaml"],
+    configs = ["test.yaml"],
     image = ":image_labels_dict",
 )

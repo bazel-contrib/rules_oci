@@ -25,7 +25,7 @@ oci_tarball(
 
 structure_test(
     name = "test",
-    config = ["test.yaml"],
+    configs = ["test.yaml"],
     driver = "tar",
     image = ":tar",
 )
