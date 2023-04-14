@@ -18,7 +18,7 @@ _attrs = {
         allow_single_file = True,
         doc = "Label of an oci_image or oci_tarball target.",
     ),
-    "config": attr.label_list(allow_files = True, mandatory = True),
+    "configs": attr.label_list(allow_files = True, mandatory = True),
     "driver": attr.string(
         default = "docker",
         # https://github.com/GoogleContainerTools/container-structure-test/blob/5e347b66fcd06325e3caac75ef7dc999f1a9b614/pkg/drivers/driver.go#L26-L28
@@ -51,7 +51,7 @@ def _structure_test_impl(ctx):
             fail("when the 'driver' attribute is not 'docker', then the image must be a .tar file")
         fixed_args.extend(["--image-from-oci-layout", image_path])
 
-    for arg in ctx.files.config:
+    for arg in ctx.files.configs:
         fixed_args.append("--config=%s" % arg.path)
 
     launcher = ctx.actions.declare_file("%s.sh" % ctx.label.name)
@@ -66,7 +66,7 @@ def _structure_test_impl(ctx):
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.config + [st_info.binary, yq_info.bin])
+    runfiles = ctx.runfiles(files = ctx.files.image + ctx.files.configs + [st_info.binary, yq_info.bin])
 
     return DefaultInfo(runfiles = runfiles, executable = launcher)
 

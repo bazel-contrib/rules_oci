@@ -7,7 +7,7 @@ test rule running structure_test against an oci_image.
 ## structure_test
 
 <pre>
-structure_test(<a href="#structure_test-name">name</a>, <a href="#structure_test-config">config</a>, <a href="#structure_test-driver">driver</a>, <a href="#structure_test-image">image</a>)
+structure_test(<a href="#structure_test-name">name</a>, <a href="#structure_test-configs">configs</a>, <a href="#structure_test-driver">driver</a>, <a href="#structure_test-image">image</a>)
 </pre>
 
 Tests an oci_image by using [container-structure-test](https://github.com/GoogleContainerTools/container-structure-test).
@@ -29,7 +29,7 @@ https://github.com/GoogleContainerTools/container-structure-test#running-file-te
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="structure_test-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="structure_test-config"></a>config |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | required |  |
+| <a id="structure_test-configs"></a>configs |  -   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | required |  |
 | <a id="structure_test-driver"></a>driver |  See https://github.com/GoogleContainerTools/container-structure-test#running-file-tests-without-docker   | String | optional | "docker" |
 | <a id="structure_test-image"></a>image |  Label of an oci_image or oci_tarball target.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 
