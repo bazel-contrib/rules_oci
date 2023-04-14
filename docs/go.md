@@ -1,6 +1,6 @@
-# Go example
+# Images containing Go applications
 
-This is an example of how to migrate from
+Typical users will migrate from
 [`go_image`](https://github.com/bazelbuild/rules_docker#go_image) in rules_docker.
 
 ## Base image
@@ -88,3 +88,7 @@ oci_image(
     os = "linux",
 )
 ```
+
+## Example
+
+A full example can be found at <https://github.com/aspect-build/bazel-examples/tree/main/oci_go_image>.
