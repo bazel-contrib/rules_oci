@@ -1,6 +1,6 @@
 # Bazel rules for OCI containers
 
-This is an alternative to [rules_docker](https://github.com/bazelbuild/rules_docker).
+This is a "barebones" alternative to [rules_docker](https://github.com/bazelbuild/rules_docker).
 
 We start from first principles and avoided some pitfalls we learned in maintaining that repo:
 
@@ -15,8 +15,8 @@ _Need help?_ This ruleset has support provided by https://aspect.dev.
 
 ## Installation
 
-From the release you wish to use: <https://github.com/bazel-contrib/rules_oci/releases>
-copy the WORKSPACE snippet into your `WORKSPACE` file.
+- Bazel 6 with bzlmod: start from <https://registry.bazel.build/modules/rules_oci>
+- Others: Copy the WORKSPACE snippet into your `WORKSPACE` file from a release: <https://github.com/bazel-contrib/rules_oci/releases>
 
 To use a commit rather than a release, you can point at any SHA of the repo.
 
@@ -33,39 +33,48 @@ For example to use commit `abc123`:
 
 ## Usage
 
-rules_oci does not contain language-specific rules, but we do document how to accomplish typical tasks, and migrate from the language-specific rules in rules_docker.
+rules_oci does not contain language-specific rules, but we do have limited documentation on how to accomplish typical tasks, and how to migrate from the language-specific rules in rules_docker.
 
-- **Go**: [Docs](docs/go.md)
-- **JavaScript**: [Docs](docs/javascript.md)
-- [**WASM**](https://docs.docker.com/desktop/wasm/): [Example](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/wasm)
+- [C/C++](docs/cpp.md)
+- [Go](docs/go.md)
+- [Java](docs/java.md)
+- [JavaScript](docs/javascript.md)
+- [Python](docs/python.md)
+- [Rust](docs/rust.md)
+- [Scala](docs/scala.md)
+- [WASM](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/wasm) (see https://docs.docker.com/desktop/wasm/)
 
-> Your language not listed above? See https://github.com/bazel-contrib/rules_oci/issues/55
+> Your language not listed above? Please contribute engineering resources or financially through our Sponsor link!
 
-There are more examples of usage in the [examples](https://github.com/bazel-contrib/rules_oci/tree/main/examples) folder.
-Note that the examples rely on the setup code in the `/WORKSPACE` file in the root of this repo.
+There are some generic examples of usage in the [examples](https://github.com/bazel-contrib/rules_oci/tree/main/examples) folder.
+Note that these examples rely on the setup code in the `/WORKSPACE` file in the root of this repo.
 
 ### Choosing between zot or crane as the local registry
 
-rules_oci supports two different registry implementation for the temporary storage within actions spawned by bazel. By default we recommend using `zot` as it stores blobs on disk and is memory efficient but doesn't support `Docker` images. On the other hand, crane is memory hungry as it stores blobs in memory leading to high memory usage but crane supports both `OCI` and `Docker` images which is quite useful for using `Docker` images pulled from the registries such as `Docker Hub`.
+rules_oci supports two different registry implementation for the temporary storage within actions spawned by bazel.
 
-# Public API
+1. By default we recommend using `zot` as it stores blobs on disk, however it doesn't support `Docker`-format images.
+2. `crane` is memory hungry as it stores blobs in memory, leading to high memory usage.
+   However it supports both `OCI` and `Docker` formats which is quite useful for using `Docker` images pulled from the registries such as DockerHub.
 
-## Construct image layers
+## Public API Docs
+
+### Construct image layers
 
 - [oci_image](docs/image.md) Build an OCI compatible container image.
 - [oci_image_index](docs/image_index.md) Build a multi-architecture OCI compatible container image.
 - [oci_tarball](docs/tarball.md) Creates tarball from `oci_image` that can be loaded by runtimes.
 
-## Pull and Push
+### Pull and Push
 
 - [oci_pull](docs/pull.md) Pulls image layers using Bazel's downloader.
 - [oci_push](docs/push.md) Push an oci_image or oci_image_index to a remote registry.
 
-## Testing
+### Testing
 
 - [structure_test](docs/structure_test.md) Test rule running [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test) against an oci_image.
 
-## Signing
+### Signing
 
 - [cosign_sign](docs/cosign_sign.md) Sign an `oci_image` using `cosign` binary at a remote registry.
 - [cosign_attest](docs/cosign_attest.md) Add an attachment to an `oci_image` at a remote registry using `cosign`.
