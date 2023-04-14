@@ -1,20 +1,31 @@
 load("//oci:defs.bzl", "oci_image", "structure_test")
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 pkg_tar(
     name = "app",
     srcs = ["test.bash"],
 )
 
-write_file(
+# We don't actually work with JSON, but the jq rule happens to be stamp-aware so we can (ab)use it
+# to put (non-deterministic) version information in our labels/annotations.
+# You'd typically use that only when building release artifacts, not for testing, as it causes
+# action cache misses.
+jq(
     name = "labels",
+    srcs = [],
     out = "labels.txt",
-    content = [
-        # TODO(alex): show how this can be produced by a stamp-aware rule so the 0.0.0 can be replaced
-        "org.opencontainers.image.version=0.0.0",
-        "org.opencontainers.image.source=https://github.com/bazel-contrib/rules_oci",
-    ],
+    args = ["--raw-output"],
+    filter = """\
+        # See docs for jq rule about stamping:
+        # https://docs.aspect.build/rules/aspect_bazel_lib/docs/jq
+        $ARGS.named.STAMP as $stamp |
+
+        # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
+        # value to ensure cache hits for actions that depend on this.
+        "org.opencontainers.image.version=" + ($stamp.BUILD_EMBED_LABEL // "0.0.0"),
+        "org.opencontainers.image.source=https://github.com/bazel-contrib/rules_oci"
+    """,
 )
 
 oci_image(

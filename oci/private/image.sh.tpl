@@ -99,13 +99,14 @@ for ARG in "$@"; do
         (--output=*) OUTPUT="${ARG#--output=}" ;;
         (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
         (--labels-file=*)
-          while LANG=C IFS= read -r in || [ -n "$in" ]; do
-            echo "add $in"
+          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
+          # file doesn't have a trailing newline.
+          while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--label=$in")
           done <"${ARG#--labels-file=}"
           ;;
         (--annotations-file=*)
-          while LANG=C IFS= read -r in || [ -n "$in" ]; do
+          while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--annotation=$in")
           done <"${ARG#--annotations-file=}"
           ;;
