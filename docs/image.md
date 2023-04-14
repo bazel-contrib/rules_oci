@@ -85,6 +85,11 @@ oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels
 Macro wrapper around [oci_image_rule](#oci_image_rule).
 
 Allows labels and annotations to be provided as a dictionary, in addition to a text file.
+See https://github.com/opencontainers/image-spec/blob/main/annotations.md
+
+Label/annotation keys like `org.opencontainers.image.created` and `org.opencontainers.image.version`
+may be supplied with non-deterministic information when bazel is run with `--stamp`; see the example in
+[/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
 
 
 **PARAMETERS**
