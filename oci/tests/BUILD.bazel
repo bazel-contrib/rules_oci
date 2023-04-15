@@ -1,17 +1,32 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+_PLATFORM = "linux/amd64"
+
+platform(
+    name = _PLATFORM,
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
 
 # Use crane to pull images as a comparison for our oci_pull repository rule
 [
     genrule(
         name = "pull_{image}".format(image = image),
         outs = [image],
-        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform=linux/amd64".format(
+        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform={platform}".format(
             digest = digest,
             image = image,
+            platform = _PLATFORM,
         ),
         local = True,  # needs to run locally to able to use credential helpers
-        message = "Pulling gcr.io/distroless/{image} for linux/amd64".format(image = image),
+        message = "Pulling gcr.io/distroless/{image} for {platform}".format(
+            image = image,
+            platform = _PLATFORM,
+        ),
         output_to_bindir = True,
         tags = ["requires-network"],
         toolchains = [
@@ -25,17 +40,29 @@ load("@bazel_skylib//rules:build_test.bzl", "build_test")
     }.items()
 ]
 
+platform_transition_filegroup(
+    name = "distroless_java_amd64",
+    # This one is declared with an oci_pull rule in /WORKSPACE
+    srcs = ["@distroless_java"],
+    target_platform = _PLATFORM,
+)
+
 diff_test(
     name = "test_java17",
     file1 = "java17",
-    # This one is declared with an oci_pull rule in /WORKSPACE
-    file2 = "@distroless_java",
+    file2 = "distroless_java_amd64",
+)
+
+platform_transition_filegroup(
+    name = "distroless_static_amd64",
+    srcs = ["@distroless_static"],
+    target_platform = _PLATFORM,
 )
 
 diff_test(
     name = "test_static",
     file1 = "static",
-    file2 = "@distroless_static",
+    file2 = "distroless_static_amd64",
 )
 
 # assert than we don't break fetching these
