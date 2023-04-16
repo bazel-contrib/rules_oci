@@ -44,6 +44,34 @@ def fetch_images():
         tag = "debug",
     )
 
+    oci_pull(
+        name = "debian",
+        # Omits the "image." CNAME for dockerhub
+        image = "docker.io/library/debian",
+        platforms = [
+            "linux/arm64",
+            "linux/amd64",
+        ],
+        # Don't print a warning about the tag
+        reproducible = False,
+        tag = "latest",
+    )
+
+    # You can copy-paste a typical image string from dockerhub search results.
+    oci_pull(
+        name = "debian_latest",
+        image = "debian:latest",
+        reproducible = False,
+        platforms = ["linux/amd64", "linux/arm64"],
+    )
+
+    # You can use a digest on the image name
+    # https://hub.docker.com/layers/library/debian/stable/images/sha256-e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028?context=explore
+    oci_pull(
+        name = "debian_stable",
+        image = "debian@sha256:e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028",
+    )
+
     # Show the simple case of migrating from rules_docker, like
     # container_pull(
     #     name = "base",
@@ -65,18 +93,6 @@ def fetch_images():
         # tag = "3.8"
         digest = "sha256:46b3b8614b31761b24f56be1bb8c7ba191d9b9b4624bbf7f53ed7ddc696c928b",
         image = "public.ecr.aws/lambda/python",
-    )
-
-    oci_pull(
-        name = "debian",
-        image = "index.docker.io/library/debian",
-        platforms = [
-            "linux/arm64",
-            "linux/amd64",
-        ],
-        # Don't print a warning about the tag
-        reproducible = False,
-        tag = "latest",
     )
 
     oci_pull(

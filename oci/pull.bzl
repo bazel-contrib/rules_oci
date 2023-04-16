@@ -75,6 +75,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
     """
 
+    # Check syntax sugar for registry/repository in place of image
     if (repository and not registry) or (registry and not repository):
         fail("When one of repository or registry is set, the other must be as well")
     if image and (repository or registry):
@@ -83,6 +84,20 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         fail("One of 'image' or '{repository, registry}' must be set")
     if not image:
         image = "/".join([registry, repository])
+
+    # Check syntax sugar for digest/tag suffix on image
+    if image.find("@") > 0:
+        image, digest = image.split("@", 1)
+    if image.find(":") > 0:
+        image, tag = image.split(":", 1)
+
+    # Syntax sugar, special case for dockerhub
+    if image.startswith("docker.io/"):
+        image = "index." + image
+
+    # If image has no repository, like bare "ubuntu" we assume it's dockerhub
+    if image.find("/") == -1:
+        image = "index.docker.io/library/" + image
 
     if digest and tag:
         # Users might wish to leave tag=latest as "documentation" however if we just ignore tag
