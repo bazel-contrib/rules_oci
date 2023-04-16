@@ -41,11 +41,7 @@ bzl_library(
     srcs = ["pull.bzl"],
     visibility = ["//visibility:public"],
     deps = [
-        "//oci/private:download",
-        "//oci/private:auth_config_locator",
-        "@aspect_bazel_lib//lib:base64",
-        "@aspect_bazel_lib//lib:paths",
-        "@aspect_bazel_lib//lib:repo_utils",
+        "//oci/private:pull",
     ],
 )
 
