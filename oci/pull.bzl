@@ -49,7 +49,7 @@ _DOCKER_ARCH_TO_BAZEL_CPU = {
     "s390x": "@platforms//cpu:s390x",
 }
 
-def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True):
+def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -61,7 +61,10 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
 
     Args:
         name: repository with this name is created
-        image: the remote image without a tag, such as gcr.io/bazel-public/bazel
+        image: the remote image without a tag, such as `gcr.io/bazel-public/bazel`
+            One of image or {registry,repository} should be set.
+        registry: the remote registry domain, such as `gcr.io`
+        repository: the image path beneath the registry, such as `distroless/static`
         platforms: for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers.
         digest: the digest string, starting with "sha256:", "sha512:", etc.
@@ -71,6 +74,15 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
             Since tags are mutable, this is not reproducible, so a warning is printed.
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
     """
+
+    if (repository and not registry) or (registry and not repository):
+        fail("When one of repository or registry is set, the other must be as well")
+    if image and (repository or registry):
+        fail("Only one of 'image' or '{repository, registry}' may be set")
+    if not image and not (repository or registry):
+        fail("One of 'image' or '{repository, registry}' must be set")
+    if not image:
+        image = "/".join([registry, repository])
 
     if digest and tag:
         # Users might wish to leave tag=latest as "documentation" however if we just ignore tag

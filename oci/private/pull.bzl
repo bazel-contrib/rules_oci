@@ -315,7 +315,7 @@ def _oci_pull_impl(rctx):
 
     if mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
-            fail("{} is a single-architecture image, so attribute 'platform' should not be set.".format(rctx.attr.image))
+            fail("{} is a single-architecture image, so attribute 'platforms' should not be set.".format(rctx.attr.image))
         image_mf_file = mf_file
         image_mf = mf
         image_mf_len = mf_len
@@ -323,7 +323,7 @@ def _oci_pull_impl(rctx):
     elif mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
-            fail("{} is a multi-architecture image, so attribute 'platform' is required.".format(rctx.attr.image))
+            fail("{} is a multi-architecture image, so attribute 'platforms' is required.".format(rctx.attr.image))
         matching_mf = _find_platform_manifest(rctx, mf)
         image_digest = matching_mf["digest"]
         image_mf_file = _trim_hash_algorithm(image_digest)

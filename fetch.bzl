@@ -52,13 +52,13 @@ def fetch_images():
     #     # 'tag' is also supported, but digest is encouraged for reproducibility.
     #     digest = "sha256:deadbeef",
     # )
-    # TODO(#135): add registry/repository attribute pair
-    # oci_pull(
-    #     name = "from_rules_docker",
-    #     registry = "gcr.io",
-    #     repository = "distroless/nodejs18",
-    #     #digest =
-    # )
+    oci_pull(
+        name = "from_rules_docker",
+        registry = "gcr.io",
+        repository = "distroless/nodejs18",
+        digest = "sha256:1fd03807e02eeb78efaacb0e38e8e68ead0639733e92e7cc9a9e017cd9b50bbf",
+        platforms = ["linux/amd64", "linux/arm64"],
+    )
 
     oci_pull(
         name = "aws_lambda_python",

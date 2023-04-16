@@ -72,5 +72,6 @@ build_test(
         "@aws_lambda_python",
         "@debian",
         "@apollo_router",
+        "@from_rules_docker",
     ],
 )
