@@ -100,8 +100,13 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         # Check syntax sugar for digest/tag suffix on image
         if image.find("@") > 0:
             image, digest = image.split("@", 1)
-        if image.find(":") > 0:
-            image, tag = image.split(":", 1)
+        colon = image.rfind(":")
+
+        # Check if the last colon has no slashes after it.
+        # Matches debian:latest and myregistry:8000/myimage:latest
+        # but does not match myregistry:8000/myimage
+        if colon > 0 and image[colon:].find("/") == -1:
+            image, tag = image.rsplit(":", 1)
 
         # Syntax sugar, special case for dockerhub
         if image.startswith("docker.io/"):
