@@ -5,13 +5,13 @@ load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("//oci/private:download.bzl", "download")
 
 _ATTRS = {
-    "protocol": attr.string(
+    "scheme": attr.string(
         doc = "scheme portion of the URL for fetching from the registry",
         values = ["http", "https"],
         default = "https",
     ),
     "registry": attr.string(
-        doc = "Remote registry to pull from, e.g. `gcr.io`",
+        doc = "Remote registry host to pull from, e.g. `gcr.io` or `index.docker.io`",
         mandatory = True,
     ),
     "repository": attr.string(
@@ -191,8 +191,8 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
 
     # Construct the URL to fetch from remote, see
     # https://github.com/google/go-containerregistry/blob/62f183e54939eabb8e80ad3dbc787d7e68e68a43/pkg/v1/remote/descriptor.go#L234
-    registry_url = "{protocol}://{registry}/v2/{repository}/{resource}/{identifier}".format(
-        protocol = rctx.attr.protocol,
+    registry_url = "{scheme}://{registry}/v2/{repository}/{resource}/{identifier}".format(
+        scheme = rctx.attr.scheme,
         registry = rctx.attr.registry,
         repository = rctx.attr.repository,
         resource = resource,

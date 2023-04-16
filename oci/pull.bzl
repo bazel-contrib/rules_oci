@@ -61,10 +61,16 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
 
     Args:
         name: repository with this name is created
-        image: the remote image without a tag, such as `gcr.io/bazel-public/bazel`
-            One of image or {registry,repository} should be set.
-        registry: the remote registry domain, such as `gcr.io`
-        repository: the image path beneath the registry, such as `distroless/static`
+        image: the remote image, such as `gcr.io/bazel-public/bazel`.
+            A tag can be suffixed with a colon, like `debian:latest`,
+            and a digest can be suffixed with an at-sign, like
+            `debian@sha256:e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028`.
+
+            Exactly one of image or {registry,repository} should be set.
+        registry: the remote registry domain, such as `gcr.io` or `docker.io`.
+            When set, repository must be set as well.
+        repository: the image path beneath the registry, such as `distroless/static`.
+            When set, registry must be set as well.
         platforms: for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers.
         digest: the digest string, starting with "sha256:", "sha512:", etc.
