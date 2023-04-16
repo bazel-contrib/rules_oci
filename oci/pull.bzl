@@ -89,7 +89,14 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     if not image and not (repository or registry):
         fail("One of 'image' or '{repository, registry}' must be set")
 
+    scheme = "https"
     if image:
+        if image.startswith("http://"):
+            image = image[len("http://"):]
+            scheme = "http"
+        if image.startswith("https://"):
+            image = image[len("https://"):]
+
         # Check syntax sugar for digest/tag suffix on image
         if image.find("@") > 0:
             image, digest = image.split("@", 1)
@@ -134,6 +141,7 @@ bazel run @{}_unpinned//:pin
             _, arch = plat.split("/", 1)
             _oci_pull(
                 name = plat_name,
+                scheme = scheme,
                 registry = registry,
                 repository = repository,
                 identifier = digest or tag,
@@ -149,6 +157,7 @@ bazel run @{}_unpinned//:pin
     else:
         _oci_pull(
             name = name,
+            scheme = scheme,
             registry = registry,
             repository = repository,
             identifier = digest or tag,
