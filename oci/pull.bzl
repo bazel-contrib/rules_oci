@@ -82,29 +82,28 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         fail("Only one of 'image' or '{repository, registry}' may be set")
     if not image and not (repository or registry):
         fail("One of 'image' or '{repository, registry}' must be set")
-    if not image:
-        image = "/".join([registry, repository])
 
-    # Check syntax sugar for digest/tag suffix on image
-    if image.find("@") > 0:
-        image, digest = image.split("@", 1)
-    if image.find(":") > 0:
-        image, tag = image.split(":", 1)
+    if image:
+        # Check syntax sugar for digest/tag suffix on image
+        if image.find("@") > 0:
+            image, digest = image.split("@", 1)
+        if image.find(":") > 0:
+            image, tag = image.split(":", 1)
 
-    # Syntax sugar, special case for dockerhub
-    if image.startswith("docker.io/"):
-        image = "index." + image
+        # Syntax sugar, special case for dockerhub
+        if image.startswith("docker.io/"):
+            image = "index." + image
 
-    # If image has no repository, like bare "ubuntu" we assume it's dockerhub
-    if image.find("/") == -1:
-        image = "index.docker.io/library/" + image
+        # If image has no repository, like bare "ubuntu" we assume it's dockerhub
+        if image.find("/") == -1:
+            image = "index.docker.io/library/" + image
+        registry, repository = image.split("/", 1)
 
     if digest and tag:
         # Users might wish to leave tag=latest as "documentation" however if we just ignore tag
         # then it's never checked which means the documentation can be wrong.
         # For now just forbit having both, it's a non-breaking change to allow it later.
         fail("Only one of 'digest' or 'tag' may be set")
-
     if not digest and not tag:
         fail("One of 'digest' or 'tag' must be set")
 
@@ -129,7 +128,8 @@ bazel run @{}_unpinned//:pin
             _, arch = plat.split("/", 1)
             _oci_pull(
                 name = plat_name,
-                image = image,
+                registry = registry,
+                repository = repository,
                 identifier = digest or tag,
                 platform = plat,
                 target_name = plat_name,
@@ -143,7 +143,8 @@ bazel run @{}_unpinned//:pin
     else:
         _oci_pull(
             name = name,
-            image = image,
+            registry = registry,
+            repository = repository,
             identifier = digest or tag,
             target_name = name,
         )
