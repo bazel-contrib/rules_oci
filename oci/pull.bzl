@@ -49,7 +49,7 @@ _DOCKER_ARCH_TO_BAZEL_CPU = {
     "s390x": "@platforms//cpu:s390x",
 }
 
-def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True, toolchain_name = "oci"):
+def oci_pull(name, image, platforms = None, digest = None, tag = None, reproducible = True):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -70,7 +70,6 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
             Exactly one of `tag` and `digest` must be set.
             Since tags are mutable, this is not reproducible, so a warning is printed.
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
-        toolchain_name: Value of name attribute to the oci_register_toolchains call in the workspace.
     """
 
     if digest and tag:
@@ -83,7 +82,7 @@ def oci_pull(name, image, platforms = None, digest = None, tag = None, reproduci
         fail("One of 'digest' or 'tag' must be set")
 
     if tag and reproducible:
-        pin_tag(name = name + "_unpinned", image = image, tag = tag, toolchain_name = toolchain_name)
+        pin_tag(name = name + "_unpinned", image = image, tag = tag)
 
         # Print a command - in the future we should print a buildozer command or
         # buildifier: disable=print
@@ -107,7 +106,6 @@ bazel run @{}_unpinned//:pin
                 identifier = digest or tag,
                 platform = plat,
                 target_name = plat_name,
-                toolchain_name = toolchain_name,
             )
             select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
         oci_alias(
@@ -121,5 +119,4 @@ bazel run @{}_unpinned//:pin
             image = image,
             identifier = digest or tag,
             target_name = name,
-            toolchain_name = toolchain_name,
         )
