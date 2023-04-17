@@ -226,24 +226,23 @@ def _download_manifest(rctx, state, identifier, output):
     result = _download(rctx, state, identifier, output, "manifests", allow_fail = True)
     fallback_to_curl = False
 
-    if not result.success:
+    if result.success:
+        bytes = rctx.read(output)
+        manifest = json.decode(bytes)
+        if manifest["schemaVersion"] == 1:
+            # buildifier: disable=print
+            print("""
+    WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
+    Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
+    """)
+            fallback_to_curl = True
+    else:
         # buildifier: disable=print
         print("""
 WARNING: Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
 Falling back to using `curl`.
 """)
         fallback_to_curl = True
-    else:
-        bytes = rctx.read(output)
-        manifest = json.decode(bytes)
-        if manifest["schemaVersion"] == 1:
-            fallback_to_curl = True
-
-            # buildifier: disable=print
-            print("""
-    WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
-    Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
-    """)
 
     if fallback_to_curl:
         _download(
