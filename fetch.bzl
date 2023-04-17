@@ -96,6 +96,28 @@ def fetch_images():
     )
 
     oci_pull(
+        name = "debian",
+        image = "index.docker.io/library/debian",
+        platforms = [
+            "linux/arm64",
+            "linux/amd64",
+        ],
+        # Don't print a warning about the tag
+        reproducible = False,
+        tag = "latest",
+    )
+
+    oci_pull(
+        name = "ubuntu",
+        image = "ubuntu",
+        platforms = [
+            "linux/arm64",
+            "linux/amd64",
+        ],
+        digest = "sha256:67211c14fa74f070d27cc59d69a7fa9aeff8e28ea118ef3babc295a0428a6d21",
+    )
+
+    oci_pull(
         name = "apollo_router",
         # tag = "v1.14.0",
         digest = "sha256:237c4d6a477b5013bae88549bfc50aaafd68974cab7d2dde2ba5431345e9c95d",
