@@ -12,7 +12,7 @@ oci_image(
         "@platforms//cpu:arm64": "arm64",
         "@platforms//cpu:x86_64": "amd64",
     }),
-    base = "//examples:base",
+    base = "@ubuntu",
     cmd = ["test.sh"],
     env = {
         "ENV1": "$PATH:/test",
