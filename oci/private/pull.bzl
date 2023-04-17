@@ -200,7 +200,7 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
     )
 
     # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
-    sha256 = None
+    sha256 = ""
 
     if identifier.startswith("sha256:"):
         sha256 = identifier[len("sha256:"):]
