@@ -71,6 +71,9 @@ build_test(
     targets = [
         "@aws_lambda_python",
         "@debian",
+        "@debian_latest",
+        "@debian_stable",
         "@apollo_router",
+        "@from_rules_docker",
     ],
 )
