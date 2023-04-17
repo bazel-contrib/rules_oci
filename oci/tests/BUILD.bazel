@@ -1,6 +1,7 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load(":pull_tests.bzl", "parse_image_test")
 
 _PLATFORM = "linux/amd64"
 
@@ -78,3 +79,5 @@ build_test(
         "@ubuntu",
     ],
 )
+
+parse_image_test(name = "parse_image_test")

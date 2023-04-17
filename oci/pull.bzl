@@ -36,7 +36,7 @@ oci_image(
 ```
 """
 
-load("//oci/private:pull.bzl", "oci_alias", "pin_tag", _oci_pull = "oci_pull")
+load("//oci/private:pull.bzl", "lib", "oci_alias", "pin_tag", _oci_pull = "oci_pull")
 
 # Note: there is no exhaustive list, image authors can use whatever name they like.
 # This is only used for the oci_alias rule that makes a select() - if a mapping is missing,
@@ -85,37 +85,18 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     if (repository and not registry) or (registry and not repository):
         fail("When one of repository or registry is set, the other must be as well")
     if image and (repository or registry):
-        fail("Only one of 'image' or '{repository, registry}' may be set")
+        fail("Only one of 'image' or '{registry, repository}' may be set")
     if not image and not (repository or registry):
-        fail("One of 'image' or '{repository, registry}' must be set")
+        fail("One of 'image' or '{registry, repository}' must be set")
 
-    scheme = "https"
     if image:
-        if image.startswith("http://"):
-            image = image[len("http://"):]
-            scheme = "http"
-        if image.startswith("https://"):
-            image = image[len("https://"):]
-
-        # Check syntax sugar for digest/tag suffix on image
-        if image.find("@") > 0:
-            image, digest = image.split("@", 1)
-        colon = image.rfind(":")
-
-        # Check if the last colon has no slashes after it.
-        # Matches debian:latest and myregistry:8000/myimage:latest
-        # but does not match myregistry:8000/myimage
-        if colon > 0 and image[colon:].find("/") == -1:
-            image, tag = image.rsplit(":", 1)
-
-        # Syntax sugar, special case for dockerhub
-        if image.startswith("docker.io/"):
-            image = "index." + image
-
-        # If image has no repository, like bare "ubuntu" we assume it's dockerhub
-        if image.find("/") == -1:
-            image = "index.docker.io/library/" + image
-        registry, repository = image.split("/", 1)
+        scheme, registry, repository, maybe_digest, maybe_tag = lib.parse_image(image)
+        if maybe_digest:
+            digest = maybe_digest
+        if maybe_tag:
+            tag = maybe_tag
+    else:
+        scheme = None
 
     if digest and tag:
         # Users might wish to leave tag=latest as "documentation" however if we just ignore tag
