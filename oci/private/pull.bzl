@@ -181,7 +181,7 @@ def _trim_hash_algorithm(identifier):
         return identifier
     return parts[1]
 
-def _download(rctx, state, identifier, output, resource, download_fn = download.bazel, headers = {}):
+def _download(rctx, state, identifier, output, resource, download_fn = download.bazel, headers = {}, allow_fail = False):
     "Use the Bazel Downloader to fetch from the remote registry"
 
     if resource != "blobs" and resource != "manifests":
@@ -200,41 +200,52 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
     )
 
     # TODO(https://github.com/bazel-contrib/rules_oci/issues/73): other hash algorithms
+    sha256 = None
+
     if identifier.startswith("sha256:"):
-        download_fn(
-            rctx,
-            output = output,
-            sha256 = identifier[len("sha256:"):],
-            url = registry_url,
-            auth = {
-                registry_url: auth,
-            },
-            headers = headers,
-        )
+        sha256 = identifier[len("sha256:"):]
     else:
         # buildifier: disable=print
         print("""
 WARNING: fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
-        download_fn(
-            rctx,
-            output = output,
-            url = registry_url,
-            auth = {
-                registry_url: auth,
-            },
-            headers = headers,
-        )
+
+    return download_fn(
+        rctx,
+        output = output,
+        sha256 = sha256,
+        url = registry_url,
+        auth = {registry_url: auth},
+        headers = headers,
+        allow_fail = allow_fail,
+    )
 
 def _download_manifest(rctx, state, identifier, output):
-    _download(rctx, state, identifier, output, "manifests")
-    bytes = rctx.read(output)
-    manifest = json.decode(bytes)
-    if manifest["schemaVersion"] == 1:
+    bytes = None
+    manifest = None
+
+    result = _download(rctx, state, identifier, output, "manifests", allow_fail = True)
+    fallback_to_curl = False
+
+    if not result.success:
         # buildifier: disable=print
         print("""
-WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
-Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
+WARNING: Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
+Falling back to using `curl`.
 """)
+        fallback_to_curl = True
+    else:
+        bytes = rctx.read(output)
+        manifest = json.decode(bytes)
+        if manifest["schemaVersion"] == 1:
+            fallback_to_curl = True
+
+            # buildifier: disable=print
+            print("""
+    WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
+    Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
+    """)
+
+    if fallback_to_curl:
         _download(
             rctx,
             state,
