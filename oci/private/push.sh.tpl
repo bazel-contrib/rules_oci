@@ -5,31 +5,45 @@ readonly CRANE="{{crane_path}}"
 readonly YQ="{{yq_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly TAGS_FILE="{{tags}}"
-readonly FIXED_ARGS=({{fixed_args}})
 
-# set $@ to be FIXED_ARGS+$@
-ALL_ARGS=(${FIXED_ARGS[@]} $@)
-set -- ${ALL_ARGS[@]}
+# TODO: should we allow per registry control over insecure registries. It can be enabled with args = ["--insecure"] currently.
+function parse_reference() {
+  local ref=$1
 
-REPOSITORY="{{repository}}"
-TAGS=()
+  if [[ "$ref" = *"@"* ]]; then 
+    echo "ERROR: repotags references can not contain digests: $ref"
+    return 1
+  fi
+  
+  # the `%` will remove everything after the last `:`
+  before_colon="${ref%":"*}"
+  colon=${#before_colon}
+  after_colon="${ref:$colon+1}"
+  
+  if [[ $colon -gt 0  && "$after_colon" = *"/"* ]] || [[ -z $after_colon ]]; then 
+    echo "ERROR: repotag must contain a tag: $ref"
+    return 1
+  fi
+
+  local reference="$before_colon"
+  local tag="$after_colon"
+
+  echo "$reference"
+  echo "$tag"
+}
+
+REPOTAGS=()
 ARGS=()
 
+# process flags
 while (( $# > 0 )); do
   case $1 in
-    (-t|--tag)
-      TAGS+=( "$2" )
+    (-t|--repotag)
+      REPOTAGS+=( "$2" )
       shift
       shift;;
-    (--tag=*) 
-      TAGS+=( "${1#--tag=}" )
-      shift;;
-    (-r|--repository)
-      REPOSITORY="$2"
-      shift
-      shift;;
-    (--repository=*)
-      REPOSITORY="${1#--repository=}"
+    (--repotag=*) 
+      REPOTAGS+=( "${1#--repotag=}" )
       shift;;
     (*) 
       ARGS+=( "$1" )
@@ -37,16 +51,42 @@ while (( $# > 0 )); do
   esac
 done
 
+# read repotags file as array and prepend it to REPOTAGS array.
+IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
+REPOTAGS=(${REPOTAGSFILE[@]} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
+
+if [[ ${#REPOTAGS[@]} -lt 1 ]]; then 
+  echo "ERROR: at least one repotags must be provided."
+  exit 1
+fi 
+
+
+# parse repotags by leaving out tags the and uniqify the result to prevent unnecessary pushes.
+REFERENCES=($(
+  for REPO in "${REPOTAGS[@]+"${REPOTAGS[@]}"}"; do
+    IFS=$'\n' reference=($(parse_reference "$REPO"))
+    echo "${reference[0]}"
+  done | sort -u
+))
+
+
+# get digest of the image
 DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
-REFS=$(mktemp)
-"${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
+# push the first reference with image digest
+"${CRANE}" push "${IMAGE_DIR}" "${REFERENCES[0]}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}"
 
-for tag in "${TAGS[@]+"${TAGS[@]}"}"
-do
-  "${CRANE}" tag $(cat "${REFS}") "${tag}"
+# copy from first registry to others
+# reason cp is preferred over pushing is cross-repository/registry blob mounting which minimizes network usage if 
+# the registry supports blob mounting. crane will silently fallback to pull&push if the registry misbehaves.
+for REFERENCE in "${REFERENCES[@]:1}"; do 
+  "${CRANE}" cp "${REFERENCES[0]}@${DIGEST}" "${REFERENCE}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}"
 done
 
-if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs -n1 "${CRANE}" tag $(cat "${REFS}")
-fi
+
+# now apply tags to images by digest at their respective registries
+for REPO in "${REPOTAGS[@]+"${REPOTAGS[@]}"}"; do
+  IFS=$'\n' REFERENCE=($(parse_reference "$REPO"))
+  "${CRANE}" tag "${REFERENCE[0]}@$DIGEST" "${REFERENCE[1]}" "${ARGS[@]+"${ARGS[@]}"}"
+done
+  
