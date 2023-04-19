@@ -23,8 +23,7 @@ oci_image(name = "image")
 
 oci_push(
     image = ":image",
-    repository = "index.docker.io/<ORG>/image",
-    repotags = ["latest"]
+    repotags = ["index.docker.io/<ORG>/image:latest"]
 )
 ```
 
@@ -49,19 +48,17 @@ oci_image_index(
 # This is defined in our /examples/push
 stamp_tags(
     name = "stamped",
-    repotags = [\"\"\"($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
+    repotags = [\"\"\""ghcr.io/<OWNER>/image"+($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
 )
 
 oci_push(
     image = ":app_image",
-    repository = "ghcr.io/<OWNER>/image",
-    tags = ":stamped",
+    repotags = ":stamped",
 )
 ```
 
 When running the pusher, you can pass flags:
-- Additional `repositori`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
-- Additional `repotags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
+- Additional `repotags`: `-t|--repotag` flag, e.g. `bazel run //myimage:push -- --repotag index.docker.io/<ORG>/image:latest`
 """
 
 _attrs = {
@@ -91,9 +88,6 @@ def _impl(ctx):
 
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
-
-    repos = []
-    tags = []
 
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
