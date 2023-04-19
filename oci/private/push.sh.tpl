@@ -20,16 +20,15 @@ function parse_reference() {
   colon=${#before_colon}
   after_colon="${ref:$colon+1}"
   
-  if [[ $colon -gt 0  && "$after_colon" = *"/"* ]] || [[ -z $after_colon ]]; then 
-    echo "ERROR: repotag must contain a tag: $ref"
-    return 1
+  # it has no tag
+  if [[ $colon -gt 0  && "$after_colon" = *"/"* ]]; then 
+    echo "$ref"
+    echo ""
+    return 0
   fi
 
-  local reference="$before_colon"
-  local tag="$after_colon"
-
-  echo "$reference"
-  echo "$tag"
+  echo "$before_colon"
+  echo "$after_colon"
 }
 
 REPOTAGS=()
@@ -53,7 +52,7 @@ done
 
 # read repotags file as array and prepend it to REPOTAGS array.
 IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
-REPOTAGS=(${REPOTAGSFILE[@]} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
+REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
 
 if [[ ${#REPOTAGS[@]} -lt 1 ]]; then 
   echo "ERROR: at least one repotags must be provided."
@@ -69,6 +68,7 @@ REFERENCES=($(
   done | sort -u
 ))
 
+echo ${REFERENCES[@]}
 
 # get digest of the image
 DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
@@ -87,6 +87,9 @@ done
 # now apply tags to images by digest at their respective registries
 for REPO in "${REPOTAGS[@]+"${REPOTAGS[@]}"}"; do
   IFS=$'\n' REFERENCE=($(parse_reference "$REPO"))
+  if [[ ${#REFERENCE[@]} -eq 1 ]]; then 
+    continue
+  fi
   "${CRANE}" tag "${REFERENCE[0]}@$DIGEST" "${REFERENCE[1]}" "${ARGS[@]+"${ARGS[@]}"}"
 done
   
