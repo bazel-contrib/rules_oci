@@ -51,8 +51,7 @@ bzl_library(
         "//oci/private:auth_config_locator",
         "//oci/private:download",
         "@aspect_bazel_lib//lib:base64",
-        "@aspect_bazel_lib//lib:paths",
-        "@aspect_bazel_lib//lib:repo_utils",
+        "@bazel_skylib//lib:dicts",
     ],
 )
 
