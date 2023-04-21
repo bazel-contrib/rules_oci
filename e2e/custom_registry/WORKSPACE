@@ -37,6 +37,17 @@ oci_pull(
     tag = "latest",
 )
 
+http_archive(
+    name = "rules_container_structure_test",
+    sha256 = "a3ce27f77c5088b7604faa4f40d27224392838f9ebaba6076afcb3bec493e633",
+    strip_prefix = "container-structure-test-c0a5f1f9af73d56b1aaa094dadba309a04ab3a4b",
+    urls = ["https://github.com/aspect-forks/container-structure-test/archive/c0a5f1f9af73d56b1aaa094dadba309a04ab3a4b.zip"],
+)
+
+load("@rules_container_structure_test//:repositories.bzl", "container_structure_test_register_toolchain")
+
+container_structure_test_register_toolchain(name = "st")
+
 ############################################
 # Gazelle and Go
 

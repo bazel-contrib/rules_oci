@@ -52,3 +52,10 @@ def rules_oci_internal_deps():
             "https://github.com/bazelbuild/stardoc/releases/download/0.5.0/stardoc-0.5.0.tar.gz",
         ],
     )
+
+    http_archive(
+        name = "rules_container_structure_test",
+        sha256 = "a3ce27f77c5088b7604faa4f40d27224392838f9ebaba6076afcb3bec493e633",
+        strip_prefix = "container-structure-test-c0a5f1f9af73d56b1aaa094dadba309a04ab3a4b",
+        urls = ["https://github.com/aspect-forks/container-structure-test/archive/c0a5f1f9af73d56b1aaa094dadba309a04ab3a4b.zip"],
+    )

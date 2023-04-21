@@ -36,14 +36,3 @@ ZOT_VERSIONS = {
         "linux-arm64": "sha256-57DAO3f8h5ZV3w6zH+nXsD6KpnJI5crywbksLri4RHE=",
     },
 }
-
-ST_VERSIONS = {
-    "v1.14.0": {
-        "darwin-amd64": "sha256-PZS2nMoMWEBD39FvGsqAMdVmJBabRf5I7SD1ag1QapY=",
-        "linux-amd64": "sha256-93iwXw13Y/F5EvyN112mMMDx+d4pP7tj6W3LGfBYesA=",
-        "linux-arm64": "sha256-YAPkhV5mn5XZXGaQYJ8j+o1UZVfJK8utgeoEsPXLnXM=",
-        "linux-ppc64le": "sha256-uwn7tAFnRT+Lj2R3jYLxLg33MwkRfJE+bQYaBD7G3tQ=",
-        "linux-s390x": "sha256-fImQJVMetAKFKe/iW6lS80LQZyIvrhpM+PHH2FKh2B4=",
-        "windows-amd64.exe": "sha256-FOwsOtnSFt2v1WT8PHKHsK+7rLrYq75itYyzXpjWR2M=",
-    },
-}
