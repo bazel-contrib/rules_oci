@@ -5,27 +5,35 @@ function setup_file() {
     cd $BATS_TEST_DIRNAME
 
     export PATH="$PATH:$BATS_TEST_DIRNAME/helpers/"
+    export TAIL_PID="$(mktemp)"
+    export AUTH_STDIN="$(mktemp -d)/stdin"
 
-    export ASSERT=$(mktemp)
-    echo "{}" > $ASSERT
-
-    bazel run :auth $ASSERT &
+    mkfifo $AUTH_STDIN
+    (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | bazel run :auth &
     export REGISTRY_PID=$!
-    sleep 1
-    bazel run :push -- --repository localhost:1447/empty_image
+    export TAIL_PID=$(cat $TAIL_PID)
+
+    while ! nc -z localhost 1447; do   
+      sleep 0.1
+    done
+    
+    bazel run :push -- --repotag localhost:1447/empty_image
 }
 
 function teardown_file() {
     bazel shutdown
     kill $REGISTRY_PID
+    kill $TAIL_PID
 }
-
 
 function setup() {
     export DOCKER_CONFIG=$(mktemp -d)
-    echo "{}" > $ASSERT
 }
 
+function update_assert() {
+    echo $@ > $AUTH_STDIN
+    sleep 0.5
+}
 
 @test "plain text" {
     cat > "$DOCKER_CONFIG/config.json" <<EOF
@@ -35,7 +43,7 @@ function setup() {
   }
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
+    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
@@ -48,7 +56,7 @@ EOF
   }
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
+    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
@@ -61,7 +69,7 @@ EOF
   }
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
+    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
@@ -73,7 +81,7 @@ EOF
   "credsStore": "oci"
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}' > $ASSERT
+    update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
