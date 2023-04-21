@@ -7,7 +7,7 @@ Public API
 ## oci_push_rule
 
 <pre>
-oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-repository">repository</a>, <a href="#oci_push_rule-repotags">repotags</a>)
+oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-repotags">repotags</a>)
 </pre>
 
 Push an oci_image or oci_image_index to a remote registry.
@@ -33,8 +33,7 @@ oci_image(name = "image")
 
 oci_push(
     image = ":image",
-    repository = "index.docker.io/<ORG>/image",
-    repotags = ["latest"]
+    repotags = ["index.docker.io/<ORG>/image:latest"]
 )
 ```
 
@@ -59,19 +58,17 @@ oci_image_index(
 # This is defined in our /examples/push
 stamp_tags(
     name = "stamped",
-    repotags = ["""($stamp.BUILD_EMBED_LABEL // "0.0.0")"""],
+    repotags = [""""ghcr.io/<OWNER>/image:"+($stamp.BUILD_EMBED_LABEL // "0.0.0")"""],
 )
 
 oci_push(
     image = ":app_image",
-    repository = "ghcr.io/<OWNER>/image",
-    tags = ":stamped",
+    repotags = ":stamped",
 )
 ```
 
 When running the pusher, you can pass flags:
-- Override `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
-- Additional `repotags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
+- Additional `repotags`: `-t|--repotag` flag, e.g. `bazel run //myimage:push -- --repotag index.docker.io/<ORG>/image:latest`
 
 
 **ATTRIBUTES**
@@ -81,8 +78,7 @@ When running the pusher, you can pass flags:
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_push_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
 | <a id="oci_push_rule-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
-| <a id="oci_push_rule-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | required |  |
-| <a id="oci_push_rule-repotags"></a>repotags |  a .txt file containing tags, one per line.         These are passed to [<code>crane tag</code>](         https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
+| <a id="oci_push_rule-repotags"></a>repotags |  a file containing repotags, one per line.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 
 
 <a id="#oci_push"></a>
