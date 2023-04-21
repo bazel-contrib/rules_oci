@@ -12,7 +12,7 @@ function setup_file() {
     bazel run :auth $ASSERT &
     export REGISTRY_PID=$!
     sleep 1
-    bazel run :push -- --repository localhost:1447/empty_image
+    bazel run :push -- --repotag localhost:1447/empty_image
 }
 
 function teardown_file() {
@@ -20,12 +20,15 @@ function teardown_file() {
     kill $REGISTRY_PID
 }
 
-
 function setup() {
     export DOCKER_CONFIG=$(mktemp -d)
     echo "{}" > $ASSERT
 }
 
+function echo_with_sleep() {
+    echo $@
+    sleep 1
+}
 
 @test "plain text" {
     cat > "$DOCKER_CONFIG/config.json" <<EOF
@@ -35,7 +38,7 @@ function setup() {
   }
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
+    echo_with_sleep '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
@@ -48,7 +51,7 @@ EOF
   }
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
+    echo_with_sleep '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
@@ -61,7 +64,7 @@ EOF
   }
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
+    echo_with_sleep '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
@@ -73,7 +76,7 @@ EOF
   "credsStore": "oci"
 }
 EOF
-    echo '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}' > $ASSERT
+    echo_with_sleep '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}' > $ASSERT
     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
     assert_success
 }
