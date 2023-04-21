@@ -26,20 +26,14 @@ func main() {
 	go func() {
 		for scanner.Scan() {
 			content := scanner.Text()
-			if content == "exit" {
-				os.Exit(0)
-			}
 			fmt.Println(content)
 			err := json.Unmarshal([]byte(content), &auth)
 			if err != nil {
 				log.Fatalln(err)
 			}
 		}
-		fmt.Println("out of loop")
 		if scanner.Err() != nil {
 			log.Fatalln(scanner.Err())
-		} else {
-			log.Println("pipe closed")
 		}
 	}()
 

@@ -7,14 +7,17 @@ function setup_file() {
     export PATH="$PATH:$BATS_TEST_DIRNAME/helpers/"
     export TAIL_PID="$(mktemp)"
     export AUTH_STDIN="$(mktemp -d)/stdin"
+
     mkfifo $AUTH_STDIN
     (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | bazel run :auth &
     export REGISTRY_PID=$!
     export TAIL_PID=$(cat $TAIL_PID)
+
     while ! nc -z localhost 1447; do   
       sleep 0.1
     done
-    bazel run :push -- --repotag localhost:1447/empty_image  >&3
+    
+    bazel run :push -- --repotag localhost:1447/empty_image
 }
 
 function teardown_file() {
