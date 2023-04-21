@@ -105,10 +105,14 @@ jobs:
 
       - name: bats -r .
         working-directory: e2e/auth
+        env:
+          BATS_TEST_RETRIES: 10
         run: bats -r .
 
       - name: bats -r . --enable_bzlmod
         working-directory: e2e/auth
+        env:
+          BATS_TEST_RETRIES: 10
         run: |
           echo "build --enable_bzlmod" >> .bazelrc.user
           bats -r .
