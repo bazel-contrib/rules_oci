@@ -8,12 +8,9 @@ function setup_file() {
     export TAIL_PID="$(mktemp)"
     export AUTH_STDIN="$(mktemp -d)/stdin"
     mkfifo $AUTH_STDIN
-    
     (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | bazel run :auth &
     export REGISTRY_PID=$!
     export TAIL_PID=$(cat $TAIL_PID)
-    echo $REGISTRY_PID >&3
-    echo $TAIL_PID >&3
     while ! nc -z localhost 1447; do   
       sleep 0.1
     done
@@ -22,7 +19,6 @@ function setup_file() {
 
 function teardown_file() {
     bazel shutdown
-    echo "shutdown" >&3
     kill $REGISTRY_PID
     kill $TAIL_PID
 }
