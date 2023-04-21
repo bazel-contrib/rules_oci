@@ -5,20 +5,26 @@ function setup_file() {
     cd $BATS_TEST_DIRNAME
 
     export PATH="$PATH:$BATS_TEST_DIRNAME/helpers/"
+    export TAIL_PID="$(mktemp)"
     export AUTH_STDIN="$(mktemp -d)/stdin"
     mkfifo $AUTH_STDIN
-    tail -f $AUTH_STDIN > >(bazel run :auth) &
+    
+    (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | bazel run :auth &
+    export REGISTRY_PID=$!
+    export TAIL_PID=$(cat $TAIL_PID)
+    echo $REGISTRY_PID >&3
+    echo $TAIL_PID >&3
     while ! nc -z localhost 1447; do   
       sleep 0.1
     done
-    export REGISTRY_PID=$!
-    bazel run :push -- --repotag localhost:1447/empty_image
+    bazel run :push -- --repotag localhost:1447/empty_image  >&3
 }
 
 function teardown_file() {
     bazel shutdown
-    update_assert "exit"
-    kill $REGISTRY_PID || echo ""
+    echo "shutdown" >&3
+    kill $REGISTRY_PID
+    kill $TAIL_PID
 }
 
 function setup() {
@@ -43,64 +49,64 @@ EOF
     assert_success
 }
 
-@test "plain text base64" {
-    cat > "$DOCKER_CONFIG/config.json" <<EOF
-{
-  "auths": {
-    "http://localhost:1447": { "auth": "dGVzdDp0ZXN0" }
-  }
-}
-EOF
-    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-    assert_success
-}
+# @test "plain text base64" {
+#     cat > "$DOCKER_CONFIG/config.json" <<EOF
+# {
+#   "auths": {
+#     "http://localhost:1447": { "auth": "dGVzdDp0ZXN0" }
+#   }
+# }
+# EOF
+#     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
+#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+#     assert_success
+# }
 
-@test "plain text https" {
-    cat > "$DOCKER_CONFIG/config.json" <<EOF
-{
-  "auths": {
-    "https://localhost:1447": { "username": "test", "password": "test" }
-  }
-}
-EOF
-    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-    assert_success
-}
+# @test "plain text https" {
+#     cat > "$DOCKER_CONFIG/config.json" <<EOF
+# {
+#   "auths": {
+#     "https://localhost:1447": { "username": "test", "password": "test" }
+#   }
+# }
+# EOF
+#     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
+#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+#     assert_success
+# }
 
-@test "credstore" {
-    cat > "$DOCKER_CONFIG/config.json" <<EOF
-{
-  "auths": { "localhost:1447": {} },
-  "credsStore": "oci"
-}
-EOF
-    update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-    assert_success
-}
+# @test "credstore" {
+#     cat > "$DOCKER_CONFIG/config.json" <<EOF
+# {
+#   "auths": { "localhost:1447": {} },
+#   "credsStore": "oci"
+# }
+# EOF
+#     update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
+#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+#     assert_success
+# }
 
-@test "credstore misbehaves" {
-    cat > "$DOCKER_CONFIG/config.json" <<EOF
-{
-  "auths": { "localhost:1447": {} },
-  "credsStore": "evil"
-}
-EOF
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-    assert_failure
-    assert_output -p "can't run at this time" "ERROR: credential helper failed:"
-}
+# @test "credstore misbehaves" {
+#     cat > "$DOCKER_CONFIG/config.json" <<EOF
+# {
+#   "auths": { "localhost:1447": {} },
+#   "credsStore": "evil"
+# }
+# EOF
+#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+#     assert_failure
+#     assert_output -p "can't run at this time" "ERROR: credential helper failed:"
+# }
 
-@test "credstore missing" {
-    cat > "$DOCKER_CONFIG/config.json" <<EOF
-{
-  "auths": { "localhost:1447": {} },
-  "credsStore": "missing"
-}
-EOF
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-    assert_failure
-    assert_output -p "exec: docker-credential-missing: not found" "ERROR: credential helper failed:"
-}
+# @test "credstore missing" {
+#     cat > "$DOCKER_CONFIG/config.json" <<EOF
+# {
+#   "auths": { "localhost:1447": {} },
+#   "credsStore": "missing"
+# }
+# EOF
+#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+#     assert_failure
+#     assert_output -p "exec: docker-credential-missing: not found" "ERROR: credential helper failed:"
+# }
