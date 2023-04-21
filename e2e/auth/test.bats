@@ -43,64 +43,64 @@ EOF
     assert_success
 }
 
-# @test "plain text base64" {
-#     cat > "$DOCKER_CONFIG/config.json" <<EOF
-# {
-#   "auths": {
-#     "http://localhost:1447": { "auth": "dGVzdDp0ZXN0" }
-#   }
-# }
-# EOF
-#     echo_with_sleep '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
-#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-#     assert_success
-# }
+@test "plain text base64" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": {
+    "http://localhost:1447": { "auth": "dGVzdDp0ZXN0" }
+  }
+}
+EOF
+    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
+    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    assert_success
+}
 
-# @test "plain text https" {
-#     cat > "$DOCKER_CONFIG/config.json" <<EOF
-# {
-#   "auths": {
-#     "https://localhost:1447": { "username": "test", "password": "test" }
-#   }
-# }
-# EOF
-#     echo_with_sleep '{"Authorization": ["Basic dGVzdDp0ZXN0"]}' > $ASSERT
-#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-#     assert_success
-# }
+@test "plain text https" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": {
+    "https://localhost:1447": { "username": "test", "password": "test" }
+  }
+}
+EOF
+    update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
+    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    assert_success
+}
 
-# @test "credstore" {
-#     cat > "$DOCKER_CONFIG/config.json" <<EOF
-# {
-#   "auths": { "localhost:1447": {} },
-#   "credsStore": "oci"
-# }
-# EOF
-#     echo_with_sleep '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}' > $ASSERT
-#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-#     assert_success
-# }
+@test "credstore" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": { "localhost:1447": {} },
+  "credsStore": "oci"
+}
+EOF
+    update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
+    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    assert_success
+}
 
-# @test "credstore misbehaves" {
-#     cat > "$DOCKER_CONFIG/config.json" <<EOF
-# {
-#   "auths": { "localhost:1447": {} },
-#   "credsStore": "evil"
-# }
-# EOF
-#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-#     assert_failure
-#     assert_output -p "can't run at this time" "ERROR: credential helper failed:"
-# }
+@test "credstore misbehaves" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": { "localhost:1447": {} },
+  "credsStore": "evil"
+}
+EOF
+    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    assert_failure
+    assert_output -p "can't run at this time" "ERROR: credential helper failed:"
+}
 
-# @test "credstore missing" {
-#     cat > "$DOCKER_CONFIG/config.json" <<EOF
-# {
-#   "auths": { "localhost:1447": {} },
-#   "credsStore": "missing"
-# }
-# EOF
-#     run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
-#     assert_failure
-#     assert_output -p "exec: docker-credential-missing: not found" "ERROR: credential helper failed:"
-# }
+@test "credstore missing" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": { "localhost:1447": {} },
+  "credsStore": "missing"
+}
+EOF
+    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    assert_failure
+    assert_output -p "exec: docker-credential-missing: not found" "ERROR: credential helper failed:"
+}
