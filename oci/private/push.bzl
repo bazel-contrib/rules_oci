@@ -48,7 +48,7 @@ oci_image_index(
 # This is defined in our /examples/push
 stamp_tags(
     name = "stamped",
-    repotags = [\"\"\""ghcr.io/<OWNER>/image"+($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
+    repotags = [\"\"\""ghcr.io/<OWNER>/image:"+($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
 )
 
 oci_push(
