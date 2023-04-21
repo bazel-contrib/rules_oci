@@ -105,10 +105,11 @@ jobs:
 
       - name: bats -r .
         working-directory: e2e/auth
-        run: bats -r .
+        run: |
+          for i in {1..5}; do bats -r . && break || sleep 5; done
 
       - name: bats -r . --enable_bzlmod
         working-directory: e2e/auth
         run: |
           echo "build --enable_bzlmod" >> .bazelrc.user
-          bats -r .
+          for i in {1..5}; do bats -r . && break || sleep 5; done

@@ -24,7 +24,6 @@ go_library(
     importpath = "example.com/auth",
     visibility = ["//visibility:private"],
     deps = [
-        "@com_github_fsnotify_fsnotify//:fsnotify",
         "@com_github_google_go_containerregistry//pkg/registry",
         "@com_github_r3labs_diff_v3//:diff",
     ],
@@ -45,6 +44,5 @@ oci_image(
 oci_push(
     name = "push",
     image = ":empty",
-    repository = "localhost/empty_image",
-    repotags = ["latest"],
+    repotags = [],
 )
