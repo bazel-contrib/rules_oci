@@ -7,7 +7,7 @@ function setup_file() {
     export PATH="$PATH:$BATS_TEST_DIRNAME/helpers/"
     export AUTH_STDIN="$(mktemp -d)/stdin"
     mkfifo $AUTH_STDIN
-    tail -f $AUTH_STDIN > >(bazel run :auth >&3) &
+    tail -f $AUTH_STDIN > >(bazel run :auth) &
     while ! nc -z localhost 1447; do   
       sleep 0.1
     done
@@ -18,7 +18,7 @@ function setup_file() {
 function teardown_file() {
     bazel shutdown
     update_assert "exit"
-    kill $REGISTRY_PID
+    kill $REGISTRY_PID || echo ""
 }
 
 function setup() {
