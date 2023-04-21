@@ -83,6 +83,9 @@ def _oci_image_impl(ctx):
         if not ctx.attr.os or not ctx.attr.architecture:
             fail("os and architecture is mandatory when base is unspecified.")
 
+    if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
+        fail("os, architecture and variant must be empty when base is specified.")
+
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]

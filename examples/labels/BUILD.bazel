@@ -30,14 +30,9 @@ jq(
 
 oci_image(
     name = "image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@ubuntu",
     cmd = ["test.sh"],
     labels = ":labels",
-    os = "linux",
     tars = ["app.tar"],
 )
 
@@ -50,17 +45,12 @@ structure_test(
 # Test again, using the macro-provided syntax sugar where labels is a dict.
 oci_image(
     name = "image_labels_dict",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@ubuntu",
     cmd = ["test.sh"],
     labels = {
         "org.opencontainers.image.version": "0.0.0",
         "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci",
     },
-    os = "linux",
     tars = ["app.tar"],
 )
 
