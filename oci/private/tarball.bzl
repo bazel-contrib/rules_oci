@@ -34,7 +34,12 @@ Passing anything other than oci_image to the image attribute will lead to build 
 
 attrs = {
     "image": attr.label(mandatory = True, allow_single_file = True, doc = "Label of a directory containing an OCI layout, typically `oci_image`"),
-    "repotags": attr.string_list(mandatory = True, doc = "List of repository+tags to apply to the loaded image"),
+    "repotags": attr.label(
+        doc = """\
+            a file containing repotags, one per line.
+            """,
+        allow_single_file = [".txt"],
+    ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
     "_build_tar": attr.label(
         default = Label("@rules_pkg//pkg/private/tar:build_tar"),
@@ -75,22 +80,27 @@ def _tarball_impl(ctx):
 
     yq_bin = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo.bin
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+
+    substitutions = {
+        "{{yq}}": yq_bin.path,
+        "{{image_dir}}": image.path,
+        "{{blobs_dir}}": blobs.path,
+        "{{manifest_path}}": manifest.path,
+    }
+
+    if ctx.attr.repotags:
+        substitutions["{{tags}}"] = ctx.file.repotags.short_path
+
     ctx.actions.expand_template(
         template = ctx.file._tarball_sh,
         output = executable,
         is_executable = True,
-        substitutions = {
-            "{{yq}}": yq_bin.path,
-            "{{image_dir}}": image.path,
-            "{{blobs_dir}}": blobs.path,
-            "{{manifest_path}}": manifest.path,
-            "{{repotags}}": json.encode(ctx.attr.repotags),
-        },
+        substitutions = substitutions,
     )
 
     ctx.actions.run(
         executable = executable,
-        inputs = [image],
+        inputs = [image, ctx.file.repotags],
         outputs = [manifest, blobs],
         tools = [yq_bin],
         mnemonic = "OCITarball",

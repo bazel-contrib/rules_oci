@@ -4,8 +4,19 @@ set -o pipefail -o errexit -o nounset
 readonly YQ="{{yq}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly BLOBS_DIR="{{blobs_dir}}"
-readonly REPOTAGS='{{repotags}}'
+readonly TAGS_FILE="{{tags}}"
 readonly TARBALL_MANIFEST_PATH="{{manifest_path}}"
+
+REPOTAGS=()
+# read repotags file as array and prepend it to REPOTAGS array.
+IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
+REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
+
+if [[ ${#REPOTAGS[@]} -lt 1 ]]; then
+  echo "ERROR: at least one repotag must be provided."
+  exit 1
+fi
+
 
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
