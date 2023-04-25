@@ -1,6 +1,6 @@
 <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 
-Public API
+
 
 <a id="#oci_push_rule"></a>
 
@@ -91,7 +91,7 @@ oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-repotags">repotag
 
 Macro wrapper around [oci_push_rule](#oci_push_rule).
 
-Allows the tags attribute to be a list of strings in addition to a text file.
+Allows the repotags attribute to be a list of strings in addition to a text file.
 
 
 **PARAMETERS**

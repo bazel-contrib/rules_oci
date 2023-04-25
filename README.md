@@ -74,7 +74,11 @@ rules_oci supports two different registry implementation for the temporary stora
 
 - [structure_test](docs/structure_test.md) Test rule running [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test) against an oci_image.
 
+<!-- Currently undocumented, as it's not public API in 1.0
+
 ### Signing
 
 - [cosign_sign](docs/cosign_sign.md) Sign an `oci_image` using `cosign` binary at a remote registry.
 - [cosign_attest](docs/cosign_attest.md) Add an attachment to an `oci_image` at a remote registry using `cosign`.
+
+-->

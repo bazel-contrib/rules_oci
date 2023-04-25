@@ -8,7 +8,7 @@ def stamp_tags(name, repotags, **kwargs):
 
     Produces a text file that can be used with the `repotags` attribute of [`oci_push`](#oci_push).
 
-    Each entry in `repotags` is typically either a constant like `latest`, or a stamp expression.
+    Each entry in `repotags` is typically either a constant like `my-repo:latest`, or can contain a stamp expression.
     The latter can use any key from `bazel-out/stable-status.txt` or `bazel-out/volatile-status.txt`.
     See https://docs.aspect.build/rules/aspect_bazel_lib/docs/stamping/ for details.
 
