@@ -86,11 +86,11 @@ def oci_push(name, repotags = None, **kwargs):
 def oci_tarball(name, repotags = None, **kwargs):
     """Macro wrapper around [oci_tarball_rule](#oci_tarball_rule).
 
-    Allows the tags attribute to be a list of strings in addition to a text file.
+    Allows the repotags attribute to be a list of strings in addition to a text file.
 
     Args:
         name: name of resulting oci_tarball_rule
-        repotags: a list of tags to specify when loading the image,
+        repotags: a list of repository:tag to specify when loading the image,
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.

@@ -12,12 +12,6 @@ REPOTAGS=()
 IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
 REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
 
-if [[ ${#REPOTAGS[@]} -lt 1 ]]; then
-  echo "ERROR: at least one repotag must be provided."
-  exit 1
-fi
-
-
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
 
@@ -34,7 +28,7 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
 done
 
 config="blobs/${CONFIG_DIGEST}" \
-repotags="${REPOTAGS}" \
+repotags="${REPOTAGS:-[]}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \

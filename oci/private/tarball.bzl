@@ -89,7 +89,7 @@ def _tarball_impl(ctx):
     }
 
     if ctx.attr.repotags:
-        substitutions["{{tags}}"] = ctx.file.repotags.short_path
+        substitutions["{{tags}}"] = ctx.file.repotags.path
 
     ctx.actions.expand_template(
         template = ctx.file._tarball_sh,
