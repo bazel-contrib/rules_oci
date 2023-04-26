@@ -1,4 +1,23 @@
-"""creates tarball from oci_image that can be loaded by runtimes such as podman and docker"""
+"""Create a tarball from oci_image that can be loaded by runtimes such as podman and docker.
+
+For example, given an `:image` target, you could write
+
+```
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repotags = ["my-repository:latest"],
+)
+```
+
+and then run it in a container like so:
+
+```
+bazel build //path/to:image
+docker load --input $(bazel cquery --output=files //path/to:image)
+docker run --rm my-repository:latest
+```
+"""
 
 # buildifier: disable=bzl-visibility
 load(
@@ -11,18 +30,11 @@ load(
 doc = """Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
-
-example;
-
-```shell
-bazel build //target
-docker load --input $(bazel cquery --output=files //target)
-```
 """
 
 attrs = {
-    "image": attr.label(mandatory = True, allow_single_file = True, doc = "Label to an oci_image target"),
-    "repotags": attr.string_list(mandatory = True, doc = "List of tags to apply to the loaded image"),
+    "image": attr.label(mandatory = True, allow_single_file = True, doc = "Label of a directory containing an OCI layout, typically `oci_image`"),
+    "repotags": attr.string_list(mandatory = True, doc = "List of repository+tags to apply to the loaded image"),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
     "_build_tar": attr.label(
         default = Label("@rules_pkg//pkg/private/tar:build_tar"),

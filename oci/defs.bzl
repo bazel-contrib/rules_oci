@@ -1,4 +1,4 @@
-"Public API"
+""
 
 load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
@@ -58,7 +58,7 @@ def oci_image(name, labels = None, annotations = None, **kwargs):
 def oci_push(name, repotags = None, **kwargs):
     """Macro wrapper around [oci_push_rule](#oci_push_rule).
 
-    Allows the tags attribute to be a list of strings in addition to a text file.
+    Allows the repotags attribute to be a list of strings in addition to a text file.
 
     Args:
         name: name of resulting oci_push_rule
