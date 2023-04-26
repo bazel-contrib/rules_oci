@@ -8,7 +8,7 @@ load("//oci/private:structure_test.bzl", _structure_test = "structure_test")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
-oci_tarball = _oci_tarball
+oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
@@ -78,6 +78,34 @@ def oci_push(name, repotags = None, **kwargs):
         repotags = tags_label
 
     oci_push_rule(
+        name = name,
+        repotags = repotags,
+        **kwargs
+    )
+
+def oci_tarball(name, repotags = None, **kwargs):
+    """Macro wrapper around [oci_tarball_rule](#oci_tarball_rule).
+
+    Allows the repotags attribute to be a list of strings in addition to a text file.
+
+    Args:
+        name: name of resulting oci_tarball_rule
+        repotags: a list of repository:tag to specify when loading the image,
+            or a label of a file containing tags one-per-line.
+            See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
+            as one example of a way to produce such a file.
+        **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule).
+    """
+    if types.is_list(repotags):
+        tags_label = "_{}_write_tags".format(name)
+        write_file(
+            name = tags_label,
+            out = "_{}.tags.txt".format(name),
+            content = repotags,
+        )
+        repotags = tags_label
+
+    oci_tarball_rule(
         name = name,
         repotags = repotags,
         **kwargs
