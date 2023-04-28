@@ -1,3 +1,17 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_setting")
+
+bool_setting(
+    name = "docker_compatibility",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "docker_compatibility_compatible",
+    flag_values = {":docker_compatibility": "1"},
+    visibility = ["//visibility:public"],
+)
+
 exports_files([
     "zot_launcher.sh.tpl",
     "crane_launcher.sh.tpl",

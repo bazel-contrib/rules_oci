@@ -176,20 +176,17 @@ def oci_register_toolchains(name, crane_version, zot_version = None, register = 
             st_version = ST_VERSIONS.keys()[0],
         )
 
-        if zot_version:
-            zot_repositories(
-                name = "{name}_zot_{platform}".format(name = name, platform = platform),
-                platform = platform,
-                zot_version = zot_version,
-            )
+        zot_repositories(
+            name = "{name}_zot_{platform}".format(name = name, platform = platform),
+            platform = platform,
+            zot_version = zot_version,
+        )
 
         if register:
             native.register_toolchains("@{}//:{}_toolchain".format(crane_toolchain_name, platform))
             native.register_toolchains("@{}//:{}_toolchain".format(st_toolchain_name, platform))
-            if zot_version:
-                native.register_toolchains("@{}//:{}_toolchain".format(zot_toolchain_name, platform))
-            else:
-                native.register_toolchains("@{}//:{}_toolchain".format(crane_registry_toolchain_name, platform))
+            native.register_toolchains("@{}//:{}_toolchain".format(zot_toolchain_name, platform))
+            native.register_toolchains("@{}//:{}_toolchain".format(crane_registry_toolchain_name, platform))
 
     toolchains_repo(
         name = crane_toolchain_name,
@@ -205,17 +202,19 @@ def oci_register_toolchains(name, crane_version, zot_version = None, register = 
         toolchain = "@%s_st_{platform}//:structure_test_toolchain" % name,
     )
 
-    if zot_version:
-        toolchains_repo(
-            name = zot_toolchain_name,
-            toolchain_type = "@rules_oci//oci:registry_toolchain_type",
-            # avoiding use of .format since {platform} is formatted by toolchains_repo for each platform.
-            toolchain = "@%s_zot_{platform}//:zot_toolchain" % name,
-        )
-    else:
-        toolchains_repo(
-            name = crane_registry_toolchain_name,
-            toolchain_type = "@rules_oci//oci:registry_toolchain_type",
-            # avoiding use of .format since {platform} is formatted by toolchains_repo for each platform.
-            toolchain = "@%s_crane_{platform}//:registry_toolchain" % name,
-        )
+    toolchains_repo(
+        name = zot_toolchain_name,
+        toolchain_type = "@rules_oci//oci:registry_toolchain_type",
+        # avoiding use of .format since {platform} is formatted by toolchains_repo for each platform.
+        toolchain = "@%s_zot_{platform}//:zot_toolchain" % name,
+    )
+
+    toolchains_repo(
+        name = crane_registry_toolchain_name,
+        toolchain_type = "@rules_oci//oci:registry_toolchain_type",
+        # avoiding use of .format since {platform} is formatted by toolchains_repo for each platform.
+        toolchain = "@%s_crane_{platform}//:registry_toolchain" % name,
+        target_settings = [
+            "@rules_oci//oci/private/registry:docker_compatibility_compatible",
+        ],
+    )

@@ -97,7 +97,8 @@ resolved_toolchain = rule(
 TOOLCHAIN_TMPL = """\
 toolchain(
     name = "{platform}_toolchain",
-    exec_compatible_with = {compatible_with},
+    target_compatible_with = {compatible_with},
+    target_settings = {target_settings},
     toolchain = "{toolchain}",
     toolchain_type = "{toolchain_type}",
 )
@@ -115,27 +116,30 @@ load(":defs.bzl", "resolved_toolchain")
 resolved_toolchain(name = "current_toolchain", visibility = ["//visibility:public"])
 """
 
-def _toolchains_repo_impl(repository_ctx):
+def _toolchains_repo_impl(rctx):
     # Expose a concrete toolchain which is the result of Bazel resolving the toolchain
     # for the execution or target platform.
     # Workaround for https://github.com/bazelbuild/bazel/issues/14009
     defs_content = DEFS_TMPL.format(
-        toolchain_type = repository_ctx.attr.toolchain_type,
+        toolchain_type = rctx.attr.toolchain_type,
     )
-    repository_ctx.file("defs.bzl", defs_content)
+    rctx.file("defs.bzl", defs_content)
 
     build_content = BUILD_HEADER_TMPL
+
+    print(rctx.attr.target_settings)
 
     for [platform, meta] in PLATFORMS.items():
         build_content += TOOLCHAIN_TMPL.format(
             platform = platform,
-            name = repository_ctx.attr.name,
+            name = rctx.attr.name,
             compatible_with = meta.compatible_with,
-            toolchain_type = repository_ctx.attr.toolchain_type,
-            toolchain = repository_ctx.attr.toolchain.format(platform = platform),
+            target_settings = [str(label) for label in rctx.attr.target_settings],
+            toolchain_type = rctx.attr.toolchain_type,
+            toolchain = rctx.attr.toolchain.format(platform = platform),
         )
 
-    repository_ctx.file("BUILD.bazel", build_content)
+    rctx.file("BUILD.bazel", build_content)
 
 toolchains_repo = repository_rule(
     _toolchains_repo_impl,
@@ -143,5 +147,6 @@ toolchains_repo = repository_rule(
     attrs = {
         "toolchain": attr.string(doc = "Label of the toolchain with {platform} left as placeholder. example; @container_crane_{platform}//:crane_toolchain"),
         "toolchain_type": attr.string(doc = "Label of the toolchain_type. example; //oci:crane_toolchain_type"),
+        "target_settings": attr.label_list(),
     },
 )

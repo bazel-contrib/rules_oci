@@ -316,6 +316,7 @@ _build_file = """\
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_oci//oci/private/registry:transition.bzl", "docker_compatibility_outgoing_edge")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -348,7 +349,7 @@ copy_to_directory(
 )
 
 copy_to_directory(
-    name = "{target_name}",
+    name = "final",
     out = "layout",
     include_external_repositories = ["*"],
     srcs = [
@@ -356,6 +357,12 @@ copy_to_directory(
         "oci-layout",
         "index.json",
     ],
+)
+
+docker_compatibility_outgoing_edge(
+    name = "{target_name}",
+    src = ":final",
+    docker_compatibility_required = 1,  
 )
 """
 
