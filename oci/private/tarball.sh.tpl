@@ -11,7 +11,6 @@ REPOTAGS=()
 # read repotags file as array and prepend it to REPOTAGS array.
 IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
 REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
-echo REPOTAGS: $REPOTAGS
 
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
@@ -42,7 +41,6 @@ else
     done
     REPOTAGS_ARRAY=$REPOTAGS_ARRAY"]"
 fi
-echo REPOTAGS_ARRAY: $REPOTAGS_ARRAY
 
 config="blobs/${CONFIG_DIGEST}" \
 repotags="$REPOTAGS_ARRAY" \
