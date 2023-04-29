@@ -11,6 +11,7 @@ REPOTAGS=()
 # read repotags file as array and prepend it to REPOTAGS array.
 IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
 REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
+echo REPOTAGS: $REPOTAGS
 
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
@@ -27,8 +28,24 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
     cp "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
+# format the repotags as a json array:
+if [ -z "$REPOTAGS" ]
+then
+    REPOTAGS_ARRAY=[]
+else
+    REPOTAGS_ARRAY=[
+    for repotag in $REPOTAGS
+    do
+        REPOTAGS_ARRAY=$REPOTAGS_ARRAY\"
+        REPOTAGS_ARRAY=$REPOTAGS_ARRAY$repotag
+        REPOTAGS_ARRAY=$REPOTAGS_ARRAY\",
+    done
+    REPOTAGS_ARRAY=$REPOTAGS_ARRAY"]"
+fi
+echo REPOTAGS_ARRAY: $REPOTAGS_ARRAY
+
 config="blobs/${CONFIG_DIGEST}" \
-repotags="${REPOTAGS:-[]}" \
+repotags="$REPOTAGS_ARRAY" \
 layers="${LAYERS}" \
 "${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
