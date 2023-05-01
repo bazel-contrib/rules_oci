@@ -107,7 +107,13 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         fail("One of 'digest' or 'tag' must be set")
 
     if tag and reproducible:
-        pin_tag(name = name + "_unpinned", image = image, tag = tag)
+        pin_tag(
+            name = name + "_unpinned",
+            scheme = scheme,
+            registry = registry,
+            repository = repository,
+            identifier = digest or tag,
+        )
 
         # Print a command - in the future we should print a buildozer command or
         # buildifier: disable=print
