@@ -1,7 +1,7 @@
 "Implementation details for oci_pull repository rules"
 
-load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
+load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("//oci/private:download.bzl", "download")
 
 # attributes that are specific to image reference url. shared between multiple targets
