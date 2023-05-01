@@ -87,7 +87,8 @@ jobs:
           support-version: "0.3.0"
           assert-path: /usr/lib/bats/bats-assert
           assert-version: "2.1.0"
-
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: bats -r .
         working-directory: e2e/auth
         run: |
