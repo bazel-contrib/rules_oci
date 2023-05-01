@@ -15,8 +15,8 @@ oci_tarball(
 and then run it in a container like so:
 
 ```
-bazel build //path/to:image
-docker load --input $(bazel cquery --output=files //path/to:image)
+bazel build //path/to:tarball
+docker load --input $(bazel cquery --output=files //path/to:tarball)
 docker run --rm my-repository:latest
 ```
 
