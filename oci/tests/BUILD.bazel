@@ -74,7 +74,8 @@ build_test(
         "@debian",
         "@debian_latest",
         "@debian_stable",
-        "@apollo_router",
+        # TODO: https://github.com/bazel-contrib/rules_oci/issues/193
+        # "@apollo_router",
         "@from_rules_docker",
         "@ubuntu",
     ],

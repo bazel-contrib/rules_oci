@@ -4,7 +4,8 @@ load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("//oci/private:download.bzl", "download")
 
-_IMAGE_ATTRS = {
+# attributes that are specific to image reference url. shared between multiple targets
+_IMAGE_REFERENCE_ATTRS = {
     "scheme": attr.string(
         doc = "scheme portion of the URL for fetching from the registry",
         values = ["http", "https"],
@@ -449,7 +450,7 @@ def _oci_pull_impl(rctx):
 oci_pull = repository_rule(
     implementation = _oci_pull_impl,
     attrs = dicts.add(
-        _IMAGE_ATTRS,
+        _IMAGE_REFERENCE_ATTRS,
         {
             "platform": attr.string(
                 doc = "A single platform in `os/arch` format, for multi-arch images",
@@ -540,7 +541,7 @@ def _pin_tag_impl(rctx):
 
 pin_tag = repository_rule(
     _pin_tag_impl,
-    attrs = _IMAGE_ATTRS,
+    attrs = _IMAGE_REFERENCE_ATTRS,
 )
 
 lib = struct(
