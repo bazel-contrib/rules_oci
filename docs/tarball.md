@@ -1,6 +1,25 @@
 <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 
-creates tarball from oci_image that can be loaded by runtimes such as podman and docker
+Create a tarball from oci_image that can be loaded by runtimes such as podman and docker.
+
+For example, given an `:image` target, you could write
+
+```
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repotags = ["my-repository:latest"],
+)
+```
+
+and then run it in a container like so:
+
+```
+bazel build //path/to:image
+docker load --input $(bazel cquery --output=files //path/to:image)
+docker run --rm my-repository:latest
+```
+
 
 <a id="#oci_tarball"></a>
 
@@ -14,13 +33,6 @@ Creates tarball from OCI layouts that can be loaded into docker daemon without n
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
 
-example;
-
-```shell
-bazel build //target
-docker load --input $(bazel cquery --output=files //target)
-```
-
 
 **ATTRIBUTES**
 
@@ -28,7 +40,7 @@ docker load --input $(bazel cquery --output=files //target)
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_tarball-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="oci_tarball-image"></a>image |  Label to an oci_image target   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
-| <a id="oci_tarball-repotags"></a>repotags |  List of tags to apply to the loaded image   | List of strings | required |  |
+| <a id="oci_tarball-image"></a>image |  Label of a directory containing an OCI layout, typically <code>oci_image</code>   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
+| <a id="oci_tarball-repotags"></a>repotags |  a file containing repotags, one per line.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 
 

@@ -2,11 +2,16 @@
 
 _DOC = """Build an OCI compatible container image.
 
+Note, most users should use the wrapper macro instead of this rule directly.
+See [oci_image](#oci_image).
+
 It takes number of tar files as layers to create image filesystem.
-For incrementality, use more fine grained tar files to build up the filesystem.
+For incrementality, use more fine-grained tar files to build up the filesystem,
+and choose an order so that less-frequently changed files appear earlier in the list.
 
 ```starlark
 oci_image(
+    # do not sort
     tars = [
         "rootfs.tar",
         "appfs.tar",
@@ -16,7 +21,7 @@ oci_image(
 )
 ```
 
-To base an oci_image on another oci_image, the `base` attribute MAYBE used.
+To base an oci_image on another oci_image, the `base` attribute can be used.
 
 ```starlark
 oci_image(
@@ -27,7 +32,7 @@ oci_image(
 )
 ```
 
-To combine `env` with environment variables from the `base`, bash style variable syntax MAYBE used.
+To combine `env` with environment variables from the `base`, bash style variable syntax can be used.
 
 ```starlark
 oci_image(
@@ -44,7 +49,13 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
-    "tars": attr.label_list(allow_files = [".tar", ".tar.gz"], doc = "List of tar files to add to the image as layers."),
+    "tars": attr.label_list(allow_files = [".tar", ".tar.gz"], doc = """\
+        List of tar files to add to the image as layers.
+        Do not sort this list; the order is preserved in the resulting image.
+        Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.
+
+        The authors recommend [dive](https://github.com/wagoodman/dive) to explore the layering of the resulting image.
+    """),
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
     "entrypoint": attr.string_list(doc = "A list of arguments to use as the `command` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container."),
     "cmd": attr.string_list(doc = "Default arguments to the `entrypoint` of the container. These values act as defaults and may be replaced by any specified when creating a container."),

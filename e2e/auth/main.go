@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,7 +9,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/fsnotify/fsnotify"
 	"github.com/google/go-containerregistry/pkg/registry"
 	"github.com/r3labs/diff/v3"
 )
@@ -17,59 +17,23 @@ type Authn struct {
 	Authorization []string `json:"Authorization"`
 }
 
-func read_auth(p string) (*Authn, error) {
-	var auth Authn
-	bytes, err := ioutil.ReadFile(p)
-	if err != nil {
-		return &auth, err
-	}
-	auth = Authn{}
-	err = json.Unmarshal(bytes, &auth)
-	if err != nil {
-		return &auth, err
-	}
-	return &auth, nil
-}
-
 func main() {
-	authPath := os.Args[1]
 
-	auth, err := read_auth(authPath)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	var auth Authn
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer watcher.Close()
-
-	err = watcher.Add(authPath)
-	if err != nil {
-		log.Fatal(err)
-	}
+	scanner := bufio.NewScanner(os.Stdin)
 
 	go func() {
-		for {
-			select {
-			case event, ok := <-watcher.Events:
-				if !ok {
-					return
-				}
-				if event.Has(fsnotify.Write) {
-					fmt.Println("Assertion file has changed. upcoming requests will be asserted against it.")
-					auth, err = read_auth(authPath)
-					if err != nil {
-						log.Fatalln(err)
-					}
-				}
-			case err, ok := <-watcher.Errors:
-				if !ok {
-					return
-				}
+		for scanner.Scan() {
+			content := scanner.Text()
+			fmt.Println(content)
+			err := json.Unmarshal([]byte(content), &auth)
+			if err != nil {
 				log.Fatalln(err)
 			}
+		}
+		if scanner.Err() != nil {
+			log.Fatalln(scanner.Err())
 		}
 	}()
 
@@ -84,7 +48,7 @@ func main() {
 
 				var ret []byte
 
-				changes, err := diff.Diff(currentAuth, *auth)
+				changes, err := diff.Diff(currentAuth, auth)
 
 				if err != nil {
 					ret = []byte(err.Error())
@@ -106,7 +70,7 @@ func main() {
 		}),
 		Addr: "localhost:1447",
 	}
-	err = s.ListenAndServe()
+	err := s.ListenAndServe()
 	if err != nil {
 		fmt.Println(err)
 	}
