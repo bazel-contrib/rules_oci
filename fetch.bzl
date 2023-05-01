@@ -44,19 +44,6 @@ def fetch_images():
         tag = "debug",
     )
 
-    oci_pull(
-        name = "debian",
-        # Omits the "image." CNAME for dockerhub
-        image = "docker.io/library/debian",
-        platforms = [
-            "linux/arm64",
-            "linux/amd64",
-        ],
-        # Don't print a warning about the tag
-        reproducible = False,
-        tag = "latest",
-    )
-
     # You can copy-paste a typical image string from dockerhub search results.
     oci_pull(
         name = "debian_latest",
