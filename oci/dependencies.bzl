@@ -30,10 +30,10 @@ def rules_oci_dependencies():
     http_archive(
         name = "rules_pkg",
         urls = [
-            "https://github.com/bazelbuild/rules_pkg/releases/download/0.9.0/rules_pkg-0.9.0.tar.gz",
-            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.9.0/rules_pkg-0.9.0.tar.gz",
+            "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
         ],
-        sha256 = "bcc96ae58d9d61db1a36a13d29e85dc2c1696ecb7997f9a26643ab0971ecb2ef",
+        sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
     )
 
     http_archive(
