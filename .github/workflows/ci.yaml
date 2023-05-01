@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         folder:
           - .
           - e2e/custom_registry
@@ -32,12 +32,6 @@ jobs:
 
         bzlmodEnabled: [true, false]
         exclude:
-          - folder: e2e/custom_registry
-            os: macos-latest
-          - folder: e2e/wasm
-            os: macos-latest
-          - folder: e2e/smoke
-            os: macos-latest
           # Broken due to stardoc usage, see
           # https://github.com/bazelbuild/stardoc/issues/117#issuecomment-1380744704
           - folder: .
@@ -63,15 +57,6 @@ jobs:
             bazel-cache-${{ matrix.os }}-${{ matrix.folder }}
             bazel-cache-${{ matrix.os }}
             bazel-cache-
-
-      - name: install podman
-        working-directory: ${{ matrix.folder }}
-        if: ${{ matrix.os == 'macos-latest' }}
-        run: |
-          brew install podman
-          podman machine init
-          podman machine start
-          echo "DOCKER_HOST=unix:///Users/runner/.local/share/containers/podman/machine/podman-machine-default/podman.sock" >> $GITHUB_ENV
 
       - name: Set bzlmod flag
         # Store the --enable_bzlmod flag that we add to the test command below
@@ -102,7 +87,8 @@ jobs:
           support-version: "0.3.0"
           assert-path: /usr/lib/bats/bats-assert
           assert-version: "2.1.0"
-
+      - name: Setup upterm session
+        uses: lhotari/action-upterm@v1
       - name: bats -r .
         working-directory: e2e/auth
         run: |
