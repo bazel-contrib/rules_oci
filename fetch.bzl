@@ -44,24 +44,6 @@ def fetch_images():
         tag = "debug",
     )
 
-    oci_pull(
-        name = "debian",
-        # Omits the "image." CNAME for dockerhub
-        image = "docker.io/library/debian",
-        platforms = [
-            "linux/amd64",
-            "linux/arm/v5",
-            "linux/arm/v7",
-            "linux/arm64/v8",
-            "linux/386",
-            "linux/mips64le",
-            "linux/ppc64le",
-            "linux/s390x",
-        ],
-        reproducible = False,
-        tag = "latest",
-    )
-
     # You can copy-paste a typical image string from dockerhub search results.
     oci_pull(
         name = "debian_latest",
@@ -98,6 +80,24 @@ def fetch_images():
         # tag = "3.8"
         digest = "sha256:46b3b8614b31761b24f56be1bb8c7ba191d9b9b4624bbf7f53ed7ddc696c928b",
         image = "public.ecr.aws/lambda/python",
+    )
+
+    oci_pull(
+        name = "debian",
+        # Omits the "image." CNAME for dockerhub
+        image = "docker.io/library/debian",
+        platforms = [
+            "linux/amd64",
+            "linux/arm/v5",
+            "linux/arm/v7",
+            "linux/arm64/v8",
+            "linux/386",
+            "linux/mips64le",
+            "linux/ppc64le",
+            "linux/s390x",
+        ],
+        reproducible = False,
+        tag = "latest",
     )
 
     oci_pull(
