@@ -35,9 +35,4 @@ stardoc_with_diff_test(
     bzl_library_target = "//oci:pull",
 )
 
-stardoc_with_diff_test(
-    name = "structure_test",
-    bzl_library_target = "//oci/private:structure_test",
-)
-
 update_docs(name = "update")

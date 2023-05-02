@@ -272,7 +272,7 @@ def _download_manifest(rctx, state, identifier, output):
         # buildifier: disable=print
         print("""
 WARNING: Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
-Falling back to using `curl`.
+Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
 """)
         fallback_to_curl = True
 

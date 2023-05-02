@@ -1,6 +1,7 @@
-load("//oci:defs.bzl", "oci_image", "structure_test")
+load("//oci:defs.bzl", "oci_image")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 pkg_tar(
     name = "app",
@@ -41,7 +42,7 @@ oci_image(
     tars = ["app.tar"],
 )
 
-structure_test(
+container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     image = ":image",
@@ -64,7 +65,7 @@ oci_image(
     tars = ["app.tar"],
 )
 
-structure_test(
+container_structure_test(
     name = "test2",
     configs = ["test.yaml"],
     image = ":image_labels_dict",

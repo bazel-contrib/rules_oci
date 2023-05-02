@@ -1,4 +1,5 @@
-load("//oci:defs.bzl", "oci_image", "structure_test")
+load("//oci:defs.bzl", "oci_image")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 pkg_tar(
@@ -22,7 +23,7 @@ oci_image(
     tars = ["app.tar"],
 )
 
-structure_test(
+container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     image = ":image",

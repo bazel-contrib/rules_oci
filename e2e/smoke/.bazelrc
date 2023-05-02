@@ -1,1 +1,2 @@
 test --test_env=DOCKER_HOST
+common --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/cst/
