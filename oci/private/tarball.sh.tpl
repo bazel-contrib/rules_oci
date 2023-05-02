@@ -24,7 +24,6 @@ done
 
 # the repotags file is already space separated so just read it as an array
 REPOTAGS=$(cat $TAGS_FILE)
-echo Repo tags: $REPOTAGS
 
 # format the repotags as a json array:
 if [ -z "$REPOTAGS" ]
@@ -40,7 +39,6 @@ else
     done
     REPOTAGS_ARRAY=$REPOTAGS_ARRAY"]"
 fi
-echo Repo tags array: $REPOTAGS_ARRAY
 
 config="blobs/${CONFIG_DIGEST}" \
 repotags="$REPOTAGS_ARRAY" \
@@ -48,5 +46,3 @@ layers="${LAYERS}" \
 "${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${TARBALL_MANIFEST_PATH}"
-
-echo $(cat $TARBALL_MANIFEST_PATH)
