@@ -7,11 +7,6 @@ readonly BLOBS_DIR="{{blobs_dir}}"
 readonly TAGS_FILE="{{tags}}"
 readonly TARBALL_MANIFEST_PATH="{{manifest_path}}"
 
-REPOTAGS=()
-# read repotags file as array and prepend it to REPOTAGS array.
-IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
-REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
-
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
 
@@ -27,6 +22,10 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
     cp "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
+# the repotags file is already space separated so just read it as an array
+REPOTAGS=$(cat $TAGS_FILE)
+echo Repo tags: $REPOTAGS
+
 # format the repotags as a json array:
 if [ -z "$REPOTAGS" ]
 then
@@ -41,6 +40,7 @@ else
     done
     REPOTAGS_ARRAY=$REPOTAGS_ARRAY"]"
 fi
+echo Repo tags array: $REPOTAGS_ARRAY
 
 config="blobs/${CONFIG_DIGEST}" \
 repotags="$REPOTAGS_ARRAY" \
@@ -48,3 +48,5 @@ layers="${LAYERS}" \
 "${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${TARBALL_MANIFEST_PATH}"
+
+echo $(cat $TARBALL_MANIFEST_PATH)
