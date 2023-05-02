@@ -1,7 +1,7 @@
 load("//oci:defs.bzl", "oci_image")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
-load("@rules_container_structure_test//:defs.bzl", "container_structure_test")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 pkg_tar(
     name = "app",

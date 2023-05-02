@@ -54,8 +54,8 @@ def rules_oci_internal_deps():
     )
 
     http_archive(
-        name = "rules_container_structure_test",
-        sha256 = "a3ce27f77c5088b7604faa4f40d27224392838f9ebaba6076afcb3bec493e633",
-        strip_prefix = "container-structure-test-c0a5f1f9af73d56b1aaa094dadba309a04ab3a4b",
-        urls = ["https://github.com/aspect-forks/container-structure-test/archive/c0a5f1f9af73d56b1aaa094dadba309a04ab3a4b.zip"],
+        name = "container_structure_test",
+        sha256 = "1b3e2b5ccc7783efb74df0e3836f8361fdba5b7a339ab9b592b466e69de80495",
+        strip_prefix = "container-structure-test-4549390a770fdc744b22e58636567055c260e175",
+        urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/4549390a770fdc744b22e58636567055c260e175.zip"],
     )

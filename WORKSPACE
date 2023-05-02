@@ -29,7 +29,7 @@ load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
 
 register_unittest_toolchains()
 
-load("@rules_container_structure_test//:repositories.bzl", "container_structure_test_register_toolchain")
+load("@container_structure_test//:repositories.bzl", "container_structure_test_register_toolchain")
 
 container_structure_test_register_toolchain(name = "container_structure_test")
 

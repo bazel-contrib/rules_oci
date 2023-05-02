@@ -1,5 +1,5 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
-load("@rules_container_structure_test//:defs.bzl", "container_structure_test")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 oci_image(
     name = "image",
