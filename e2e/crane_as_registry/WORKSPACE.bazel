@@ -1,5 +1,3 @@
-workspace(name = "crane_as_registry")
-
 local_repository(
     name = "rules_oci",
     path = "../../",
