@@ -26,6 +26,7 @@ done
 REPOTAGS=$(cat $TAGS_FILE)
 
 # format the repotags as a json array:
+REPOTAGS_ARRAY=[]
 if [ -z "$REPOTAGS" ]
 then
     REPOTAGS_ARRAY=[]
