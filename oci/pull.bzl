@@ -135,7 +135,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             registry = registry,
             repository = repository,
             identifier = digest or tag,
-            target_name = name,
+            target_name = single_platform,
         )
 
     oci_alias(
