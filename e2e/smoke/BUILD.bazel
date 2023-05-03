@@ -38,10 +38,11 @@ container_structure_test(
     image = ":tar",
 )
 
-filegroup(
+genrule(
     name = "tar_manifest",
     srcs = [":tar"],
-    output_group = "manifest",
+    outs = ["manifest.json"],
+    cmd = "tar -xOzf ./$(location :tar) ./manifest.json > $@"
 )
 
 write_file(
