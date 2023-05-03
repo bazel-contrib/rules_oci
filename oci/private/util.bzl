@@ -13,7 +13,8 @@ def sha256(rctx, path):
     if result.return_code:
         msg = "sha256 failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
-    return rctx.attr.name.replace("_unpinned", "")
+
+    return result.stdout.split(" ", 1)[0]
 
 def warning(rctx, message):
     rctx.execute([
