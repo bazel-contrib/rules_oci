@@ -24,12 +24,12 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
     cp "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
-config="blobs/${CONFIG_DIGEST}" \
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/212 
 # we can't use \n due to https://github.com/mikefarah/yq/issues/1430 and 
 # we can't update YQ at the moment because structure_test depends on a specific version
 repotags="${REPOTAGS/$'\n'/\%}" \
+config="blobs/${CONFIG_DIGEST}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
-        --null-input '.[0] = {"Config": strenv(config), "RepoTags": "${repotags}" | envsubst | split("\%"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
+        --null-input '.[0] = {"Config": env(config), "RepoTags": "${repotags}" | envsubst | split("\%"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${TARBALL_MANIFEST_PATH}"
