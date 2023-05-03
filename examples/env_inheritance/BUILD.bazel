@@ -1,6 +1,7 @@
 load("//oci:defs.bzl", "oci_image")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 
 pkg_tar(
     name = "app",
@@ -22,4 +23,18 @@ container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     image = ":image",
+)
+
+genrule(
+    name = "hash",
+    srcs = [":image"],
+    outs = ["sha256.sum"],
+    cmd = "$(JQ_BIN) -r '.manifests[0].digest' $(location :image)/index.json > $@",
+    toolchains = ["@jq_toolchains//:resolved_toolchain"],
+)
+
+assert_contains(
+    name = "check_digest",
+    actual = ":hash",
+    expected = "sha256:d15c83f8f8438e5e05ff40478dc98ad923e9afa272b6630c5b29baf6f7e93585",
 )
