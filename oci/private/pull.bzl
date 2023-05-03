@@ -1,6 +1,5 @@
 "Implementation details for oci_pull repository rules"
 
-load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION")
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("//oci/private:download.bzl", "download")
@@ -354,12 +353,19 @@ copy_to_directory(
 )
 """
 
-def _find_platform_manifest(rctx, image_mf):
+def _find_platform_manifest(image_mf, platform_wanted):
     for mf in image_mf["manifests"]:
-        plat = "{}/{}".format(mf["platform"]["os"], mf["platform"]["architecture"])
-        if plat == rctx.attr.platform:
+        parts = [
+            mf["platform"]["os"],
+            mf["platform"]["architecture"],
+        ]
+        if "variant" in mf["platform"]:
+            parts.append(mf["platform"]["variant"])
+
+        platform = "/".join(parts)
+        if platform_wanted == platform:
             return mf
-    fail("No matching manifest found in image {}/{} for platform {}".format(rctx.attr.registry, rctx.attr.repository, rctx.attr.platform))
+    return None
 
 def _oci_pull_impl(rctx):
     downloader = _create_downloader(rctx)
@@ -378,7 +384,9 @@ def _oci_pull_impl(rctx):
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
             fail("{}/{} is a multi-architecture image, so attribute 'platforms' is required.".format(rctx.attr.registry, rctx.attr.repository))
-        matching_mf = _find_platform_manifest(rctx, mf)
+        matching_mf = _find_platform_manifest(mf, rctx.attr.platform)
+        if not matching_mf:
+            fail("No matching manifest found in image {}/{} for platform {}".format(rctx.attr.registry, rctx.attr.repository, rctx.attr.platform))
         image_digest = matching_mf["digest"]
         image_mf_file = _trim_hash_algorithm(image_digest)
         image_mf, image_mf_len = downloader.download_manifest(image_digest, image_mf_file)
@@ -479,42 +487,16 @@ oci_alias = repository_rule(
     },
 )
 
-_latest_build = """\
-load("@aspect_bazel_lib//lib:jq.bzl", "jq")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
-
-jq(
-    name = "platforms",
-    srcs = ["manifest_list.json"],
-    filter = "[(.manifests // [])[] | .platform | .os + \\"/\\" + .architecture]",
-    # Print without newlines because it's too hard to indent that to fit under the generated
-    # starlark code below.
-    args = ["--compact-output"],
-)
-
-jq(
-    name = "mediaType",
-    srcs = ["manifest_list.json"],
-    filter = ".mediaType",
-    args = ["--raw-output"],
-)
-
+_LATEST_BUILD = """\
 sh_binary(
     name = "pin",
     srcs = ["pin.sh"],
-    data = [
-        ":mediaType",
-        ":platforms",
-        "@bazel_tools//tools/bash/runfiles",
-    ],
 )
 """
 
-_pin_sh = """\
+_PIN_SH = """\
 #!/usr/bin/env bash
-{rlocation}
 
-mediaType="$(cat $(rlocation {name}/mediaType.json))"
 echo -e "Replace your '{reponame}' declaration with the following:\n"
 
 cat <<EOF
@@ -522,35 +504,40 @@ oci_pull(
     name = "{reponame}",
     digest = "sha256:{digest}",
     image = "{registry}/{repository}",
+    {optional_platforms}
+)
 EOF
-
-[[ $mediaType == "{manifestListType}" ]] && cat <<EOF
-    # Listing of all platforms that were found in the image manifest.
-    # You may remove any that you don't use.
-    platforms = $(cat $(rlocation {name}/platforms.json)),
-EOF
-
-echo ")"
 """
 
 def _pin_tag_impl(rctx):
     """Download the tag and create a repository that can produce pinning instructions"""
     downloader = _create_downloader(rctx)
-    downloader.download_manifest(rctx.attr.identifier, "manifest_list.json")
+    manifest, _ = downloader.download_manifest(rctx.attr.identifier, "manifest_list.json")
     result = rctx.execute(["shasum", "-a", "256", "manifest_list.json"])
     if result.return_code:
         msg = "shasum failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
-    rctx.file("pin.sh", _pin_sh.format(
+
+    optional_platforms = ""
+    if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+        # calculate platforms
+        platforms = []
+        for submanifest in manifest["manifests"]:
+            parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
+            if "variant" in submanifest["platform"]:
+                parts.append(submanifest["platform"]["variant"])
+            platforms.append("/".join(parts))
+        optional_platforms = "platforms = {}".format(platforms)
+
+    rctx.file("pin.sh", _PIN_SH.format(
         name = rctx.attr.name,
         reponame = rctx.attr.name.replace("_unpinned", ""),
         digest = result.stdout.split(" ", 1)[0],
         registry = rctx.attr.registry,
         repository = rctx.attr.repository,
-        rlocation = BASH_RLOCATION_FUNCTION,
-        manifestListType = "application/vnd.oci.image.index.v1+json",
+        optional_platforms = optional_platforms,
     ), executable = True)
-    rctx.file("BUILD.bazel", _latest_build)
+    rctx.file("BUILD.bazel", _LATEST_BUILD)
 
 pin_tag = repository_rule(
     _pin_tag_impl,

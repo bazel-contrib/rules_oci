@@ -49,7 +49,7 @@ def fetch_images():
         name = "debian_latest",
         image = "debian:latest",
         reproducible = False,
-        platforms = ["linux/amd64", "linux/arm64"],
+        platforms = ["linux/amd64", "linux/arm64/v8"],
     )
 
     # You can use a digest on the image name
@@ -84,12 +84,18 @@ def fetch_images():
 
     oci_pull(
         name = "debian",
-        image = "index.docker.io/library/debian",
+        # Omits the "image." CNAME for dockerhub
+        image = "docker.io/library/debian",
         platforms = [
-            "linux/arm64",
             "linux/amd64",
+            "linux/arm/v5",
+            "linux/arm/v7",
+            "linux/arm64/v8",
+            "linux/386",
+            "linux/mips64le",
+            "linux/ppc64le",
+            "linux/s390x",
         ],
-        # Don't print a warning about the tag
         reproducible = False,
         tag = "latest",
     )
@@ -98,7 +104,7 @@ def fetch_images():
         name = "ubuntu",
         image = "ubuntu",
         platforms = [
-            "linux/arm64",
+            "linux/arm64/v8",
             "linux/amd64",
         ],
         digest = "sha256:67211c14fa74f070d27cc59d69a7fa9aeff8e28ea118ef3babc295a0428a6d21",
