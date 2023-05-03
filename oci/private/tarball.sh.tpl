@@ -29,7 +29,7 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
 done
 
 config="blobs/${CONFIG_DIGEST}" \
-repotags="${REPOTAGS}" \
+repotags="${REPOTAGS:-[]}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags) | split(" "), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
