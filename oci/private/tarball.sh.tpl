@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
+readonly STAGING_DIR=$(mktemp -d)
 readonly YQ="{{yq}}"
 readonly IMAGE_DIR="{{image_dir}}"
-readonly BLOBS_DIR="{{blobs_dir}}"
+readonly BLOBS_DIR="${STAGING_DIR}/blobs"
+readonly TARBALL_PATH="{{tarball_path}}"
 readonly TAGS_FILE="{{tags}}"
-readonly TARBALL_MANIFEST_PATH="{{manifest_path}}"
 
 REPOTAGS=()
 # read repotags file as array and prepend it to REPOTAGS array.
-IFS=$'\n' REPOTAGSFILE=($(cat "$TAGS_FILE"))
+REPOTAGSFILE=($(IFS=$'\n' cat "$TAGS_FILE"))
 REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
 
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
@@ -31,5 +32,7 @@ config="blobs/${CONFIG_DIGEST}" \
 repotags="${REPOTAGS:-[]}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
-        --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
-        --output-format json > "${TARBALL_MANIFEST_PATH}"
+        --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags) | split(" "), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
+        --output-format json > "${STAGING_DIR}/manifest.json"
+
+tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" .
