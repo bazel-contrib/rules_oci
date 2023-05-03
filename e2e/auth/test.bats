@@ -17,7 +17,7 @@ function setup_file() {
       sleep 0.1
     done
     
-    bazel run :push -- --repotag localhost:1447/empty_image
+    bazel run :push -- --repository localhost:1447/empty_image
 }
 
 function teardown_file() {
