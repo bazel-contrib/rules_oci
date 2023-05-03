@@ -53,13 +53,14 @@ def oci_image(name, labels = None, annotations = None, **kwargs):
         **kwargs
     )
 
-def oci_push(name, repotags = None, **kwargs):
+def oci_push(name, repository = None, repotags = None, **kwargs):
     """Macro wrapper around [oci_push_rule](#oci_push_rule).
 
     Allows the repotags attribute to be a list of strings in addition to a text file.
 
     Args:
         name: name of resulting oci_push_rule
+        repository: a string to prepend onto each of the repotags
         repotags: a list of tags to apply to the image after pushing,
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
@@ -74,6 +75,20 @@ def oci_push(name, repotags = None, **kwargs):
             content = repotags,
         )
         repotags = tags_label
+    elif repotags != None and not types.is_string(repotags):
+        fail("repotags should be a label, or a list of strings")
+
+    if types.is_string(repository):
+        tags_label = "_{}_prepend_repository".format(name)
+        native.genrule(
+            name = tags_label,
+            srcs = [repotags],
+            outs = ["_{}.repo.txt".format(name)],
+            cmd = """awk '$$0="{}:"$$0' <$< >$@""".format(repository),
+        )
+        repotags = tags_label
+    elif repository != None:
+        fail("repository should be a string")
 
     oci_push_rule(
         name = name,

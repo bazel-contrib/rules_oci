@@ -11,9 +11,8 @@ oci_image(
 oci_push(
     name = "push_image",
     image = ":image",
-    repotags = [
-        "index.docker.io/<ORG>/image:latest",
-    ],
+    repository = "index.docker.io/<ORG>/image",
+    repotags = ["latest"],
 )
 
 oci_push(
@@ -34,14 +33,15 @@ stamp_tags(
     name = "stamped",
     repotags = [
         # With --stamp, use the --embed_label value, otherwise use 0.0.0
-        """"index.docker.io/<ORG>/image:"+($stamp.BUILD_EMBED_LABEL // "0.0.0")""",
-        "index.docker.io/<ORG>/image:nightly",
+        """($stamp.BUILD_EMBED_LABEL // "0.0.0")""",
+        "nightly",
     ],
 )
 
 oci_push(
     name = "push_image_index",
     image = ":image_index",
+    repository = "index.docker.io/<ORG>/image",
     repotags = ":stamped",
 )
 

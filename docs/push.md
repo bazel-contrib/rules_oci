@@ -86,7 +86,7 @@ When running the pusher, you can pass flags:
 ## oci_push
 
 <pre>
-oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-repotags">repotags</a>, <a href="#oci_push-kwargs">kwargs</a>)
+oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-repository">repository</a>, <a href="#oci_push-repotags">repotags</a>, <a href="#oci_push-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_push_rule](#oci_push_rule).
@@ -100,6 +100,7 @@ Allows the repotags attribute to be a list of strings in addition to a text file
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  name of resulting oci_push_rule   |  none |
+| <a id="oci_push-repository"></a>repository |  a string to prepend onto each of the repotags   |  <code>None</code> |
 | <a id="oci_push-repotags"></a>repotags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
 | <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule).   |  none |
 
