@@ -36,7 +36,8 @@ oci_image(
 ```
 """
 
-load("//oci/private:pull.bzl", "lib", "oci_alias", _oci_pull = "oci_pull")
+load("//oci/private:pull.bzl", "oci_alias", _oci_pull = "oci_pull")
+load("//oci/private:util.bzl", "util")
 
 # Note: there is no exhaustive list, image authors can use whatever name they like.
 # This is only used for the oci_alias rule that makes a select() - if a mapping is missing,
@@ -93,7 +94,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         fail("One of 'image' or '{registry, repository}' must be set")
 
     if image:
-        scheme, registry, repository, maybe_digest, maybe_tag = lib.parse_image(image)
+        scheme, registry, repository, maybe_digest, maybe_tag = util.parse_image(image)
         if maybe_digest:
             digest = maybe_digest
         if maybe_tag:
