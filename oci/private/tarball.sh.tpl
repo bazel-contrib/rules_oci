@@ -25,7 +25,8 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
 done
 
 config="blobs/${CONFIG_DIGEST}" \
-# TODO: can't use \n due to https://github.com/mikefarah/yq/issues/1430 and 
+# TODO: https://github.com/bazel-contrib/rules_oci/issues/212 
+# we can't use \n due to https://github.com/mikefarah/yq/issues/1430 and 
 # we can't update YQ at the moment because structure_test depends on a specific version
 repotags="${REPOTAGS/$'\n'/\%}" \
 layers="${LAYERS}" \
