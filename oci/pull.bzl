@@ -36,7 +36,7 @@ oci_image(
 ```
 """
 
-load("//oci/private:pull.bzl", "lib", "oci_alias", "pin_tag", _oci_pull = "oci_pull")
+load("//oci/private:pull.bzl", "lib", "oci_alias", _oci_pull = "oci_pull")
 
 # Note: there is no exhaustive list, image authors can use whatever name they like.
 # This is only used for the oci_alias rule that makes a select() - if a mapping is missing,
@@ -109,28 +109,11 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     if not digest and not tag:
         fail("One of 'digest' or 'tag' must be set")
 
-    if tag and reproducible:
-        pin_tag(
-            name = name + "_unpinned",
-            scheme = scheme,
-            registry = registry,
-            repository = repository,
-            identifier = digest or tag,
-        )
-
-        # Print a command - in the future we should print a buildozer command or
-        # buildifier: disable=print
-        print("""
-WARNING: for reproducible builds, a digest is recommended.
-Either set 'reproducible = False' to silence this warning,
-or run the following command to change oci_pull to use a digest:
-
-bazel run @{}_unpinned//:pin
-""".format(name))
-        return
+    platform_to_image = None
+    single_platform = None
 
     if platforms:
-        select_map = {}
+        platform_to_image = {}
         for plat in platforms:
             plat_name = "_".join([name] + plat.split("/"))
             _oci_pull(
@@ -143,18 +126,27 @@ bazel run @{}_unpinned//:pin
                 target_name = plat_name,
             )
             if plat in _PLATFORM_TO_BAZEL_CPU:
-                select_map[_PLATFORM_TO_BAZEL_CPU[plat]] = "@" + plat_name
-        oci_alias(
-            name = name,
-            platforms = select_map,
-            target_name = name,
-        )
+                platform_to_image[_PLATFORM_TO_BAZEL_CPU[arch]] = "@" + plat_name
     else:
+        single_platform = "{}_single".format(name)
         _oci_pull(
-            name = name,
+            name = single_platform,
             scheme = scheme,
             registry = registry,
             repository = repository,
             identifier = digest or tag,
             target_name = name,
         )
+
+    oci_alias(
+        name = name,
+        target_name = name,
+        # image attributes
+        scheme = scheme,
+        registry = registry,
+        repository = repository,
+        identifier = digest or tag,
+        # image attributes
+        platforms = platform_to_image,
+        platform = single_platform,
+    )

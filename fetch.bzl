@@ -96,7 +96,8 @@ def fetch_images():
             "linux/ppc64le",
             "linux/s390x",
         ],
-        reproducible = False,
+        # Don't print a warning about the tag
+        # reproducible = False,
         tag = "latest",
     )
 
