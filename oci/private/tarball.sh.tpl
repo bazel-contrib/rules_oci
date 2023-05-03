@@ -8,10 +8,7 @@ readonly TAGS_FILE="{{tags}}"
 readonly TARBALL_MANIFEST_PATH="{{manifest_path}}"
 
 # read repotags file as an array:
-SAVEIFS=$IFS   # Save current IFS (Internal Field Separator)
-IFS=$'\n'      # Change IFS to newline char
-REPOTAGS=$(cat "$TAGS_FILE")
-IFS=$SAVEIFS   # Restore original IFS
+REPOTAGS=$(IFS=$'\n' cat "$TAGS_FILE")
 
 # format the repotags as yaml:
 REPOTAGS_YAML=[]
