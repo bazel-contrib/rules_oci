@@ -25,11 +25,14 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
     cp "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
+# TODO: https://github.com/bazel-contrib/rules_oci/issues/212 
+# we can't use \n due to https://github.com/mikefarah/yq/issues/1430 and 
+# we can't update YQ at the moment because structure_test depends on a specific version
+repotags="${REPOTAGS/$'\n'/%}" \
 config="blobs/${CONFIG_DIGEST}" \
-repotags="${REPOTAGS}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
-        --null-input '.[0] = {"Config": strenv(config), "RepoTags": strenv(repotags) | split("\n"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
+        --null-input '.[0] = {"Config": env(config), "RepoTags": "${repotags}" | envsubst | split("%"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${STAGING_DIR}/manifest.json"
 
-tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" .
+tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs

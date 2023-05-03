@@ -1,3 +1,5 @@
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 
@@ -18,10 +20,15 @@ oci_image(
     os = "linux",
 )
 
+tags = [
+    "my/image:some-tag",
+    "my/image:latest",
+]
+
 oci_tarball(
     name = "tar",
     image = ":image",
-    repotags = [],
+    repotags = tags,
 )
 
 container_structure_test(
@@ -29,4 +36,24 @@ container_structure_test(
     configs = ["test.yaml"],
     driver = "tar",
     image = ":tar",
+)
+
+genrule(
+    name = "tar_manifest",
+    srcs = [":tar"],
+    outs = ["manifest.json"],
+    cmd = "tar -xOf ./$(location :tar) manifest.json > $@",
+)
+
+write_file(
+    name = "expected_RepoTags",
+    out = "expected_RepoTags.json",
+    content = [str(tags)],
+)
+
+assert_json_matches(
+    name = "check_tags",
+    file1 = ":tar_manifest",
+    file2 = ":expected_RepoTags",
+    filter1 = ".[0].RepoTags",
 )

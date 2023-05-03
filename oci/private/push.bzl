@@ -23,7 +23,8 @@ oci_image(name = "image")
 
 oci_push(
     image = ":image",
-    repotags = ["index.docker.io/<ORG>/image:latest"]
+    repository = "index.docker.io/<ORG>/image",
+    repotags = ["latest"]
 )
 ```
 
@@ -48,17 +49,19 @@ oci_image_index(
 # This is defined in our /examples/push
 stamp_tags(
     name = "stamped",
-    repotags = [\"\"\""ghcr.io/<OWNER>/image:"+($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
+    repotags = [\"\"\"($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
 )
 
 oci_push(
     image = ":app_image",
-    repotags = ":stamped",
+    repository = "ghcr.io/<OWNER>/image",
+    tags = ":stamped",
 )
 ```
 
 When running the pusher, you can pass flags:
-- Additional `repotags`: `-t|--repotag` flag, e.g. `bazel run //myimage:push -- --repotag index.docker.io/<ORG>/image:latest`
+- Override `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
+- Additional `repotags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
 """
 
 _attrs = {
@@ -67,9 +70,18 @@ _attrs = {
         doc = "Label to an oci_image or oci_image_index",
         mandatory = True,
     ),
+    "repository": attr.string(
+        doc = """\
+        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
+        Digests and tags are not allowed.
+        """,
+        mandatory = True,
+    ),
     "repotags": attr.label(
         doc = """\
-        a file containing repotags, one per line.
+        a .txt file containing tags, one per line.
+        These are passed to [`crane tag`](
+        https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)
         """,
         allow_single_file = [".txt"],
     ),
@@ -89,12 +101,16 @@ def _impl(ctx):
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
 
+    if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
+        fail("repository attribute should not contain digest or tag.")
+
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
     substitutions = {
         "{{crane_path}}": crane.crane_info.binary.short_path,
         "{{yq_path}}": yq.yqinfo.bin.short_path,
         "{{image_dir}}": ctx.file.image.short_path,
+        "{{fixed_args}}": " ".join(_quote_args(["--repository", ctx.attr.repository])),
     }
     if ctx.attr.repotags:
         files.append(ctx.file.repotags)
