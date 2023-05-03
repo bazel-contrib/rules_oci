@@ -8,10 +8,7 @@ readonly BLOBS_DIR="${STAGING_DIR}/blobs"
 readonly TARBALL_PATH="{{tarball_path}}"
 readonly TAGS_FILE="{{tags}}"
 
-REPOTAGS=()
-# read repotags file as array and prepend it to REPOTAGS array.
-REPOTAGSFILE=($(IFS=$'\n' cat "$TAGS_FILE"))
-REPOTAGS=(${REPOTAGSFILE[@]+"${REPOTAGSFILE[@]}"} ${REPOTAGS[@]+"${REPOTAGS[@]}"})
+REPOTAGS="$(cat "${TAGS_FILE}")"
 
 MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json")
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
@@ -29,10 +26,10 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
 done
 
 config="blobs/${CONFIG_DIGEST}" \
-repotags="${REPOTAGS:-[]}" \
+repotags="${REPOTAGS}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
-        --null-input '.[0] = {"Config": env(config), "RepoTags": env(repotags) | split(" "), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
+        --null-input '.[0] = {"Config": strenv(config), "RepoTags": strenv(repotags) | split("\n"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${STAGING_DIR}/manifest.json"
 
 tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" .

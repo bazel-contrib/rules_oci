@@ -9,13 +9,8 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@ubuntu",
     cmd = ["app.bash"],
-    os = "linux",
     tars = [":app.tar"],
 )
 
