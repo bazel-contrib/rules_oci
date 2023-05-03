@@ -42,7 +42,7 @@ genrule(
     name = "tar_manifest",
     srcs = [":tar"],
     outs = ["manifest.json"],
-    cmd = "tar -xOf ./$(location :tar) ./manifest.json > $@",
+    cmd = "tar -xOf ./$(location :tar) manifest.json > $@",
 )
 
 write_file(
