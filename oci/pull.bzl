@@ -126,7 +126,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 target_name = plat_name,
             )
             if plat in _PLATFORM_TO_BAZEL_CPU:
-                platform_to_image[_PLATFORM_TO_BAZEL_CPU[arch]] = "@" + plat_name
+                platform_to_image[_PLATFORM_TO_BAZEL_CPU[plat]] = "@" + plat_name
     else:
         single_platform = "{}_single".format(name)
         _oci_pull(
