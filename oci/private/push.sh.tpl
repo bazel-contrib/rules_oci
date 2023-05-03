@@ -71,7 +71,7 @@ REFERENCES=($(
 echo ${REFERENCES[@]}
 
 # get digest of the image
-DIGEST=$("${YQ}" eval -oj -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
+DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 # push the first reference with image digest
 "${CRANE}" push "${IMAGE_DIR}" "${REFERENCES[0]}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}"
