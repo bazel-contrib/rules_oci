@@ -41,12 +41,15 @@ load("//oci/private:pull.bzl", "lib", "oci_alias", "pin_tag", _oci_pull = "oci_p
 # Note: there is no exhaustive list, image authors can use whatever name they like.
 # This is only used for the oci_alias rule that makes a select() - if a mapping is missing,
 # users can just write their own select() for it.
-_DOCKER_ARCH_TO_BAZEL_CPU = {
-    "amd64": "@platforms//cpu:x86_64",
-    "arm": "@platforms//cpu:arm",
-    "arm64": "@platforms//cpu:arm64",
-    "ppc64le": "@platforms//cpu:ppc",
-    "s390x": "@platforms//cpu:s390x",
+_PLATFORM_TO_BAZEL_CPU = {
+    "linux/amd64": "@platforms//cpu:x86_64",
+    "linux/arm64": "@platforms//cpu:arm64",
+    "linux/arm64/v8": "@platforms//cpu:arm64",
+    "linux/arm/v7": "@platforms//cpu:armv7",
+    "linux/ppc64le": "@platforms//cpu:ppc",
+    "linux/s390x": "@platforms//cpu:s390x",
+    "linux/386": "@platforms//cpu:i386",
+    "linux/mips64le": "@platforms//cpu:mips64",
 }
 
 def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True):
@@ -130,7 +133,6 @@ bazel run @{}_unpinned//:pin
         select_map = {}
         for plat in platforms:
             plat_name = "_".join([name] + plat.split("/"))
-            _, arch = plat.split("/", 1)
             _oci_pull(
                 name = plat_name,
                 scheme = scheme,
@@ -140,7 +142,8 @@ bazel run @{}_unpinned//:pin
                 platform = plat,
                 target_name = plat_name,
             )
-            select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
+            if plat in _PLATFORM_TO_BAZEL_CPU:
+                select_map[_PLATFORM_TO_BAZEL_CPU[plat]] = "@" + plat_name
         oci_alias(
             name = name,
             platforms = select_map,

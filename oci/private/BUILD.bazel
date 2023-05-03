@@ -51,8 +51,6 @@ bzl_library(
         "//oci/private:auth_config_locator",
         "//oci/private:download",
         "@aspect_bazel_lib//lib:base64",
-        "@aspect_bazel_lib//lib:paths",
-        "@aspect_bazel_lib//lib:repo_utils",
         "@bazel_skylib//lib:dicts",
     ],
 )
@@ -79,15 +77,6 @@ bzl_library(
     name = "versions",
     srcs = ["versions.bzl"],
     visibility = ["//oci:__subpackages__"],
-)
-
-bzl_library(
-    name = "structure_test",
-    srcs = ["structure_test.bzl"],
-    visibility = [
-        "//docs:__pkg__",
-        "//oci:__subpackages__",
-    ],
 )
 
 bzl_library(

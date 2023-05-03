@@ -1,4 +1,5 @@
 "Bazel dependencies"
+bazel_dep(name = "container_structure_test", dev_dependency = True, version = "1.15.0")
 bazel_dep(name = "rules_oci", dev_dependency = True, version = "0.0.0")
 bazel_dep(name = "platforms", version = "0.0.5")
 

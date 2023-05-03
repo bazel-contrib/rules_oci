@@ -72,7 +72,7 @@ rules_oci supports two different registry implementation for the temporary stora
 
 ### Testing
 
-- [structure_test](docs/structure_test.md) Test rule running [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test) against an oci_image.
+- We recommend [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test) to run tests against an oci_image target.
 
 <!-- Currently undocumented, as it's not public API in 1.0
 

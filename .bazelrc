@@ -5,7 +5,7 @@
 build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
 test --test_env=DOCKER_HOST
-
+common --registry=https://raw.githubusercontent.com/bazelbuild/bazel-central-registry/cst/
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members
 # This needs to be last statement in this

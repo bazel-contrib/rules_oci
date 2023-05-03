@@ -16,13 +16,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  matrix-prep-bazelversion:
+    # Prepares the 'bazelversion' axis of the test matrix
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: bazel_6
+        run: echo "bazelversion=$(head -n 1 .bazelversion)" >> $GITHUB_OUTPUT
+      - id: bazel_5
+        run: echo "bazelversion=5.3.2" >> $GITHUB_OUTPUT
+    outputs:
+      # Will look like ["<version from .bazelversion>", "5.3.2"]
+      bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
+
   test:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
+    needs:
+      - matrix-prep-bazelversion
+
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
+        bazelversion: ${{ fromJSON(needs.matrix-prep-bazelversion.outputs.bazelversions) }}
         folder:
           - .
           - e2e/custom_registry
@@ -35,6 +52,9 @@ jobs:
           # Broken due to stardoc usage, see
           # https://github.com/bazelbuild/stardoc/issues/117#issuecomment-1380744704
           - folder: .
+            bzlmodEnabled: true
+          # Don't test bzlmod with Bazel 5 (not supported)
+          - bazelversion: 5.3.2
             bzlmodEnabled: true
           # TODO: fix
           - folder: e2e/custom_registry
@@ -64,6 +84,10 @@ jobs:
         id: set_bzlmod_flag
         if: matrix.bzlmodEnabled
         run: echo "bzlmod_flag=--enable_bzlmod" >> $GITHUB_OUTPUT
+
+      - name: Configure Bazel version
+        working-directory: ${{ matrix.folder }}
+        run: echo "${{ matrix.bazelversion }}" > .bazelversion
 
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}

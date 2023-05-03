@@ -1,6 +1,7 @@
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball", "structure_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 oci_image(
     name = "image",
@@ -30,7 +31,7 @@ oci_tarball(
     repotags = tags,
 )
 
-structure_test(
+container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     driver = "tar",
