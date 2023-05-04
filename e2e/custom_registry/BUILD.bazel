@@ -1,11 +1,8 @@
-load("@rules_oci//oci:defs.bzl", "oci_image", "structure_test")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 oci_image(
     name = "image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@debian",
     cmd = [
         "--arg1",
@@ -15,10 +12,9 @@ oci_image(
     env = {
         "ENV": "/test",
     },
-    os = "linux",
 )
 
-structure_test(
+container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     image = ":image",

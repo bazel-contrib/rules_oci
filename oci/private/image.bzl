@@ -92,11 +92,13 @@ def _platform_str(os, arch, variant = None):
 def _oci_image_impl(ctx):
     if not ctx.attr.base:
         if not ctx.attr.os or not ctx.attr.architecture:
-            fail("os and architecture is mandatory when base is unspecified.")
+            fail("'os' and 'architecture' are mandatory when 'base' is unspecified.")
+
+    if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
+        fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
-    print(registry.registry_info.launcher.path)
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)

@@ -1,4 +1,5 @@
-load("//oci:defs.bzl", "oci_image", "structure_test")
+load("//oci:defs.bzl", "oci_image")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 oci_image(
     name = "image",
@@ -18,7 +19,7 @@ oci_image(
     os = "linux",
 )
 
-structure_test(
+container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     image = ":image",

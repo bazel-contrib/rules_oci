@@ -52,3 +52,10 @@ def rules_oci_internal_deps():
             "https://github.com/bazelbuild/stardoc/releases/download/0.5.0/stardoc-0.5.0.tar.gz",
         ],
     )
+
+    http_archive(
+        name = "container_structure_test",
+        sha256 = "1b3e2b5ccc7783efb74df0e3836f8361fdba5b7a339ab9b592b466e69de80495",
+        strip_prefix = "container-structure-test-4549390a770fdc744b22e58636567055c260e175",
+        urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/4549390a770fdc744b22e58636567055c260e175.zip"],
+    )

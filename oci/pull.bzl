@@ -36,17 +36,20 @@ oci_image(
 ```
 """
 
-load("//oci/private:pull.bzl", "lib", "oci_alias", "pin_tag", _oci_pull = "oci_pull")
+load("//oci/private:pull.bzl", "lib", "oci_alias", _oci_pull = "oci_pull")
 
 # Note: there is no exhaustive list, image authors can use whatever name they like.
 # This is only used for the oci_alias rule that makes a select() - if a mapping is missing,
 # users can just write their own select() for it.
-_DOCKER_ARCH_TO_BAZEL_CPU = {
-    "amd64": "@platforms//cpu:x86_64",
-    "arm": "@platforms//cpu:arm",
-    "arm64": "@platforms//cpu:arm64",
-    "ppc64le": "@platforms//cpu:ppc",
-    "s390x": "@platforms//cpu:s390x",
+_PLATFORM_TO_BAZEL_CPU = {
+    "linux/amd64": "@platforms//cpu:x86_64",
+    "linux/arm64": "@platforms//cpu:arm64",
+    "linux/arm64/v8": "@platforms//cpu:arm64",
+    "linux/arm/v7": "@platforms//cpu:armv7",
+    "linux/ppc64le": "@platforms//cpu:ppc",
+    "linux/s390x": "@platforms//cpu:s390x",
+    "linux/386": "@platforms//cpu:i386",
+    "linux/mips64le": "@platforms//cpu:mips64",
 }
 
 def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True):
@@ -106,25 +109,13 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     if not digest and not tag:
         fail("One of 'digest' or 'tag' must be set")
 
-    if tag and reproducible:
-        pin_tag(name = name + "_unpinned", image = image, tag = tag)
-
-        # Print a command - in the future we should print a buildozer command or
-        # buildifier: disable=print
-        print("""
-WARNING: for reproducible builds, a digest is recommended.
-Either set 'reproducible = False' to silence this warning,
-or run the following command to change oci_pull to use a digest:
-
-bazel run @{}_unpinned//:pin
-""".format(name))
-        return
+    platform_to_image = None
+    single_platform = None
 
     if platforms:
-        select_map = {}
+        platform_to_image = {}
         for plat in platforms:
             plat_name = "_".join([name] + plat.split("/"))
-            _, arch = plat.split("/", 1)
             _oci_pull(
                 name = plat_name,
                 scheme = scheme,
@@ -134,18 +125,28 @@ bazel run @{}_unpinned//:pin
                 platform = plat,
                 target_name = plat_name,
             )
-            select_map[_DOCKER_ARCH_TO_BAZEL_CPU[arch]] = "@" + plat_name
-        oci_alias(
-            name = name,
-            platforms = select_map,
-            target_name = name,
-        )
+            if plat in _PLATFORM_TO_BAZEL_CPU:
+                platform_to_image[_PLATFORM_TO_BAZEL_CPU[plat]] = "@" + plat_name
     else:
+        single_platform = "{}_single".format(name)
         _oci_pull(
-            name = name,
+            name = single_platform,
             scheme = scheme,
             registry = registry,
             repository = repository,
             identifier = digest or tag,
-            target_name = name,
+            target_name = single_platform,
         )
+
+    oci_alias(
+        name = name,
+        target_name = name,
+        # image attributes
+        scheme = scheme,
+        registry = registry,
+        repository = repository,
+        identifier = digest or tag,
+        # image attributes
+        platforms = platform_to_image,
+        platform = single_platform,
+    )
