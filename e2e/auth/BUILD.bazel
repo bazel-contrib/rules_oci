@@ -44,6 +44,6 @@ oci_image(
 oci_push(
     name = "push",
     image = ":empty",
+    remote_tags = ["latest"],
     repository = "localhost/empty_image",
-    repotags = ["latest"],
 )
