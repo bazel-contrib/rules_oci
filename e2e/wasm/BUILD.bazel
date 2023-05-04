@@ -52,5 +52,5 @@ build_test(
 oci_tarball(
     name = "tarball",
     image = ":image",
-    repotags = ["gcr.io/wasm:latest"],
+    repo_tags = ["gcr.io/wasm:latest"],
 )

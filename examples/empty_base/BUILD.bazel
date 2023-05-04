@@ -27,5 +27,5 @@ container_structure_test(
 oci_tarball(
     name = "tarball",
     image = ":image",
-    repotags = ["gcr.io/empty_base:latest"],
+    repo_tags = ["gcr.io/empty_base:latest"],
 )
