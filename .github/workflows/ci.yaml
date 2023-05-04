@@ -49,10 +49,6 @@ jobs:
 
         bzlmodEnabled: [true, false]
         exclude:
-          # Broken due to stardoc usage, see
-          # https://github.com/bazelbuild/stardoc/issues/117#issuecomment-1380744704
-          - folder: .
-            bzlmodEnabled: true
           # Don't test bzlmod with Bazel 5 (not supported)
           - bazelversion: 5.3.2
             bzlmodEnabled: true

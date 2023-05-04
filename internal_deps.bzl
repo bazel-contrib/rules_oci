@@ -45,6 +45,12 @@ def rules_oci_internal_deps():
     )
 
     http_archive(
+        name = "bazel_skylib_gazelle_plugin",
+        sha256 = "0a466b61f331585f06ecdbbf2480b9edf70e067a53f261e0596acd573a7d2dc3",
+        urls = ["https://github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-gazelle-plugin-1.4.1.tar.gz"],
+    )
+
+    http_archive(
         name = "io_bazel_stardoc",
         sha256 = "c9794dcc8026a30ff67cf7cf91ebe245ca294b20b071845d12c192afe243ad72",
         urls = [
