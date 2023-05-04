@@ -33,8 +33,3 @@ oci_register_toolchains(
     # Note that it does not support docker-format images.
     # zot_version = LATEST_ZOT_VERSION,
 )
-
-# Optional, for oci_tarball rule
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-
-rules_pkg_dependencies()
