@@ -8,7 +8,7 @@ on:
 
 jobs:
   release:
-    uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@v2
+    uses: bazel-contrib/.github/.github/workflows/release_ruleset.yaml@2ded56de883b35b1e18b37566fd406625153f1e2
     with:
       prerelease: true
       release_files: rules_oci-*.tar.gz
