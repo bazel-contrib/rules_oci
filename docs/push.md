@@ -70,8 +70,10 @@ oci_push(
 ```
 
 When running the pusher, you can pass flags:
-- Override `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
-- Additional `default_tags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
+
+- Override `repository`; `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
+- Tags in addition to default_tags `default_tags`; `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
+
 
 
 **ATTRIBUTES**
