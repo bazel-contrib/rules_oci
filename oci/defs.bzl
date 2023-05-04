@@ -53,31 +53,31 @@ def oci_image(name, labels = None, annotations = None, **kwargs):
         **kwargs
     )
 
-def oci_push(name, repotags = None, **kwargs):
+def oci_push(name, default_tags = [], **kwargs):
     """Macro wrapper around [oci_push_rule](#oci_push_rule).
 
-    Allows the repotags attribute to be a list of strings in addition to a text file.
+    Allows the default_tags attribute to be a list of strings in addition to a text file.
 
     Args:
         name: name of resulting oci_push_rule
-        repotags: a list of tags to apply to the image after pushing,
+        default_tags: a list of tags to apply to the image after pushing,
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
         **kwargs: other named arguments to [oci_push_rule](#oci_push_rule).
     """
-    if types.is_list(repotags):
+    if types.is_list(default_tags):
         tags_label = "_{}_write_tags".format(name)
         write_file(
             name = tags_label,
             out = "_{}.tags.txt".format(name),
-            content = repotags,
+            content = default_tags,
         )
-        repotags = tags_label
+        default_tags = tags_label
 
     oci_push_rule(
         name = name,
-        repotags = repotags,
+        default_tags = default_tags,
         **kwargs
     )
 

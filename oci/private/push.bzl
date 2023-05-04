@@ -12,7 +12,7 @@ Pushing and tagging are performed sequentially which MAY lead to non-atomic push
 - Remote registry closes the connection during the tagging
 - Local network outages
 
-In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `repotags` sequentially at
+In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `default_tags` sequentially at
 the remote registry. 
 
 Any failure during pushing or tagging will be reported with non-zero exit code cause remaining steps to be skipped.
@@ -26,7 +26,7 @@ oci_image(name = "image")
 oci_push(
     image = ":image",
     repository = "index.docker.io/<ORG>/image",
-    repotags = ["latest"]
+    default_tags = ["latest"]
 )
 ```
 
@@ -51,7 +51,7 @@ oci_image_index(
 # This is defined in our /examples/push
 stamp_tags(
     name = "stamped",
-    repotags = [\"\"\"($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
+    default_tags = [\"\"\"($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
 )
 
 oci_push(
@@ -63,7 +63,7 @@ oci_push(
 
 When running the pusher, you can pass flags:
 - Override `repository`: `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
-- Additional `repotags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
+- Additional `default_tags`: `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
 """
 
 _attrs = {
@@ -79,7 +79,7 @@ _attrs = {
         """,
         mandatory = True,
     ),
-    "repotags": attr.label(
+    "default_tags": attr.label(
         doc = """\
         a .txt file containing tags, one per line.
         These are passed to [`crane tag`](
@@ -115,9 +115,9 @@ def _impl(ctx):
         "{{image_dir}}": ctx.file.image.short_path,
         "{{fixed_args}}": " ".join(_quote_args(["--repository", ctx.attr.repository])),
     }
-    if ctx.attr.repotags:
-        files.append(ctx.file.repotags)
-        substitutions["{{tags}}"] = ctx.file.repotags.short_path
+    if ctx.attr.default_tags:
+        files.append(ctx.file.default_tags)
+        substitutions["{{tags}}"] = ctx.file.default_tags.short_path
 
     ctx.actions.expand_template(
         template = ctx.file._push_sh_tpl,
