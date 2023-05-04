@@ -28,11 +28,11 @@ done
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/212 
 # we can't use \n due to https://github.com/mikefarah/yq/issues/1430 and 
 # we can't update YQ at the moment because structure_test depends on a specific version
-repotags="${REPOTAGS/$'\n'/%}" \
+repo_tags="${REPOTAGS/$'\n'/%}" \
 config="blobs/${CONFIG_DIGEST}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
-        --null-input '.[0] = {"Config": env(config), "RepoTags": "${repotags}" | envsubst | split("%"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
+        --null-input '.[0] = {"Config": env(config), "RepoTags": "${repo_tags}" | envsubst | split("%"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${STAGING_DIR}/manifest.json"
 
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/217

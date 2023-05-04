@@ -6,7 +6,7 @@ For example, given an `:image` target, you could write
 oci_tarball(
     name = "tarball",
     image = ":image",
-    repotags = ["my-repository:latest"],
+    repo_tags = ["my-repository:latest"],
 )
 ```
 
@@ -26,9 +26,9 @@ Passing anything other than oci_image to the image attribute will lead to build 
 
 attrs = {
     "image": attr.label(mandatory = True, allow_single_file = True, doc = "Label of a directory containing an OCI layout, typically `oci_image`"),
-    "repotags": attr.label(
+    "repo_tags": attr.label(
         doc = """\
-            a file containing repotags, one per line.
+            a file containing repo_tags, one per line.
             """,
         allow_single_file = [".txt"],
     ),
@@ -47,8 +47,8 @@ def _tarball_impl(ctx):
         "{{tarball_path}}": tarball.path,
     }
 
-    if ctx.attr.repotags:
-        substitutions["{{tags}}"] = ctx.file.repotags.path
+    if ctx.attr.repo_tags:
+        substitutions["{{tags}}"] = ctx.file.repo_tags.path
 
     ctx.actions.expand_template(
         template = ctx.file._tarball_sh,
@@ -59,7 +59,7 @@ def _tarball_impl(ctx):
 
     ctx.actions.run(
         executable = executable,
-        inputs = [image, ctx.file.repotags],
+        inputs = [image, ctx.file.repo_tags],
         outputs = [tarball],
         tools = [yq_bin],
         mnemonic = "OCITarball",

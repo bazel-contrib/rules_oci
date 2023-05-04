@@ -28,7 +28,7 @@ tags = [
 oci_tarball(
     name = "tar",
     image = ":image",
-    repotags = tags,
+    repo_tags = tags,
 )
 
 container_structure_test(

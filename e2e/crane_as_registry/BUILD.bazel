@@ -21,7 +21,7 @@ oci_image(
 oci_tarball(
     name = "tar",
     image = ":image",
-    repotags = [],
+    repo_tags = [],
 )
 
 container_structure_test(
