@@ -53,7 +53,7 @@ def oci_image(name, labels = None, annotations = None, **kwargs):
         **kwargs
     )
 
-def oci_push(name, default_tags = [], **kwargs):
+def oci_push(name, default_tags = None, **kwargs):
     """Macro wrapper around [oci_push_rule](#oci_push_rule).
 
     Allows the default_tags attribute to be a list of strings in addition to a text file.
