@@ -1,5 +1,6 @@
 load("//oci:defs.bzl", "oci_image", "oci_image_index")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 load(":transition.bzl", "multi_arch")
 
 pkg_tar(
@@ -29,4 +30,18 @@ oci_image_index(
     images = [
         ":images",
     ],
+)
+
+genrule(
+    name = "hash",
+    srcs = [":index"],
+    outs = ["sha256.sum"],
+    cmd = "$(JQ_BIN) -r '.manifests[0].digest' $(location :index)/index.json > $@",
+    toolchains = ["@jq_toolchains//:resolved_toolchain"],
+)
+
+assert_contains(
+    name = "check_digest",
+    actual = ":hash",
+    expected = "sha256:7dc510461a627051f9276ec21a26ed9a314e87e94eac1be996fcf48be6cc9aa2",
 )

@@ -9,10 +9,9 @@ First, we'll need a base image.
 
 It's wise to minimize changes by using the same one your current `rust_image` uses.
 
-To check which base image rules_docker use for Rust, we can check logic in  [rules_docker repo](https://github.com/bazelbuild/rules_docker) or use `bazel query`. In this docs we'll go with the first way, if you want to see how to use `bazel query`, you can refer to [build go image docs](/docs/go.md).
+To check which base image rules_docker use for Rust, we can check logic in [rules_docker repo](https://github.com/bazelbuild/rules_docker) or use `bazel query`. In this docs we'll go with the first way, if you want to see how to use `bazel query`, you can refer to [build go image docs](/docs/go.md).
 
 Logic to choose rust base image is in [rust/image.bzl](https://github.com/bazelbuild/rules_docker/blob/master/rust/image.bzl), we can see that it use an variable called `DEFAULT_BASE` imported from [cc/image.bzl](https://github.com/bazelbuild/rules_docker/blob/fc729d85f284225cfc0b8c6d1d838f4b3e037749/cc/image.bzl). Inspecting that file, we can see that it refer to [`distroless/cc`](https://github.com/GoogleContainerTools/distroless/blob/main/cc/README.md) image.
-
 
 **TL;DR:** Base image to use is [`distroless/cc`](https://github.com/GoogleContainerTools/distroless/blob/main/cc/README.md). To use it, add below code to WORKSPACE:
 
@@ -30,6 +29,7 @@ oci_pull(
 See more details in the [`oci_pull` docs](/docs/pull.md)
 
 ## Note about compatibility
+
 `distroless/cc` is based on [Debian 11 (bullseye)](https://github.com/GoogleContainerTools/distroless#base-operating-system), which contain `glibc 2.31`. So if you run `rust_binary` on a machine that have `glibc > 2.31`, your image may not work and will see error like: `/<binary_name>: /lib/x86_64-linux-gnu/libc.so.6: version GLIBC_2.33 not found `. To avoid this, you can:
 
 - Use a base image that contains newer version of glibc (> 2.31)
@@ -51,6 +51,7 @@ fn main() {
 Create a `WORKSPACE` file to load required toolchains and pull [`distroless/cc`](https://github.com/GoogleContainerTools/distroless/blob/main/cc/README.md) as base image. For more information, refer to [`rules_rust`](https://github.com/bazelbuild/rules_rust) and [`rules_oci`](https://github.com/bazel-contrib/rules_oci/)
 
 **WORKSPACE**
+
 ```
 # Name of workspace
 workspace(name = "sample-rust-bzl")
@@ -90,11 +91,6 @@ oci_register_toolchains(
     # Note that it does not support docker-format images.
     # zot_version = LATEST_ZOT_VERSION,
 )
-
-# Add oci_tarball
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-
-rules_pkg_dependencies()
 
 # Pull distroless image
 
@@ -161,10 +157,10 @@ oci_image(
 
 We can try to load it into `docker` to see if it work properly.
 
-
 Complete `BUILD.bazel` file
 
 **BUILD.bazel**
+
 ```
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 load("@rules_pkg//:pkg.bzl", "pkg_tar")

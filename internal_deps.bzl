@@ -59,3 +59,12 @@ def rules_oci_internal_deps():
         strip_prefix = "container-structure-test-4549390a770fdc744b22e58636567055c260e175",
         urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/4549390a770fdc744b22e58636567055c260e175.zip"],
     )
+
+    http_archive(
+        name = "rules_pkg",
+        urls = [
+            "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
+        ],
+        sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
+    )

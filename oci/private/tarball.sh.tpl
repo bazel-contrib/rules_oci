@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
+readonly STAGING_DIR=$(mktemp -d)
 readonly YQ="{{yq}}"
 readonly IMAGE_DIR="{{image_dir}}"
-readonly BLOBS_DIR="{{blobs_dir}}"
+readonly BLOBS_DIR="${STAGING_DIR}/blobs"
+readonly TARBALL_PATH="{{tarball_path}}"
 readonly TAGS_FILE="{{tags}}"
-readonly TARBALL_MANIFEST_PATH="{{manifest_path}}"
 
 REPOTAGS="$(cat "${TAGS_FILE}")"
 
@@ -32,4 +33,7 @@ config="blobs/${CONFIG_DIGEST}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": "${repotags}" | envsubst | split("%"), "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
-        --output-format json > "${TARBALL_MANIFEST_PATH}"
+        --output-format json > "${STAGING_DIR}/manifest.json"
+
+# TODO: https://github.com/bazel-contrib/rules_oci/issues/217
+tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs

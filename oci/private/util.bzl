@@ -1,5 +1,46 @@
 """Utilities"""
 
+def _parse_image(image):
+    """Support syntax sugar in oci_pull where multiple data fields are in a single string, "image"
+
+    Args:
+        image: full-qualified reference url
+    Returns:
+        a tuple containing  scheme, registry, repository, digest, and tag information.
+    """
+
+    scheme = "https"
+    digest = None
+    tag = None
+
+    if image.startswith("http://"):
+        image = image[len("http://"):]
+        scheme = "http"
+    if image.startswith("https://"):
+        image = image[len("https://"):]
+
+    # Check syntax sugar for digest/tag suffix on image
+    if image.rfind("@") > 0:
+        image, digest = image.rsplit("@", 1)
+
+    # Check if the last colon has no slashes after it.
+    # Matches debian:latest and myregistry:8000/myimage:latest
+    # but does not match myregistry:8000/myimage
+    colon = image.rfind(":")
+    if colon > 0 and image[colon:].find("/") == -1:
+        image, tag = image.rsplit(":", 1)
+
+    # Syntax sugar, special case for dockerhub
+    if image.startswith("docker.io/"):
+        image = "index." + image
+
+    # If image has no repository, like bare "ubuntu" we assume it's dockerhub
+    if image.find("/") == -1:
+        image = "index.docker.io/library/" + image
+    registry, repository = image.split("/", 1)
+
+    return (scheme, registry, repository, digest, tag)
+
 def sha256(rctx, path):
     """Returns hashsum of file at path
 
@@ -21,3 +62,7 @@ def warning(rctx, message):
         "echo",
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
+
+util = struct(
+    parse_image = _parse_image,
+)

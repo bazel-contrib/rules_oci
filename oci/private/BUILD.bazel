@@ -19,7 +19,6 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
-    deps = ["@rules_pkg//pkg:bzl_srcs"],
 )
 
 bzl_library(
@@ -62,6 +61,9 @@ bzl_library(
     visibility = [
         "//docs:__pkg__",
         "//oci:__subpackages__",
+    ],
+    deps = [
+        "//oci/private:util",
     ],
 )
 
