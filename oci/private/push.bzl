@@ -1,5 +1,7 @@
 "Implementation details for the push rule"
 
+load("//oci/private:util.bzl", "util")
+
 _DOC = """Push an oci_image or oci_image_index to a remote registry.
 
 Internal rule used by the [oci_push macro](/docs/push.md#oci_push).
@@ -101,8 +103,9 @@ def _impl(ctx):
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
 
-    if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
-        fail("repository attribute should not contain digest or tag.")
+    _, _, _, maybe_digest, maybe_tag = util.parse_image(ctx.attr.repository)
+    if maybe_digest or maybe_tag:
+        fail("`repository` attribute should not contain digest or tag. got: {}".format(ctx.attr.repository))
 
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]

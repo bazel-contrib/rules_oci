@@ -63,6 +63,9 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = [
+        "//oci/private:util",
+    ],
 )
 
 bzl_library(

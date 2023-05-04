@@ -37,6 +37,7 @@ bzl_library(
     visibility = ["//visibility:public"],
     deps = [
         "//oci/private:pull",
+        "//oci/private:util",
     ],
 )
 

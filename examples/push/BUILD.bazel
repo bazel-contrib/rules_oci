@@ -11,7 +11,7 @@ oci_image(
 oci_push(
     name = "push_image",
     image = ":image",
-    repository = "index.docker.io/<ORG>/image",
+    repository = "index.docker.io:9899/<ORG>/image",
     repotags = ["latest"],
 )
 
