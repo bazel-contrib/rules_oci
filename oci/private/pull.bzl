@@ -3,7 +3,7 @@
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("//oci/private:download.bzl", "download")
-load("//oci/private:util.bzl", "util")
+load("//oci/private:util.bzl", "sha256", "util")
 
 # attributes that are specific to image reference url. shared between multiple targets
 _IMAGE_REFERENCE_ATTRS = {
