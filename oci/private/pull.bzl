@@ -204,9 +204,7 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
     if identifier.startswith("sha256:"):
         sha256 = identifier[len("sha256:"):]
     else:
-        # buildifier: disable=print
-        print("""
-WARNING: fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
+        warning(rctx, """fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
 
     return download_fn(
         rctx,
@@ -229,18 +227,14 @@ def _download_manifest(rctx, state, identifier, output):
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
         if manifest["schemaVersion"] == 1:
-            # buildifier: disable=print
-            print("""
-    WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
-    Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
-    """)
+            warning(rctx, """\
+registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
+Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.""")
             fallback_to_curl = True
     else:
-        # buildifier: disable=print
-        print("""
-WARNING: Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
-Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
-""")
+        warning(rctx, """\
+Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
+Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.""")
         fallback_to_curl = True
 
     if fallback_to_curl:
