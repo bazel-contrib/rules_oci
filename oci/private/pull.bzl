@@ -3,7 +3,7 @@
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("//oci/private:download.bzl", "download")
-load("//oci/private:util.bzl", "sha256", "warning")
+load("//oci/private:util.bzl", "sha256", "util")
 
 # attributes that are specific to image reference url. shared between multiple targets
 _IMAGE_REFERENCE_ATTRS = {
@@ -204,9 +204,7 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
     if identifier.startswith("sha256:"):
         sha256 = identifier[len("sha256:"):]
     else:
-        # buildifier: disable=print
-        print("""
-WARNING: fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
+        util.warning(rctx, """fetching from %s without an integrity hash. The result will not be cached.""" % registry_url)
 
     return download_fn(
         rctx,
@@ -229,18 +227,14 @@ def _download_manifest(rctx, state, identifier, output):
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
         if manifest["schemaVersion"] == 1:
-            # buildifier: disable=print
-            print("""
-    WARNING: registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
-    Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
-    """)
+            util.warning(rctx, """\
+registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
+Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.""")
             fallback_to_curl = True
     else:
-        # buildifier: disable=print
-        print("""
-WARNING: Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
-Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.
-""")
+        util.warning(rctx, """\
+Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
+Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.""")
         fallback_to_curl = True
 
     if fallback_to_curl:
@@ -472,7 +466,7 @@ def _oci_alias_impl(rctx):
                 platforms.append('"{}"'.format("/".join(parts)))
             optional_platforms = "'add platforms {}'".format(" ".join(platforms))
 
-        warning(rctx, """\
+        util.warning(rctx, """\
 for reproducible builds, a digest is recommended.
 Either set 'reproducible = False' to silence this warning,
 or run the following command to change oci_pull to use a digest:
