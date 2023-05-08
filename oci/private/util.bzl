@@ -57,7 +57,7 @@ def _sha256(rctx, path):
 
     return result.stdout.split(" ", 1)[0]
 
-def warning(rctx, message):
+def _warning(rctx, message):
     rctx.execute([
         "echo",
         "\033[0;33mWARNING:\033[0m {}".format(message),
@@ -66,4 +66,5 @@ def warning(rctx, message):
 util = struct(
     parse_image = _parse_image,
     sha256 = _sha256,
+    warning = _warning,
 )
