@@ -41,7 +41,7 @@ def _parse_image(image):
 
     return (scheme, registry, repository, digest, tag)
 
-def sha256(rctx, path):
+def _sha256(rctx, path):
     """Returns hashsum of file at path
 
     Args:
@@ -65,4 +65,5 @@ def warning(rctx, message):
 
 util = struct(
     parse_image = _parse_image,
+    sha256 = _sha256,
 )
