@@ -122,3 +122,8 @@ def fetch_images():
             "linux/arm64",
         ],
     )
+
+    oci_pull(
+        name = "fluxcd_flux",
+        image = "docker.io/fluxcd/flux:1.25.4",
+    )

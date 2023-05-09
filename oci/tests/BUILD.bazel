@@ -1,31 +1,27 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
-load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(":pull_tests.bzl", "parse_image_test")
 
 _PLATFORM = "linux/amd64"
 
-platform(
-    name = _PLATFORM,
-    constraint_values = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-)
+IMAGES_TO_TEST = {
+    "distroless_java": "gcr.io/distroless/java17@sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
+    "distroless_static_linux_amd64": "gcr.io/distroless/static@sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+    "fluxcd_flux_single": "docker.io/fluxcd/flux:1.25.4",
+}
 
 # Use crane to pull images as a comparison for our oci_pull repository rule
 [
     genrule(
-        name = "pull_{image}".format(image = image),
-        outs = [image],
-        cmd = "$(CRANE_BIN) pull gcr.io/distroless/{image}@{digest} $@ --format=oci --platform={platform}".format(
-            digest = digest,
-            image = image,
+        name = "pull_{}".format(repo_name),
+        outs = [repo_name],
+        cmd = "$(CRANE_BIN) pull {reference} $@ --format=oci --platform={platform}".format(
+            reference = reference,
             platform = _PLATFORM,
         ),
         local = True,  # needs to run locally to able to use credential helpers
-        message = "Pulling gcr.io/distroless/{image} for {platform}".format(
-            image = image,
+        message = "Pulling {reference} for {platform}".format(
+            reference = reference,
             platform = _PLATFORM,
         ),
         output_to_bindir = True,
@@ -35,36 +31,17 @@ platform(
         ],
         visibility = ["//visibility:public"],
     )
-    for image, digest in {
-        "java17": "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
-        "static": "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
-    }.items()
+    for repo_name, reference in IMAGES_TO_TEST.items()
 ]
 
-platform_transition_filegroup(
-    name = "distroless_java_amd64",
-    # This one is declared with an oci_pull rule in /WORKSPACE
-    srcs = ["@distroless_java"],
-    target_platform = _PLATFORM,
-)
-
-diff_test(
-    name = "test_java17",
-    file1 = "java17",
-    file2 = "distroless_java_amd64",
-)
-
-platform_transition_filegroup(
-    name = "distroless_static_amd64",
-    srcs = ["@distroless_static"],
-    target_platform = _PLATFORM,
-)
-
-diff_test(
-    name = "test_static",
-    file1 = "static",
-    file2 = "distroless_static_amd64",
-)
+[
+    diff_test(
+        name = "test_{}".format(repo_name),
+        file1 = repo_name,
+        file2 = "@{}".format(repo_name),
+    )
+    for repo_name, reference in IMAGES_TO_TEST.items()
+]
 
 # assert than we don't break fetching these
 build_test(
