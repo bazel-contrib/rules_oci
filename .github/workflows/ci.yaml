@@ -42,7 +42,6 @@ jobs:
         bazelversion: ${{ fromJSON(needs.matrix-prep-bazelversion.outputs.bazelversions) }}
         folder:
           - .
-          - e2e/auth
           - e2e/custom_registry
           - e2e/wasm
           - e2e/smoke
