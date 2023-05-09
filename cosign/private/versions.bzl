@@ -1,6 +1,24 @@
 "Mirrored versions/integrity hashes of cosign binaries"
 
 COSIGN_VERSIONS = {
+    "v2.0.2": {
+        "darwin-amd64": "sha256-D1HL4ZoxW5GehwQvBIUzGCFyLst/ziLMG4gO1IM/yLA=",
+        "darwin-arm64": "sha256-VSQqUuvKQ9+xM9D+JuEVRr+kVxrd1oUteCwRnXTereE=",
+        "linux-amd64": "sha256-3GQRc8vaKbpIWAzd4/gPenNPO1WKJeWVCksZ9SJnjHA=",
+        "linux-arm": "sha256-aG72FgiJ6E5XEFBTRbW1XO8Ic5B9DvWVTIN9nWR88Wk=",
+        "linux-arm64": "sha256-UX6W+dA2xLd9sBEyys2+8h5CZumtOpPmd3PFkLpU4m8=",
+        "linux-ppc64le": "sha256-ciPMSusQW6l0Gfn2lHXw2aDCp7O9YsTxpkLGAtei9zQ=",
+        "linux-s390x": "sha256-SwLRYzmENB1lcLj32HcsUdaubkV6kqJRcr12PclFJSQ=",
+    },
+    "v2.0.1": {
+        "darwin-amd64": "sha256-oi2jnE4pDTrloqiCR22vhLRqwZrNCwGqyOFz1/V7jq4=",
+        "darwin-arm64": "sha256-lXdPD40LFnRgaJPjg37NPwHWXA6kpxQJsIkwf/0fm+0=",
+        "linux-amd64": "sha256-kkdUsuYvJWg+PnT5CqXhZpRKDwz3W0GW7nbLL0h92YA=",
+        "linux-arm": "sha256-BoFfZKzg/44pXk/rlHD92nC2NuLn9Yk0MiIXUbtDKi0=",
+        "linux-arm64": "sha256-SozUlRjMZnuxbmqvnaKRtkfDi6/6Ri/UlQQ65nYvaYE=",
+        "linux-ppc64le": "sha256-5ZWw+KZBNnqhhgWpN+WZOpDpIaYtcSREnnFOlsrlIb0=",
+        "linux-s390x": "sha256-sb3I5UW9muztuvjq1zymOlVl2jmxsEynIO/6iAQkE6g=",
+    },
     "v2.0.0": {
         "darwin-amd64": "sha256-0sj8DttCoel0XaHEOikozuBE87ihuN9kCIo4TH5vW10=",
         "darwin-arm64": "sha256-nXgh4cBdpLB1E3KcsA0QcMmpUzLGbZD6WT7XfYxyyio=",
