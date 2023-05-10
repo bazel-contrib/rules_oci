@@ -15,7 +15,7 @@ _Need help?_ This ruleset has support provided by https://aspect.dev.
 
 ## Installation
 
-- Bazel 6 with bzlmod: start from <https://registry.bazel.build/modules/rules_oci>
+- Bazel >= 6.2.0 with `--enable_bzlmod`: start from <https://registry.bazel.build/modules/rules_oci>
 - Others: Copy the WORKSPACE snippet into your `WORKSPACE` file from a release: <https://github.com/bazel-contrib/rules_oci/releases>
 
 To use a commit rather than a release, you can point at any SHA of the repo.
