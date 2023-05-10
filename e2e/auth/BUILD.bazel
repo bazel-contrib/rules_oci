@@ -39,6 +39,7 @@ oci_image(
     name = "empty",
     architecture = "arm64",
     os = "linux",
+    base = "@empty_image"
 )
 
 oci_push(

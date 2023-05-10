@@ -95,6 +95,14 @@ def _get_auth(rctx, state, registry):
                 # cache the result so that we don't do this again unnecessarily.
                 state["auth"][registry] = pattern
 
+        # Quick hack that fixes it
+        for host_raw in config["credHelpers"]:
+            host = _strip_host(host_raw)
+            if host == registry:
+                auth_val = config["credHelpers"][host_raw]
+                pattern = _fetch_auth_via_creds_helper(rctx, host_raw, auth_val)
+                # state["auth"][registry] = pattern
+
     return pattern
 
 def _get_token(rctx, state, registry, repository):
@@ -142,6 +150,7 @@ exec "docker-credential-{}" get <<< "$1"
         """.format(helper_name),
     )
     result = rctx.execute([rctx.path(executable), raw_host])
+    print(result.stdout)
     if result.return_code:
         fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
 
