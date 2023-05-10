@@ -49,6 +49,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "ghcr.io/token",
     },
+    "cgr.dev": {
+        "realm": "cgr.dev/token",
+        "service": "cgr.dev",
+        "scope": "repository:{repository}:pull",
+    },
 }
 
 def _strip_host(url):
@@ -63,6 +68,13 @@ def _get_auth(rctx, state, registry):
 
     pattern = {}
     config = state["config"]
+
+    if "credHelpers" in config:
+        for host_raw in config["credHelpers"]:
+            host = _strip_host(host_raw)
+            if host == registry:
+                helper_val = config["credHelpers"][host_raw]
+                return  _fetch_auth_via_creds_helper(rctx, host_raw, helper_val)
 
     if "auths" in config:
         for host_raw in config["auths"]:

@@ -113,6 +113,18 @@ def fetch_images():
     )
 
     oci_pull(
+        name = "chainguard_static",
+        image = "cgr.dev/chainguard/static",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        #tag = "latest",
+        #reproducible = False,
+        digest = "sha256:0fc4584e8ae2a6e71f0bf73213c659f64756b48caab1bba3207c2ea51d292fb0",
+    )
+
+    oci_pull(
         name = "apollo_router",
         # tag = "v1.14.0",
         digest = "sha256:237c4d6a477b5013bae88549bfc50aaafd68974cab7d2dde2ba5431345e9c95d",
