@@ -64,7 +64,16 @@ def _get_auth(rctx, state, registry):
     pattern = {}
     config = state["config"]
 
-    if "auths" in config:
+    # first look into per registry credHelpers if it exists
+    if "credHelpers" in config:
+        for host_raw in config["credHelpers"]:
+            host = _strip_host(host_raw)
+            if host == registry:
+                helper_val = config["credHelpers"][host_raw]
+                pattern = _fetch_auth_via_creds_helper(rctx, host_raw, helper_val)
+
+    # if no match for per registry credential helper for the host then look into auths dictionary 
+    if "auths" in config and len(pattern.keys()) == 0:
         for host_raw in config["auths"]:
             host = _strip_host(host_raw)
             if host == registry:
@@ -92,8 +101,8 @@ def _get_auth(rctx, state, registry):
                         "password": auth_val["password"],
                     }
 
-                # cache the result so that we don't do this again unnecessarily.
-                state["auth"][registry] = pattern
+    # cache the result so that we don't do this again unnecessarily.
+    state["auth"][registry] = pattern
 
     return pattern
 
