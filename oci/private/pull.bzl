@@ -501,7 +501,9 @@ buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {option
             name = rctx.attr.name,
             target_name = rctx.attr.target_name,
             platform_map = {
-                str(k): v
+                # Workaround bug in Bazel 6.1.0, see
+                # https://github.com/bazel-contrib/rules_oci/issues/221
+                str(k).replace("@@", "@"): v
                 for k, v in rctx.attr.platforms.items()
             },
         )
