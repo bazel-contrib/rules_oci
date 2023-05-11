@@ -1,6 +1,7 @@
 # Bazel settings that apply to this repository.
 # Take care to document any settings that you expect users to apply.
 # Settings that apply only to CI are in .github/workflows/ci.bazelrc
+common --enable_bzlmod
 
 build --incompatible_strict_action_env
 build --nolegacy_external_runfiles

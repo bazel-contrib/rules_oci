@@ -1,0 +1,6 @@
+schemaVersion: 2.0.0
+commandTests:
+  - name: test
+    command: java
+    args: ['-jar', '/src/main/java/com/example/JavaLoggingClient_deploy.jar']
+    expectedOutput: ['Sending message to server']
