@@ -21,8 +21,9 @@ def fetch_images():
     # A multi-arch base image
     oci_pull(
         name = "distroless_static",
-        digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+        # digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
         image = "gcr.io/distroless/static",
+        tag = "latest",
         platforms = [
             "linux/amd64",
             "linux/arm",
@@ -36,7 +37,8 @@ def fetch_images():
     # A multi-arch base image
     oci_pull(
         name = "distroless_base_nossl",
-        digest = "sha256:b7ed83c586e0901849c7cc9790f98fb6eeac8567bc144eec355c4a077c466c10",
+        # digest = "sha256:b7ed83c586e0901849c7cc9790f98fb6eeac8567bc144eec355c4a077c466c10",
+        tag = "latest",
         image = "gcr.io/distroless/base-nossl-debian11",
         platforms = [
             "linux/amd64",
@@ -167,6 +169,18 @@ def fetch_images():
     oci_pull(
         name = "chainguard_jre",
         image = "cgr.dev/chainguard/jre",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        tag = "latest",
+        reproducible = False,
+    )
+
+
+    oci_pull(
+        name = "chainguard_jdk",
+        image = "cgr.dev/chainguard/jdk",
         platforms = [
             "linux/amd64",
             "linux/arm64",

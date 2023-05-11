@@ -30,7 +30,7 @@ oci_tarball(
 
 # chainguard demo #######################################################
 oci_image(
-    name = "chainguard_image",
+    name = "chainguard_jre_image",
     base = "@chainguard_jre",
     entrypoint = [
         "java",
@@ -41,7 +41,24 @@ oci_image(
 )
 
 oci_tarball(
-    name = "chainguard_tar",
-    image = ":chainguard_image",
-    repo_tags = ["chainguard:example"],
+    name = "chainguard_jre_tar",
+    image = ":chainguard_jre_image",
+    repo_tags = ["chainguard_jre:example"],
+)
+
+oci_image(
+    name = "chainguard_jdk_image",
+    base = "@chainguard_jdk",
+    entrypoint = [
+        "java",
+        "-jar",
+        "/src/main/java/com/example/JavaLoggingClient_deploy.jar",
+    ],
+    tars = [":tar"],
+)
+
+oci_tarball(
+    name = "chainguard_jdk_tar",
+    image = ":chainguard_jdk_image",
+    repo_tags = ["chainguard_jdk:example"],
 )
