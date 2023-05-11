@@ -37,7 +37,7 @@ function create_oci_layout() {
 
     echo '{"imageLayoutVersion": "1.0.0"}' > "${path}/oci-layout" 
     echo '{"schemaVersion": 2, "manifests": []}' > "${path}/index.json"
-    echo '{"schemaVersion": 2, "mediaType": "application/vnd.oci.image.index.v1+json", "manifests": []}' > "${path}/manifest_list.json"
+    echo '{"schemaVersion": 2, "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json", "manifests": []}' > "${path}/manifest_list.json"
 }
 
 CURRENT_IMAGE=""
