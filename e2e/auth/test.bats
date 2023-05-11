@@ -28,6 +28,7 @@ function teardown_file() {
 
 function setup() {
     export DOCKER_CONFIG=$(mktemp -d)
+    bazel clean
 }
 
 function update_assert() {
@@ -44,7 +45,7 @@ function update_assert() {
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    run bazel build @empty_image//... --repository_cache=
     assert_success
 }
 
@@ -57,7 +58,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    run bazel build @empty_image//... --repository_cache=
     assert_success
 }
 
@@ -70,7 +71,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    run bazel build @empty_image//... --repository_cache=
     assert_success
 }
 
@@ -82,7 +83,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    run bazel build @empty_image//... --repository_cache=
     assert_success
 }
 
@@ -93,7 +94,7 @@ EOF
   "credsStore": "evil"
 }
 EOF
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    run bazel build @empty_image//... --repository_cache=
     assert_failure
     assert_output -p "can't run at this time" "ERROR: credential helper failed:"
 }
@@ -105,7 +106,46 @@ EOF
   "credsStore": "missing"
 }
 EOF
-    run bazel build @empty_image//... --repository_cache=$BATS_TEST_TMPDIR
+    run bazel build @empty_image//... --repository_cache=
     assert_failure
     assert_output -p "exec: docker-credential-missing: not found" "ERROR: credential helper failed:"
+}
+
+@test "per registry credHelper fails" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "credHelpers": {
+    "localhost:1447": "evil"
+  }
+}
+EOF
+    run bazel build @empty_image//... --repository_cache=
+    assert_failure 
+    assert_output -p "Error in fail: credential helper failed:" "can't run at this time"
+}
+
+@test "per registry credHelper succeeds" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "credHelpers": {
+    "localhost:1447": "new"
+  }
+}
+EOF
+    update_assert '{"Authorization": ["Basic cGVyLWNyZWQ6dGVzdGluZw=="]}'
+    run bazel build @empty_image//... --repository_cache=
+    assert_success
+}
+
+@test "per registry credHelper fails to match authorization" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "credHelpers": {
+    "localhost:1447": "oci"
+  }
+}
+EOF
+    update_assert '{"Authorization": ["Basic not_match"]}'
+    run bazel build @empty_image//... --repository_cache=
+    assert_failure
 }

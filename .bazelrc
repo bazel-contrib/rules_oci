@@ -4,6 +4,8 @@
 
 build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
+build --symlink_prefix=/
+
 test --test_env=DOCKER_HOST
 
 # Load any settings specific to the current user.
