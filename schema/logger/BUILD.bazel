@@ -1,0 +1,15 @@
+"Copied from https://github.com/aspect-build/codelabs/tree/final/schema/logger"
+
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+proto_library(
+    name = "logger_proto",
+    srcs = ["logger.proto"],
+)
+
+java_proto_library(
+    name = "logger_java_proto",
+    deps = [":logger_proto"],
+)

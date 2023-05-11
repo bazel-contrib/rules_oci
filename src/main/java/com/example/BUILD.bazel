@@ -1,0 +1,34 @@
+load("@rules_jvm_external//:defs.bzl", "artifact")
+
+java_library(
+    name = "logger_java_grpc",
+    srcs = ["LoggerGrpc.java"],
+    deps = [
+        "//schema/logger:logger_java_proto",
+        artifact("com.google.guava:guava"),
+        artifact("com.google.protobuf:protobuf-java"),
+        artifact("io_grpc:grpc-api"),
+        artifact("io_grpc:grpc-core"),
+        artifact("io_grpc:grpc-netty-shaded"),
+        artifact("io_grpc:grpc-protobuf"),
+        artifact("io_grpc:grpc-stub"),
+    ],
+)
+
+java_library(
+    name = "JavaLoggingClientLibrary",
+    srcs = ["JavaLoggingClientLibrary.java"],
+    deps = [
+        ":logger_java_grpc",
+        "//schema/logger:logger_java_proto",
+        artifact("io.grpc:grpc-stub"),
+        artifact("io.grpc:grpc-api"),
+    ],
+)
+
+java_binary(
+    name = "JavaLoggingClient",
+    srcs = ["JavaLoggingClient.java"],
+    visibility = ["//visibility:public"],
+    deps = [":JavaLoggingClientLibrary"],
+)

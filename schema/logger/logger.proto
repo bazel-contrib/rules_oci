@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.example";
+option java_outer_classname = "GreeterProto";
+
+service Logger {
+  rpc SendLogMessage(LogMessage) returns (Empty) {}
+}
+
+message LogMessage {
+  string message = 1;
+  int64 time = 2;
+}
+
+message Empty {}
