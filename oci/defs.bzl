@@ -1,4 +1,10 @@
-""
+"""
+To load these rules, add this to the top of your `BUILD` file:
+
+```starlark
+load("@rules_oci//oci:defs.bzl", ...)
+```
+"""
 
 load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
