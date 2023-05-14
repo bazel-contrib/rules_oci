@@ -9,7 +9,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
 load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
-load("//oci/private:push.bzl", _oci_push = "oci_push")
+load("//oci/private:push.bzl", _oci_push = "oci_push", _RepositoryInfo = "RepositoryInfo")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
@@ -17,6 +17,8 @@ oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
+
+RepositoryInfo = _RepositoryInfo
 
 def oci_image(name, labels = None, annotations = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).

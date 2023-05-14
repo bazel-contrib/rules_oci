@@ -68,6 +68,14 @@ When running the pusher, you can pass flags:
 
 """
 
+RepositoryInfo = provider(
+    doc = "Information about the repository.",
+    fields = {
+        "name": "The name of the image repository",
+        "registry": "The name of the image registry"
+    },
+)
+
 _attrs = {
     "image": attr.label(
         allow_single_file = True,
@@ -105,7 +113,7 @@ def _impl(ctx):
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
 
-    _, _, _, maybe_digest, maybe_tag = util.parse_image(ctx.attr.repository)
+    _, registry, repository, maybe_digest, maybe_tag = util.parse_image(ctx.attr.repository)
     if maybe_digest or maybe_tag:
         fail("`repository` attribute should not contain digest or tag. got: {}".format(ctx.attr.repository))
 
@@ -131,7 +139,13 @@ def _impl(ctx):
     runfiles = runfiles.merge(yq.default.default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
 
-    return DefaultInfo(executable = executable, runfiles = runfiles)
+    return [
+        DefaultInfo(executable = executable, runfiles = runfiles),
+        RepositoryInfo(
+            name = repository,
+            registry = registry,
+        )
+    ]
 
 oci_push_lib = struct(
     implementation = _impl,
