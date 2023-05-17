@@ -72,7 +72,7 @@ def _get_auth(rctx, state, registry):
                 helper_val = config["credHelpers"][host_raw]
                 pattern = _fetch_auth_via_creds_helper(rctx, host_raw, helper_val)
 
-    # if no match for per registry credential helper for the host then look into auths dictionary 
+    # if no match for per registry credential helper for the host then look into auths dictionary
     if "auths" in config and len(pattern.keys()) == 0:
         for host_raw in config["auths"]:
             host = _strip_host(host_raw)
@@ -191,11 +191,11 @@ def _trim_hash_algorithm(identifier):
 
 def _download(rctx, state, identifier, output, resource, download_fn = download.bazel, headers = {}, allow_fail = False):
     "Use the Bazel Downloader to fetch from the remote registry"
-
+    download_fn = download.bazel
     if resource != "blobs" and resource != "manifests":
         fail("resource must be blobs or manifests")
 
-    auth = _get_token(rctx, state, rctx.attr.registry, rctx.attr.repository)
+    # auth = _get_token(rctx, state, rctx.attr.registry, rctx.attr.repository)
 
     # Construct the URL to fetch from remote, see
     # https://github.com/google/go-containerregistry/blob/62f183e54939eabb8e80ad3dbc787d7e68e68a43/pkg/v1/remote/descriptor.go#L234
@@ -220,7 +220,7 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
         output = output,
         sha256 = sha256,
         url = registry_url,
-        auth = {registry_url: auth},
+        # auth = {registry_url: auth},
         headers = headers,
         allow_fail = allow_fail,
     )

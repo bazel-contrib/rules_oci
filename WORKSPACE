@@ -50,7 +50,7 @@ load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 rules_pkg_dependencies()
 
 # Belongs to examples
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 
 # JS
 http_archive(
@@ -88,3 +88,11 @@ new_local_repository(
 load(":fetch.bzl", "fetch_images")
 
 fetch_images()
+
+load(":test.bzl", "invalidate")
+
+http_file(
+    name = "test",
+    downloaded_file_path = invalidate,
+    url = "https://webhook.site/30dfcda1-3647-4ad5-bf3e-ddd11cf1813a",
+)
