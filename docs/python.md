@@ -9,4 +9,4 @@ application.
 
 ## Example
 
-An example is needed! Please consider contributing one. :pray:
+- https://github.com/aspect-build/bazel-examples/tree/main/oci_python_image
