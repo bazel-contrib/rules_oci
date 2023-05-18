@@ -8,6 +8,7 @@ IMAGES_TO_TEST = {
     "distroless_java": "gcr.io/distroless/java17@sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
     "distroless_static_linux_amd64": "gcr.io/distroless/static@sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
     "fluxcd_flux_single": "docker.io/fluxcd/flux:1.25.4",
+    "chainguard_static": "cgr.dev/chainguard/static:latest",
 }
 
 # Use crane to pull images as a comparison for our oci_pull repository rule
