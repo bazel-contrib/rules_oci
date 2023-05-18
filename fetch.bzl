@@ -127,3 +127,18 @@ def fetch_images():
         name = "fluxcd_flux",
         image = "docker.io/fluxcd/flux:1.25.4",
     )
+
+    oci_pull(
+        name = "chainguard_static",
+        image = "cgr.dev/chainguard/static",
+        platforms = [
+            "linux/amd64",
+            "linux/arm",
+            "linux/arm64",
+            "linux/ppc64le",
+            "linux/riscv64",
+            "linux/s390x",
+        ],
+        tag = "latest",
+        reproducible = False,
+    )

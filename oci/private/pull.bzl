@@ -49,6 +49,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "ghcr.io/token",
     },
+    "cgr.dev": {
+        "realm": "cgr.dev/token",
+        "service": "cgr.dev",
+        "scope": "repository:{repository}:pull",
+    },    
 }
 
 def _strip_host(url):
