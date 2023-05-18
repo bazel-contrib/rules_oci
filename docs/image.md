@@ -1,6 +1,12 @@
 <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 
 
+To load these rules, add this to the top of your `BUILD` file:
+
+```starlark
+load("@rules_oci//oci:defs.bzl", ...)
+```
+
 
 <a id="#oci_image_rule"></a>
 

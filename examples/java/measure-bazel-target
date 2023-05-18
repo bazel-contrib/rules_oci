@@ -1,0 +1,8 @@
+#!/bin/sh
+# Measure a bazel target by size and CVE count
+set -eux -o pipefail
+bazel build :${1}_tar
+docker load --input ../../bazel-bin/examples/java/${1}_tar/tarball.tar
+dive $1:example
+grype $1:example
+

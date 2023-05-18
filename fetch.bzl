@@ -12,15 +12,34 @@ def fetch_images():
     # A single-arch base image
     oci_pull(
         name = "distroless_java",
-        digest = "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
+        # digest = "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
         image = "gcr.io/distroless/java17",
+        tag = "latest",
+        reproducible = False,
     )
 
     # A multi-arch base image
     oci_pull(
         name = "distroless_static",
-        digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
+        # digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
         image = "gcr.io/distroless/static",
+        tag = "latest",
+        platforms = [
+            "linux/amd64",
+            "linux/arm",
+            "linux/arm64",
+            "linux/ppc64le",
+            "linux/s390x",
+        ],
+    )
+
+
+    # A multi-arch base image
+    oci_pull(
+        name = "distroless_base_nossl",
+        # digest = "sha256:b7ed83c586e0901849c7cc9790f98fb6eeac8567bc144eec355c4a077c466c10",
+        tag = "latest",
+        image = "gcr.io/distroless/base-nossl-debian11",
         platforms = [
             "linux/amd64",
             "linux/arm",
@@ -110,6 +129,64 @@ def fetch_images():
             "linux/amd64",
         ],
         digest = "sha256:67211c14fa74f070d27cc59d69a7fa9aeff8e28ea118ef3babc295a0428a6d21",
+    )
+
+    oci_pull(
+        name = "chainguard_static",
+        image = "cgr.dev/chainguard/static",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        tag = "latest",
+        reproducible = False,
+        #digest = "sha256:0fc4584e8ae2a6e71f0bf73213c659f64756b48caab1bba3207c2ea51d292fb0",
+    )
+
+    oci_pull(
+        name = "chainguard_musl_dynamic",
+        image = "cgr.dev/chainguard/musl-dynamic",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        tag = "latest",
+        reproducible = False,
+        # digest = "sha256:3ebfa9ec73439a0b7e24b5d853676ad962aeb2718635ae4b8eba9cc6b7e3c673",
+    )
+
+    oci_pull(
+        name = "chainguard_glibc_dynamic",
+        image = "cgr.dev/chainguard/glibc-dynamic",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        tag = "latest",
+        reproducible = False,
+    )
+
+    oci_pull(
+        name = "chainguard_jre",
+        image = "cgr.dev/chainguard/jre",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        tag = "latest",
+        reproducible = False,
+    )
+
+
+    oci_pull(
+        name = "chainguard_jdk",
+        image = "cgr.dev/chainguard/jdk",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64",
+        ],
+        tag = "latest",
+        reproducible = False,
     )
 
     oci_pull(

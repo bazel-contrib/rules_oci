@@ -1,0 +1,64 @@
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+pkg_tar(
+    name = "tar",
+    # Bring the java_binary
+    srcs = ["//src/main/java/com/example:JavaLoggingClient_deploy.jar"],
+    include_runfiles = True,
+    strip_prefix = ".",
+)
+
+# distroless demo ##################################################
+oci_image(
+    name = "distroless_image",
+    base = "@distroless_java",
+    entrypoint = [
+        "java",
+        "-jar",
+        "/src/main/java/com/example/JavaLoggingClient_deploy.jar",
+    ],
+    tars = [":tar"],
+)
+
+oci_tarball(
+    name = "distroless_tar",
+    image = ":distroless_image",
+    repo_tags = ["distroless:example"],
+)
+
+
+# chainguard demo #######################################################
+oci_image(
+    name = "chainguard_jre_image",
+    base = "@chainguard_jre",
+    entrypoint = [
+        "java",
+        "-jar",
+        "/src/main/java/com/example/JavaLoggingClient_deploy.jar",
+    ],
+    tars = [":tar"],
+)
+
+oci_tarball(
+    name = "chainguard_jre_tar",
+    image = ":chainguard_jre_image",
+    repo_tags = ["chainguard_jre:example"],
+)
+
+oci_image(
+    name = "chainguard_jdk_image",
+    base = "@chainguard_jdk",
+    entrypoint = [
+        "java",
+        "-jar",
+        "/src/main/java/com/example/JavaLoggingClient_deploy.jar",
+    ],
+    tars = [":tar"],
+)
+
+oci_tarball(
+    name = "chainguard_jdk_tar",
+    image = ":chainguard_jdk_image",
+    repo_tags = ["chainguard_jdk:example"],
+)

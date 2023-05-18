@@ -1,0 +1,113 @@
+load("//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
+load(":transition.bzl", "multi_arch")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "app_lib",
+    srcs = ["main.go"],
+    importpath = "example.com/custom_registry/app",
+    visibility = ["//visibility:private"],
+    deps = ["@com_github_google_go_cmp//cmp"],
+)
+
+go_binary(
+    name = "app",
+    embed = [":app_lib"],
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "app_layer",
+    srcs = [":app"],
+    # If the binary depends on RUNFILES, uncomment the attribute below.
+    # include_runfiles = True
+)
+
+# distroless demo (static) ##############################################################
+oci_image(
+    name = "distroless_static_image",
+    base = "@distroless_static",
+    entrypoint = ["/app"],
+    tars = [":app_layer"],
+)
+
+# bazel build :distroless_static_tar
+# docker load --input ../../bazel-bin/examples/go/distroless_static_tar/tarball.tar  
+# docker run --rm distroless_static:example
+oci_tarball(
+    name = "distroless_static_tar",
+    image = ":distroless_static_image",
+    repo_tags = ["distroless_static:example"],
+)
+
+# distroless demo (dynamic) ##############################################################
+oci_image(
+    name = "distroless_dynamic_image",
+    base = "@distroless_base_nossl",
+    entrypoint = ["/app"],
+    tars = [":app_layer"],
+)
+
+# bazel build :distroless_dynamic_tar
+# docker load --input ../../bazel-bin/examples/go/distroless_dynamic_tar/tarball.tar  
+# docker run --rm distroless_dynamic:example
+oci_tarball(
+    name = "distroless_dynamic_tar",
+    image = ":distroless_dynamic_image",
+    repo_tags = ["distroless_dynamic:example"],
+)
+
+# chainguard demo (static) ##############################################################
+oci_image(
+    name = "chainguard_static_image",
+    base = "@chainguard_static",
+    entrypoint = ["/app"],
+    tars = [":app_layer"],
+)
+
+# bazel build :chainguard_static_tar
+# docker load --input ../../bazel-bin/examples/go/chainguard_static_tar/tarball.tar  
+# docker run --rm chainguard_static:example
+oci_tarball(
+    name = "chainguard_static_tar",
+    image = ":chainguard_static_image",
+    repo_tags = ["chainguard_static:example"],
+)
+
+
+# chainguard demo (dynamic musl) ##############################################################
+oci_image(
+    name = "chainguard_musl_dynamic_image",
+    base = "@chainguard_musl_dynamic",
+    entrypoint = ["/app"],
+    tars = [":app_layer"],
+)
+
+# bazel build :chainguard_dynamic_tar
+# docker load --input ../../bazel-bin/examples/go/chainguard_musl_dynamic_tar/tarball.tar  
+# docker run --rm chainguard_musl_dynamic:example
+oci_tarball(
+    name = "chainguard_musl_dynamic_tar",
+    image = ":chainguard_musl_dynamic_image",
+    repo_tags = ["chainguard_musl_dynamic:example"],
+)
+
+# chainguard demo (dynamic glibc) ##############################################################
+oci_image(
+    name = "chainguard_glibc_dynamic_image",
+    base = "@chainguard_glibc_dynamic",
+    entrypoint = ["/app"],
+    tars = [":app_layer"],
+)
+
+# bazel build :chainguard_glibc_dynamic_tar
+# docker load --input ../../bazel-bin/examples/go/chainguard_glibc_dynamic_tar/tarball.tar  
+# docker run --rm chainguard_glibc_dynamic_musl:example
+oci_tarball(
+    name = "chainguard_glibc_dynamic_tar",
+    image = ":chainguard_glibc_dynamic_image",
+    repo_tags = ["chainguard_glibc_dynamic:example"],
+)
+
