@@ -1,0 +1,14 @@
+load("//oci:defs.bzl", "oci_image")
+
+[
+    oci_image(
+        name = "image_" + architecture,
+        architecture = architecture,
+        os = "linux",
+        tars = ["@bash_{}//:layer".format(architecture)],
+    )
+    for architecture in [
+        "amd64",
+        "arm64",
+    ]
+]

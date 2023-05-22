@@ -4,6 +4,7 @@ This file is similar to how bazel_gazelle can manage go_repository calls
 by writing them to a generated macro in a .bzl file.
 """
 
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 def fetch_images():
@@ -141,4 +142,30 @@ def fetch_images():
         ],
         tag = "latest",
         reproducible = False,
+    )
+
+    _DEB_TO_LAYER = """\
+alias(
+    name = "layer",
+    actual = ":data.tar.xz",
+    visibility = ["//visibility:public"],
+)
+"""
+
+    http_archive(
+        name = "bash_amd64",
+        build_file_content = _DEB_TO_LAYER,
+        urls = [
+            "http://ftp.us.debian.org/debian/pool/main/b/bash/bash_5.1-2+deb11u1_amd64.deb",
+        ],
+        sha256 = "f702ef058e762d7208a9c83f6f6bbf02645533bfd615c54e8cdcce842cd57377",
+    )
+
+    http_archive(
+        name = "bash_arm64",
+        build_file_content = _DEB_TO_LAYER,
+        urls = [
+            "http://ftp.us.debian.org/debian/pool/main/b/bash/bash_5.1-2+deb11u1_arm64.deb",
+        ],
+        sha256 = "d7c7af5d86f43a885069408a89788f67f248e8124c682bb73936f33874e0611b",
     )
