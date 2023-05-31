@@ -43,6 +43,7 @@ rules_oci does not contain language-specific rules, but we do have limited docum
 - [Rust](docs/rust.md)
 - [Scala](docs/scala.md)
 - [WASM](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/wasm) (see https://docs.docker.com/desktop/wasm/)
+- [Static Content](docs/static_content.md) (such as a html/javascript frontend)
 
 > Your language not listed above? Please contribute engineering resources or financially through our Sponsor link!
 
