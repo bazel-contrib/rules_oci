@@ -22,7 +22,7 @@ mkdir -p $(dirname "${BLOBS_DIR}/${CONFIG_DIGEST}")
 cp "${CONFIG_BLOB_PATH}" "${BLOBS_DIR}/${CONFIG_DIGEST}"
 
 for LAYER in $(${YQ} ".[]" <<< $LAYERS); do 
-    cp "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
+    cp -f "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/212 

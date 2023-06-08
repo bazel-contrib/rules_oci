@@ -386,7 +386,8 @@ def _oci_pull_impl(rctx):
 
         # TODO: we should avoid eager-download of the layers ("shallow pull")
         downloader.download_blob(layer["digest"], hash)
-        tars.append(hash)
+        if hash not in tars:
+            tars.append(hash)
 
     # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
     # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
