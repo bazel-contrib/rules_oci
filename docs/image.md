@@ -76,7 +76,7 @@ oci_image(
 | <a id="oci_image_rule-base"></a>base |  Label to an oci_image target to use as the base.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-cmd"></a>cmd |  Default arguments to the <code>entrypoint</code> of the container. These values act as defaults and may be replaced by any specified when creating a container.   | List of strings | optional | [] |
 | <a id="oci_image_rule-entrypoint"></a>entrypoint |  A list of arguments to use as the <code>command</code> to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container.   | List of strings | optional | [] |
-| <a id="oci_image_rule-env"></a>env |  Default values to the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys. To merge entries with keys specified in the base, <code>${KEY}</code> or <code>$KEY</code> syntax may be used.   | <a href="https://bazel.build/docs/skylark/lib/dict.html">Dictionary: String -> String</a> | optional | {} |
+| <a id="oci_image_rule-env"></a>env |  A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys.         To merge entries with keys specified in the base, <code>${KEY}</code> or <code>$KEY</code> syntax may be used.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-labels"></a>labels |  A file containing a dictionary of labels. Each line should be in the form <code>name=value</code>.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-os"></a>os |  The name of the operating system which the image is built to run on. eg: <code>linux</code>, <code>windows</code>. See $GOOS documentation for possible values: https://go.dev/doc/install/source#environment   | String | optional | "" |
 | <a id="oci_image_rule-tars"></a>tars |  List of tar files to add to the image as layers.         Do not sort this list; the order is preserved in the resulting image.         Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.<br><br>        The authors recommend [dive](https://github.com/wagoodman/dive) to explore the layering of the resulting image.   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | optional | [] |
@@ -90,7 +90,7 @@ oci_image(
 ## oci_image
 
 <pre>
-oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-kwargs">kwargs</a>)
+oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_image_rule](#oci_image_rule).
@@ -98,8 +98,9 @@ Macro wrapper around [oci_image_rule](#oci_image_rule).
 Allows labels and annotations to be provided as a dictionary, in addition to a text file.
 See https://github.com/opencontainers/image-spec/blob/main/annotations.md
 
-Label/annotation keys like `org.opencontainers.image.created` and `org.opencontainers.image.version`
-may be supplied with non-deterministic information when bazel is run with `--stamp`; see the example in
+Label/annotation/env can by configured using either dict(key->value) or a file that contains key=value pairs
+(one per line). The file can be preprocessed using (e.g. using `jq`) to supply external (potentially not
+deterministic) information when running with `--stamp` flag.  See the example in
 [/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
 
 
@@ -111,6 +112,7 @@ may be supplied with non-deterministic information when bazel is run with `--sta
 | <a id="oci_image-name"></a>name |  name of resulting oci_image_rule   |  none |
 | <a id="oci_image-labels"></a>labels |  Labels for the image config. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-annotations"></a>annotations |  Annotations for the image config. See documentation above.   |  <code>None</code> |
+| <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule)   |  none |
 
 

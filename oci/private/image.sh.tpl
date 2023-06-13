@@ -95,9 +95,19 @@ for ARG in "$@"; do
         (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
         (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
         (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
-        (--env=*\${*}* | --env=*\$*) ENV_EXPANSIONS+=(${ARG#--env=}) ;;
         (--output=*) OUTPUT="${ARG#--output=}" ;;
         (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
+        (--env-file=*)
+          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
+          # file doesn't have a trailing newline.
+          while IFS= read -r in || [ -n "$in" ]; do
+            if [[ "${in}" = *\$* ]]; then
+              ENV_EXPANSIONS+=( "${in}" )
+            else
+              FIXED_ARGS+=( "--env=${in}" )
+            fi
+          done <"${ARG#--env-file=}"
+          ;;
         (--labels-file=*)
           # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
           # file doesn't have a trailing newline.
@@ -105,6 +115,8 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--label=$in")
           done <"${ARG#--labels-file=}"
           ;;
+          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
+          # file doesn't have a trailing newline.
         (--annotations-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--annotation=$in")
