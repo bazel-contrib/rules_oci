@@ -60,8 +60,8 @@ _attrs = {
     "entrypoint": attr.string_list(doc = "A list of arguments to use as the `command` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container."),
     "cmd": attr.string_list(doc = "Default arguments to the `entrypoint` of the container. These values act as defaults and may be replaced by any specified when creating a container."),
     "env": attr.label(doc = """\
-        A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys.
-        To merge entries with keys specified in the base, `${KEY}` or `$KEY` syntax may be used.
+A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys.
+To merge entries with keys specified in the base, `${KEY}` or `$KEY` syntax may be used.
     """, allow_single_file = True),
     "user": attr.string(doc = """
 The `username` or `UID` which is a platform-specific structure that allows specific control over which user the process run as.
@@ -154,7 +154,6 @@ def _oci_image_impl(ctx):
     if ctx.attr.env:
         args.add(ctx.file.env.path, format = "--env-file=%s")
         inputs_depsets.append(depset([ctx.file.env]))
-        #args.add_all(ctx.attr.env.items(), map_each = _format_string_to_string_tuple, format_each = "--env=%s")
 
     if ctx.attr.labels:
         args.add(ctx.file.labels.path, format = "--labels-file=%s")
