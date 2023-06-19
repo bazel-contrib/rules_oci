@@ -50,7 +50,7 @@ def _sha256(rctx, path):
     Returns:
         hashsum of file
     """
-    result = rctx.execute(["shasum", "-a", "256", path])
+    result = rctx.execute(["sha256sum", path])
     if result.return_code:
         msg = "sha256 failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
