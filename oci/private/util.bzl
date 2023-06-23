@@ -58,7 +58,7 @@ def _sha256(rctx, path):
     if result.return_code == 127:  # 127 return code indicates command not found
         result = rctx.execute(["sha256sum", path])
     if result.return_code == 127:
-        result = rctx.execute(["openssl", "sha256", path])
+        result = rctx.execute(["openssl", "sha256", "-r", path])
     if result.return_code:
         msg = "sha256 failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
