@@ -9,7 +9,7 @@ TAG=${GITHUB_REF_NAME}
 PREFIX="rules_oci-${TAG:1}"
 ARCHIVE="rules_oci-$TAG.tar.gz"
 git archive --format=tar --prefix=${PREFIX}/ ${TAG} | gzip > $ARCHIVE
-SHA=$(sha256sum $ARCHIVE | awk '{print $1}')
+SHA=$(shasum -a 256 $ARCHIVE | awk '{print $1}')
 
 cat << EOF
 WORKSPACE snippet:
