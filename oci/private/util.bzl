@@ -42,7 +42,7 @@ def _parse_image(image):
     return (scheme, registry, repository, digest, tag)
 
 def _sha256(rctx, path):
-    """Returns hashsum of file at path
+    """Returns SHA256 hashsum of file at path
 
     Args:
         rctx: repository context
@@ -52,10 +52,13 @@ def _sha256(rctx, path):
     """
     # Attempt to use the first viable method to calculate the SHA256 sum. sha256sum is part of
     # coreutils on Linux, but is not available on MacOS. shasum is a perl script that is available
-    # on MacOS, but is not necessarily always available on Linux
+    # on MacOS, but is not necessarily always available on Linux. OpenSSL is used as a final
+    # fallback if neither are available
     result = rctx.execute(["sha256sum", path])
     if result.return_code == 127:  # 127 return code indicates command not found
         result = rctx.execute(["shasum", path])
+    if result.return_code == 127:
+        result = rctx.execute(["openssl", "sha256", path])
     if result.return_code:
         msg = "sha256 failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
