@@ -50,7 +50,12 @@ def _sha256(rctx, path):
     Returns:
         hashsum of file
     """
+    # Attempt to use the first viable method to calculate the SHA256 sum. sha256sum is part of
+    # coreutils on Linux, but is not available on MacOS. shasum is a perl script that is available
+    # on MacOS, but is not necessarily always available on Linux
     result = rctx.execute(["sha256sum", path])
+    if result.return_code == 127:  # 127 return code indicates command not found
+        result = rctx.execute(["shasum", path])
     if result.return_code:
         msg = "sha256 failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
         fail(msg)
