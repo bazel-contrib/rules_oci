@@ -7,7 +7,7 @@ set -o pipefail -o errexit -o nounset
 
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
 readonly CRANE="{{crane_path}}"
-readonly JQ="{{jq_path}}"
+readonly YQ="{{yq_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
 
 readonly STDERR=$(mktemp)
@@ -25,7 +25,7 @@ function get_option() {
     shift
     for ARG in "$@"; do
         case "$ARG" in
-            ($name=*) echo ${ARG#$name=};; 
+            ($name=*) echo ${ARG#$name=};;
         esac
     done
 }
@@ -36,8 +36,8 @@ function empty_base() {
     local ref="$registry/oci/empty_base:latest"
     # TODO: https://github.com/google/go-containerregistry/issues/1513
     ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f <(tar -cf tarfilename.tar -T /dev/null))"
-    ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
-    ref=$("${CRANE}" manifest "${ref}" | "${JQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
+    ref=$("${CRANE}" config "${ref}" | "${YQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
+    ref=$("${CRANE}" manifest "${ref}" | "${YQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
 
     local raw_platform=$(get_option --platform $@)
     IFS='/' read -r -a platform <<< "$raw_platform"
@@ -49,7 +49,7 @@ function empty_base() {
         filter+=' | .variant = $variant'
         args+=("--arg" "variant" "${platform[2]}")
     fi
-    "${CRANE}" config "${ref}" | "${JQ}" ${args[@]} "${filter}" | "${CRANE}" edit config "${ref}"
+    "${CRANE}" config "${ref}" | "${YQ}" ${args[@]} "${filter}" | "${CRANE}" edit config "${ref}"
 }
 
 function base_from_layout() {
@@ -66,11 +66,11 @@ function base_from_layout() {
     if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
 
-zot registry does not support docker manifests. 
+zot registry does not support docker manifests.
 
 crane registry does support both oci and docker images, but is more memory hungry.
 
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
+If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains".
 
 EOF
 
@@ -128,27 +128,27 @@ done
 
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
 
-if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
+if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
     env_expansion_filter=\
 '[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | reduce .[] as $match (
-    {parts: [], prev: 0}; 
+    {parts: [], prev: 0};
     {parts: (.parts + [$raw[.prev:$match.offset], $envs[$match.captures[0].string]]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
     base_config=$("${CRANE}" config "${REF}")
-    base_env=$("${JQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
+    base_env=$("${YQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
     environment_args=()
     for expansion in "${ENV_EXPANSIONS[@]}"
     do
         IFS="=" read -r key value <<< "${expansion}"
-        value_from_base=$("${JQ}" -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
+        value_from_base=$("${YQ}" -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
         environment_args+=( --env "${key}=${value_from_base}" )
     done
     REF=$("${CRANE}" mutate "${REF}" ${environment_args[@]})
 fi
 
 # TODO: https://github.com/google/go-containerregistry/issues/1515
-if [ -n "${WORKDIR}" ]; then 
-    REF=$("${CRANE}" config "${REF}" | "${JQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
+if [ -n "${WORKDIR}" ]; then
+    REF=$("${CRANE}" config "${REF}" | "${YQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
 fi
 
 if [ -n "$OUTPUT" ]; then
