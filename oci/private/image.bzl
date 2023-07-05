@@ -99,7 +99,7 @@ def _oci_image_impl(ctx):
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
     ctx.actions.expand_template(
@@ -109,7 +109,7 @@ def _oci_image_impl(ctx):
         substitutions = {
             "{{registry_launcher_path}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
-            "{{jq_path}}": jq.jqinfo.bin.path,
+            "{{yq_path}}": yq.yqinfo.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
         },
     )
@@ -152,7 +152,8 @@ def _oci_image_impl(ctx):
         args.add(ctx.attr.workdir, format = "--workdir=%s")
 
     if ctx.attr.env:
-        args.add_all(ctx.attr.env.items(), map_each = _format_string_to_string_tuple, format_each = "--env=%s")
+        args.add(ctx.file.env.path, format = "--env-file=%s")
+        inputs_depsets.append(depset([ctx.file.env]))
 
     if ctx.attr.labels:
         args.add(ctx.file.labels.path, format = "--labels-file=%s")
@@ -170,7 +171,7 @@ def _oci_image_impl(ctx):
         arguments = [args],
         outputs = [output],
         executable = launcher,
-        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, yq.yqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
     )
@@ -188,6 +189,6 @@ oci_image = rule(
     toolchains = [
         "@rules_oci//oci:crane_toolchain_type",
         "@rules_oci//oci:registry_toolchain_type",
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
 )

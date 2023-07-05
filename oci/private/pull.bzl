@@ -53,7 +53,7 @@ _WWW_AUTH = {
         "realm": "cgr.dev/token",
         "service": "cgr.dev",
         "scope": "repository:{repository}:pull",
-    },    
+    },
 }
 
 def _strip_host(url):
@@ -77,7 +77,7 @@ def _get_auth(rctx, state, registry):
                 helper_val = config["credHelpers"][host_raw]
                 pattern = _fetch_auth_via_creds_helper(rctx, host_raw, helper_val)
 
-    # if no match for per registry credential helper for the host then look into auths dictionary 
+    # if no match for per registry credential helper for the host then look into auths dictionary
     if "auths" in config and len(pattern.keys()) == 0:
         for host_raw in config["auths"]:
             host = _strip_host(host_raw)
@@ -247,7 +247,7 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
             fallback_to_curl = True
     else:
         util.warning(rctx, """\
-Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
+Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types.
 Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.""")
         fallback_to_curl = True
 
@@ -285,7 +285,6 @@ _build_file = """\
 
 load("@aspect_bazel_lib//lib:copy_to_directory.bzl", "copy_to_directory")
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
-load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package(default_visibility = ["//visibility:public"])
