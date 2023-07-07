@@ -1,7 +1,7 @@
 """
-  An aspect that find's most transitive dependencies (target) of the given rule's attribute.
+  An aspect that finds transitive dependencies (targets) of the given rule's attribute.
 
-  Used to find all potential targets that can be evaluated as part of ${location} macro.
+  Used to find all potential targets that can be evaluated in the $(location :target) expansion process.
 """
 
 DepTargetsInfo = provider(
