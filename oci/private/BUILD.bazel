@@ -22,12 +22,22 @@ bzl_library(
 )
 
 bzl_library(
+    name = "deps_aspect",
+    srcs = ["deps_aspect.bzl"],
+    visibility = [
+        "//docs:__pkg__",
+        "//oci:__subpackages__",
+    ],
+)
+
+bzl_library(
     name = "image",
     srcs = ["image.bzl"],
     visibility = [
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = [":deps_aspect"],
 )
 
 bzl_library(

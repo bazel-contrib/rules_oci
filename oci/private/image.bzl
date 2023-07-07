@@ -1,5 +1,7 @@
 "Implementation details for image rule"
 
+load(":deps_aspect.bzl", "DepTargetsInfo", "collect_dep_targets_aspect")
+
 _DOC = """Build an OCI compatible container image.
 
 Note, most users should use the wrapper macro instead of this rule directly.
@@ -49,16 +51,20 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
-    "tars": attr.label_list(allow_files = [".tar", ".tar.gz", ".tar.xz"], doc = """\
+    "tars": attr.label_list(
+        allow_files = [".tar", ".tar.gz", ".tar.xz"],
+        doc = """\
         List of tar files to add to the image as layers.
         Do not sort this list; the order is preserved in the resulting image.
         Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.
 
         The authors recommend [dive](https://github.com/wagoodman/dive) to explore the layering of the resulting image.
-    """),
+    """,
+        aspects = [collect_dep_targets_aspect],
+    ),
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
-    "entrypoint": attr.string_list(doc = "A list of arguments to use as the `command` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container."),
-    "cmd": attr.string_list(doc = "Default arguments to the `entrypoint` of the container. These values act as defaults and may be replaced by any specified when creating a container."),
+    "entrypoint": attr.string_list(doc = "A list of arguments to use as the `command` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container. Subject to $(location(s)/rootpath(s)/execpath(s) //target) substition."),
+    "cmd": attr.string_list(doc = "Default arguments to the `entrypoint` of the container. These values act as defaults and may be replaced by any specified when creating a container. Subject to $(location(s)/rootpath(s)/execpath(s) //target) substition."),
     "env": attr.label(doc = """\
 A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys.
 To merge entries with keys specified in the base, `${KEY}` or `$KEY` syntax may be used.
@@ -139,12 +145,6 @@ def _oci_image_impl(ctx):
         inputs_depsets.append(layer[DefaultInfo].files)
         args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
 
-    if ctx.attr.entrypoint:
-        args.add_joined("--entrypoint", ctx.attr.entrypoint, join_with = ",")
-
-    if ctx.attr.cmd:
-        args.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
-
     if ctx.attr.user:
         args.add(ctx.attr.user, format = "--user=%s")
 
@@ -162,6 +162,21 @@ def _oci_image_impl(ctx):
     if ctx.attr.annotations:
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
+
+    #    transitive_deps = depset(transitive = inputs_depsets)
+    #    for x in transitive_deps.to_list():
+    #        print(x)
+    transitive_deps_list = depset(transitive = [t[DepTargetsInfo].dep_targets for t in ctx.attr.tars if DepTargetsInfo in t]).to_list()  #ctx.attr.tars[DepTargetsInfo].dep_targets  #[x for x in inputs_depsets.to_list() if x is Target]
+
+    #transitive_deps_list = ctx.attr.tars[DepTargetsInfo]
+    #    for x in transitive_deps_list:
+    #        print(x)
+
+    if ctx.attr.entrypoint:
+        args.add_joined("--entrypoint", [ctx.expand_location(e, transitive_deps_list) for e in ctx.attr.entrypoint], join_with = ",")
+
+    if ctx.attr.cmd:
+        args.add_joined("--cmd", [ctx.expand_location(c, transitive_deps_list) for c in ctx.attr.cmd], join_with = ",")
 
     output = ctx.actions.declare_directory(ctx.label.name)
     args.add(output.path, format = "--output=%s")
