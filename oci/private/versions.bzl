@@ -2,6 +2,19 @@
 
 # WARNING: only v0.12.0 and above is supported.
 CRANE_VERSIONS = {
+    "v0.15.2": {
+        "darwin_arm64": "sha256-XPquVFIWvxd6ZKhSo/HxI7lYBDjOYIoOnNy02uK6F0c=",
+        "darwin_x86_64": "sha256-xzpmoZ4cwx0jKP07UvMZgZqb9sOKOA3/TfTeq6AsFHc=",
+        "linux_arm64": "sha256-r6C/VtlfqG/nHV2tteA5YLfAWG7qhCcMykC0Gm1h+7I=",
+        "linux_armv6": "sha256-xCwHYjAb2Gy+VPJbbwZJmLxI2FEnSRi1rxBmmcgzeeM=",
+        "linux_i386": "sha256-auD3v7isyLJTunFiDoteFyrDyA6eEV8s+wL0QbhIzGI=",
+        "linux_ppc64le": "sha256-SJh/KqiTi0sM2AJHxV+rTn5Is5WOsfLo5H4wSb/GkUI=",
+        "linux_s390x": "sha256-66RccOhj0T7NC+BGg6mgW1FvnDgXC1KV7sVM1BcA7xw=",
+        "linux_x86_64": "sha256-vV9yrpY3OsZAZ5phCCgLbXZph3PKIfKTrjDMF0E+KtE=",
+        "windows_arm64": "sha256-F/rbrozOPGEVeb/KEKJ/T3B0n26rvZ3/VBs2amTBz3c=",
+        "windows_armv6": "sha256-7vBk/IKCO1j5uECE32eZmrQAbAnzbxeNgye0BiqoLs4=",
+        "windows_x86_64": "sha256-1y42OZTiJt2C7of8xeqcwy2kiFeylXLf6+BvNS2Y13Y=",
+    },
     "v0.14.0": {
         "darwin_arm64": "sha256-8g+3rziZKW/OK2YPTHUWmvFDUhX6/zXInY/tVZaOb2E=",
         "darwin_x86_64": "sha256-h+vdsXSnfez8MUgLMPLLg7tVqeyyRSxSJBatC/+yPRY=",
