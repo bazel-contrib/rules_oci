@@ -145,6 +145,16 @@ def _oci_image_impl(ctx):
         inputs_depsets.append(layer[DefaultInfo].files)
         args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
 
+    tar_deps_list = depset(
+        transitive = [t[DepTargetsInfo].dep_targets for t in ctx.attr.tars if DepTargetsInfo in t],
+    ).to_list()
+
+    if ctx.attr.entrypoint:
+        args.add_joined("--entrypoint", [ctx.expand_location(e, tar_deps_list) for e in ctx.attr.entrypoint], join_with = ",")
+
+    if ctx.attr.cmd:
+        args.add_joined("--cmd", [ctx.expand_location(c, tar_deps_list) for c in ctx.attr.cmd], join_with = ",")
+
     if ctx.attr.user:
         args.add(ctx.attr.user, format = "--user=%s")
 
@@ -162,21 +172,6 @@ def _oci_image_impl(ctx):
     if ctx.attr.annotations:
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
-
-    #    transitive_deps = depset(transitive = inputs_depsets)
-    #    for x in transitive_deps.to_list():
-    #        print(x)
-    transitive_deps_list = depset(transitive = [t[DepTargetsInfo].dep_targets for t in ctx.attr.tars if DepTargetsInfo in t]).to_list()  #ctx.attr.tars[DepTargetsInfo].dep_targets  #[x for x in inputs_depsets.to_list() if x is Target]
-
-    #transitive_deps_list = ctx.attr.tars[DepTargetsInfo]
-    #    for x in transitive_deps_list:
-    #        print(x)
-
-    if ctx.attr.entrypoint:
-        args.add_joined("--entrypoint", [ctx.expand_location(e, transitive_deps_list) for e in ctx.attr.entrypoint], join_with = ",")
-
-    if ctx.attr.cmd:
-        args.add_joined("--cmd", [ctx.expand_location(c, transitive_deps_list) for c in ctx.attr.cmd], join_with = ",")
 
     output = ctx.actions.declare_directory(ctx.label.name)
     args.add(output.path, format = "--output=%s")
