@@ -12,14 +12,23 @@ oci_tarball(
 )
 ```
 
-and then run it in a container like so:
+and then load and run it in a container like so:
 
 ```
-bazel build //path/to:tarball
-docker load --input $(bazel cquery --output=files //path/to:tarball)
-docker run --rm my-repository:latest
+bazel run :tarball
+docker run --rm "my-repository:latest"
 ```
 
+By default, the generated script will attempt to use Docker to load the image. If you need to use a runtime other than docker, you can replace the entire script template:
+
+```
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repo_tags = ["my-repository:latest"],
+    run_template = "//path/to/your.tpl",
+)
+```
 
 <a id="#oci_tarball"></a>
 

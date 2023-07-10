@@ -9,6 +9,7 @@ exports_files([
     "image.sh.tpl",
     "image_index.sh.tpl",
     "tarball.sh.tpl",
+    "tarball_run.sh.tpl",
     "push.sh.tpl",
 ])
 
