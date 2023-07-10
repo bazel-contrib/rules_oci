@@ -15,11 +15,30 @@ oci_tarball(
 and then run it in a container like so:
 
 ```
-bazel build //path/to:tarball
-docker load --input $(bazel cquery --output=files //path/to:tarball)
-docker run --rm my-repository:latest
+bazel run :tarball
 ```
 
+You can pass additional arguments such as port mappings, via `runtime_args`:
+
+```
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repo_tags = ["my-repository:latest"],
+    runtime_args = ["-p", "5432:5432"],
+)
+```
+
+By default, the generated script will attempt to use Docker to run the image. If you need to use a runtime other than docker, you can replace the entire script template:
+
+```
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repo_tags = ["my-repository:latest"],
+    run_template = "//path/to/your.tpl",
+)
+```
 
 <a id="#oci_tarball"></a>
 

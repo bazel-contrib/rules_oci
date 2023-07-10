@@ -44,13 +44,12 @@ build_test(
     ],
 )
 
-# In order to run the image you need to follow instructions at https://docs.docker.com/desktop/wasm/ first.
-# then run the following;
-#  `bazel build :tarball`
-#  `docker load -i bazel-bin/tarball/tarball.tar`
-#  `docker run --runtime=io.containerd.wasmedge.v1 --platform=wasi/wasm32 --pull=never gcr.io/wasm:latest`
 oci_tarball(
     name = "tarball",
     image = ":image",
     repo_tags = ["gcr.io/wasm:latest"],
+    runtime_args = [
+        "--runtime=io.containerd.wasmedge.v1",
+        "--platform=wasi/wasm32",
+    ],
 )
