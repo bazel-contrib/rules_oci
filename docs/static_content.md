@@ -77,6 +77,7 @@ oci_tarball(
     name = "frontend_tarball",
     image = ":frontend_image",
     repo_tags = ["ourfrontend:latest"],
+    runtime_args = ["-p", "8080:80"],
 )
 
 
@@ -108,10 +109,7 @@ oci_image(
 ## Try running the container with docker
 
 ```bash
-# File created by running bazel build //frontend:frontend_tarball
-tarball_file=""
-docker load --input "$tarball_file"
-docker run --rm -p 8080:80 "ourfrontend:latest"
+bazel run :frontend_tarball
 ```
 
 Wait for nginx to start in your container, and then go to `localhost:8080` and `localhost:8080/example.txt` to see your static content.
