@@ -31,6 +31,7 @@ attrs = {
             a file containing repo_tags, one per line.
             """,
         allow_single_file = [".txt"],
+        mandatory = True,
     ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
 }
