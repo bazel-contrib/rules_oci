@@ -108,9 +108,7 @@ oci_image(
 ## Try running the container with docker
 
 ```bash
-# File created by running bazel build //frontend:frontend_tarball
-tarball_file=""
-docker load --input "$tarball_file"
+bazel run :frontend_tarball
 docker run --rm -p 8080:80 "ourfrontend:latest"
 ```
 
