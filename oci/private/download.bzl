@@ -7,6 +7,9 @@ def _auth_to_header(url, auth):
         if auth_url == url:
             auth_val = auth[auth_url]
 
+            if "type" not in auth_val:
+              continue
+
             if auth_val["type"] == "basic":
                 credentials = base64.encode("{}:{}".format(auth_val["login"], auth_val["password"]))
                 return [
