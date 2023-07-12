@@ -19,7 +19,7 @@ bazel run :tarball
 docker run --rm "my-repository:latest"
 ```
 
-By default, the generated script will attempt to use Docker to load the image. If you need to use a runtime other than docker, you can replace the entire script template:
+By default, the generated script will attempt to use Docker or Podman to load the image. If you need to use a runtime other than Docker or Podman, you can replace the entire script template:
 
 ```
 oci_tarball(

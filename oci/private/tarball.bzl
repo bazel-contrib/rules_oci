@@ -13,7 +13,6 @@ oci_tarball(
 and then run it in a container like so:
 
 ```
-bazel build //path/to:tarball
 bazel run :tarball
 docker run --rm my-repository:latest
 ```
