@@ -19,16 +19,7 @@ bazel run :tarball
 docker run --rm "my-repository:latest"
 ```
 
-By default, the generated script will attempt to use Docker or Podman to load the image. If you need to use a runtime other than Docker or Podman, you can replace the entire script template:
-
-```
-oci_tarball(
-    name = "tarball",
-    image = ":image",
-    repo_tags = ["my-repository:latest"],
-    run_template = "//path/to/your.tpl",
-)
-```
+The generated script will attempt to use Docker or Podman to load the image.
 
 <a id="#oci_tarball"></a>
 

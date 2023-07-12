@@ -5,9 +5,10 @@ readonly IMAGE="{{image_path}}"
 if command -v docker &> /dev/null; then
     CONTAINER_CLI="docker"
 elif command -v podman &> /dev/null; then
-    CONTAINER_CLI="docker"
+    CONTAINER_CLI="podman"
 else
-    echo "Neither docker or podman could be found. If you wish to use another container runtime, then you can modify the template for generating this script via the `run_template` attribute on the `oci_tarball` rule. See: https://github.com/bazel-contrib/rules_oci/blob/main/docs/tarball.md"
+    echo >&2 "Neither docker or podman could be found."
+    echo >&2 "If you wish to use another container runtime, please comment on https://github.com/bazel-contrib/rules_oci/issues/295."
     exit 1
 fi
 

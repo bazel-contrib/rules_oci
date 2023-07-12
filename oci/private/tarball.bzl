@@ -32,13 +32,13 @@ attrs = {
         allow_single_file = [".txt"],
         mandatory = True,
     ),
-    "run_template": attr.label(
+    "_run_template": attr.label(
         default = Label("//oci/private:tarball_run.sh.tpl"),
         doc = """ \
               The template used to load the container. The default template uses Docker, but this template could be replaced to use podman, runc, or another runtime. Please reference the default template to see available substitutions. 
         """,
         allow_single_file = True,
-    ),    
+    ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
 }
 
@@ -77,13 +77,13 @@ def _tarball_impl(ctx):
     exe = ctx.actions.declare_file(ctx.label.name + ".sh")
 
     ctx.actions.expand_template(
-        template = ctx.file.run_template,
+        template = ctx.file._run_template,
         output = exe,
         substitutions = {
             "{{image_path}}": tarball.short_path,
         },
         is_executable = True,
-    )    
+    )
 
     return [
         DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = [tarball]), executable = exe),
