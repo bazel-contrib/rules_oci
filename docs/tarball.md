@@ -12,14 +12,13 @@ oci_tarball(
 )
 ```
 
-and then load and run it in a container like so:
+and then run it in a container like so:
 
 ```
 bazel run :tarball
-docker run --rm "my-repository:latest"
+docker run --rm my-repository:latest
 ```
 
-The generated script will attempt to use Docker or Podman to load the image.
 
 <a id="#oci_tarball"></a>
 
