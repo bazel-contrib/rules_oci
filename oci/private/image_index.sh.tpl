@@ -4,6 +4,9 @@ set -o pipefail -o errexit -o nounset
 readonly YQ="{{yq_path}}"
 readonly COREUTILS="{{coreutils_path}}"
 
+# Only crete the directory if it doesn't already exist.
+# Otherwise we may attempt to modify permissions of an existing directory.
+# See https://github.com/bazel-contrib/rules_oci/pull/271
 function mkdirp() {
     test -d "$1" || "${COREUTILS}" mkdir -p "$1"
 }
