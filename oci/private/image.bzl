@@ -59,8 +59,8 @@ _attrs = {
         The authors recommend [dive](https://github.com/wagoodman/dive) to explore the layering of the resulting image.
     """),
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
-    "entrypoint": attr.string_list(doc = "A list of arguments to use as the `command` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container."),
-    "cmd": attr.string_list(doc = "Default arguments to the `entrypoint` of the container. These values act as defaults and may be replaced by any specified when creating a container."),
+    "entrypoint": attr.label(doc = "A file containing a python serialized list to be used as the `entrypoint` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container.", allow_single_file = True),
+    "cmd": attr.label(doc = "A file containing a python serialized list to be used as the `command & args` of the container. These values act as defaults and may be replaced by any specified when creating a container.", allow_single_file = True),
     "env": attr.label(doc = """\
 A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys.
 To merge entries with keys specified in the base, `${KEY}` or `$KEY` syntax may be used.
@@ -148,10 +148,12 @@ def _oci_image_impl(ctx):
         args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
 
     if ctx.attr.entrypoint:
-        args.add_joined("--entrypoint", ctx.attr.entrypoint, join_with = ",")
+        args.add(ctx.file.entrypoint.path, format = "--entrypoint-file=%s")
+        inputs_depsets.append(depset([ctx.file.entrypoint]))
 
     if ctx.attr.cmd:
-        args.add_joined("--cmd", ctx.attr.cmd, join_with = ",")
+        args.add(ctx.file.cmd.path, format = "--cmd-file=%s")
+        inputs_depsets.append(depset([ctx.file.cmd]))
 
     if ctx.attr.user:
         args.add(ctx.attr.user, format = "--user=%s")

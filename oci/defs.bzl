@@ -21,7 +21,7 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
-def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
+def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
@@ -40,6 +40,8 @@ def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
         labels: Labels for the image config. See documentation above.
         annotations: Annotations for the image config. See documentation above.
         env: Environment variables provisioned by default to the running container. See documentation above.
+        cmd: Command & argument configured by default in the running container. See documentation above.
+        entrypoint: Entrypoint configured by default in the running container. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule)
     """
     if types.is_dict(annotations):
@@ -69,11 +71,40 @@ def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
         )
         env = env_label
 
+    if types.is_dict(env):
+        env_label = "_{}_write_env".format(name)
+        write_file(
+            name = env_label,
+            out = "_{}.env.txt".format(name),
+            content = ["{}={}".format(key, value) for (key, value) in env.items()],
+        )
+        env = env_label
+
+    if types.is_list(cmd):
+        cmd_label = "_{}_write_cmd".format(name)
+        write_file(
+            name = cmd_label,
+            out = "_{}.cmd.txt".format(name),
+            content = [",".join(cmd)],
+        )
+        cmd = cmd_label
+
+    if types.is_list(entrypoint):
+        entrypoint_label = "_{}_write_entrypoint".format(name)
+        write_file(
+            name = entrypoint_label,
+            out = "_{}.entrypoint.txt".format(name),
+            content = [",".join(entrypoint)],
+        )
+        entrypoint = entrypoint_label
+
     oci_image_rule(
         name = name,
         annotations = annotations,
         labels = labels,
         env = env,
+        cmd = cmd,
+        entrypoint = entrypoint,
         **kwargs
     )
 

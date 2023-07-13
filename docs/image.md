@@ -74,8 +74,8 @@ oci_image(
 | <a id="oci_image_rule-annotations"></a>annotations |  A file containing a dictionary of annotations. Each line should be in the form <code>name=value</code>.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-architecture"></a>architecture |  The CPU architecture which the binaries in this image are built to run on. eg: <code>arm64</code>, <code>arm</code>, <code>amd64</code>, <code>s390x</code>. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment   | String | optional | "" |
 | <a id="oci_image_rule-base"></a>base |  Label to an oci_image target to use as the base.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
-| <a id="oci_image_rule-cmd"></a>cmd |  Default arguments to the <code>entrypoint</code> of the container. These values act as defaults and may be replaced by any specified when creating a container.   | List of strings | optional | [] |
-| <a id="oci_image_rule-entrypoint"></a>entrypoint |  A list of arguments to use as the <code>command</code> to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container.   | List of strings | optional | [] |
+| <a id="oci_image_rule-cmd"></a>cmd |  A file containing a python serialized list to be used as the <code>command & args</code> of the container. These values act as defaults and may be replaced by any specified when creating a container.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
+| <a id="oci_image_rule-entrypoint"></a>entrypoint |  A file containing a python serialized list to be used as the <code>entrypoint</code> to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-env"></a>env |  A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys. To merge entries with keys specified in the base, <code>${KEY}</code> or <code>$KEY</code> syntax may be used.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-labels"></a>labels |  A file containing a dictionary of labels. Each line should be in the form <code>name=value</code>.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 | <a id="oci_image_rule-os"></a>os |  The name of the operating system which the image is built to run on. eg: <code>linux</code>, <code>windows</code>. See $GOOS documentation for possible values: https://go.dev/doc/install/source#environment   | String | optional | "" |
@@ -90,7 +90,7 @@ oci_image(
 ## oci_image
 
 <pre>
-oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-kwargs">kwargs</a>)
+oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_image_rule](#oci_image_rule).
@@ -116,6 +116,8 @@ This is similar to the same-named target created by rules_docker's `container_im
 | <a id="oci_image-labels"></a>labels |  Labels for the image config. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-annotations"></a>annotations |  Annotations for the image config. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. See documentation above.   |  <code>None</code> |
+| <a id="oci_image-cmd"></a>cmd |  <p align="center"> - </p>   |  <code>None</code> |
+| <a id="oci_image-entrypoint"></a>entrypoint |  <p align="center"> - </p>   |  <code>None</code> |
 | <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule)   |  none |
 
 

@@ -121,6 +121,12 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--annotation=$in")
           done <"${ARG#--annotations-file=}"
           ;;
+        (--cmd-file=*)
+          FIXED_ARGS+=("--cmd=$(<"${ARG#--cmd-file=}")")
+          ;;
+        (--entrypoint-file=*)
+          FIXED_ARGS+=("--entrypoint=$(<"${ARG#--entrypoint-file=}")")
+          ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
 done
