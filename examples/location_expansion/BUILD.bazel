@@ -1,0 +1,37 @@
+load("//oci:defs.bzl", "oci_image")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
+
+sh_binary(
+    name = "test_sh",
+    srcs = ["test.bash"],
+)
+
+pkg_tar(
+    name = "app",
+    srcs = [":test_sh"],
+    strip_prefix = "/",  # We force the files to have paths embedded inside the tarball.
+)
+
+genrule(
+    name = "app_cmd",
+    srcs = [],
+    outs = ["app_cmd.txt"],
+    cmd = "echo $(rootpaths :test.bash) > \"$@\"",
+    tools = [
+        ":test.bash",
+    ],
+)
+
+oci_image(
+    name = "image",
+    base = "@ubuntu",
+    cmd = ":app_cmd",
+    tars = [":app"],
+)
+
+container_structure_test(
+    name = "test",
+    configs = ["test.yaml"],
+    image = ":image",
+)
