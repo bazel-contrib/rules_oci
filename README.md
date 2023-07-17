@@ -2,6 +2,9 @@
 
 This is a "barebones" alternative to [rules_docker](https://github.com/bazelbuild/rules_docker).
 
+A lot of companies have already done a successful migration from `rules_docker`. Please let us know about yours on our adoption discussion!
+<https://github.com/bazel-contrib/rules_oci/discussions/299>
+
 We start from first principles and avoided some pitfalls we learned in maintaining that repo:
 
 - Use a toolchain consisting of off-the-shelf, pre-built layer and container manipulation tools.
