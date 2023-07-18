@@ -27,5 +27,9 @@ container_structure_test(
 oci_tarball(
     name = "tarball",
     image = ":image",
-    repo_tags = ["gcr.io/empty_base:latest"],
+    repo_tags = [
+        "gcr.io/empty_base:latest",
+        "two:is_a_company",
+        "three:is_a_crowd",  # Used to test support for more than two repo_tags.
+    ],
 )
