@@ -49,7 +49,8 @@ def _tarball_impl(ctx):
     image = ctx.file.image
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
     yq_bin = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo.bin
-    executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+    bash_launcher = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+
     repo_tags = ctx.file.repo_tags
 
     substitutions = {
@@ -63,7 +64,7 @@ def _tarball_impl(ctx):
 
     ctx.actions.expand_template(
         template = ctx.file._tarball_sh,
-        output = executable,
+        output = bash_launcher,
         is_executable = True,
         substitutions = substitutions,
     )

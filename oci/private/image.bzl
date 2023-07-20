@@ -111,7 +111,7 @@ def _oci_image_impl(ctx):
 
     ctx.actions.expand_template(
         template = ctx.file._image_sh_tpl,
-        output = launcher,
+        output = bash_launcher,
         is_executable = True,
         substitutions = {
             "{{registry_launcher_path}}": registry.registry_info.launcher.path,
