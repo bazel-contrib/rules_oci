@@ -28,7 +28,7 @@ done
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/212 
 # we can't use \n due to https://github.com/mikefarah/yq/issues/1430 and 
 # we can't update YQ at the moment because structure_test depends on a specific version
-repo_tags="${REPOTAGS/$'\n'/%}" \
+repo_tags="${REPOTAGS/$'\r\n'/%}" \
 config="blobs/${CONFIG_DIGEST}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
