@@ -97,6 +97,7 @@ bzl_library(
     name = "auth_config_locator",
     srcs = ["auth_config_locator.bzl"],
     visibility = ["//oci:__subpackages__"],
+    deps = ["@aspect_bazel_lib//lib:repo_utils"],
 )
 
 bzl_library(
