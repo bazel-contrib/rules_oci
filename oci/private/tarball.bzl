@@ -18,6 +18,8 @@ docker run --rm my-repository:latest
 ```
 """
 
+load("//oci/private:util.bzl", "util")
+
 doc = """Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
@@ -40,6 +42,7 @@ attrs = {
         allow_single_file = True,
     ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
+    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _tarball_impl(ctx):
@@ -66,8 +69,8 @@ def _tarball_impl(ctx):
     )
 
     ctx.actions.run(
-        executable = executable,
-        inputs = [image, repo_tags],
+        executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
+        inputs = [image, repo_tags, executable],
         outputs = [tarball],
         tools = [yq_bin],
         mnemonic = "OCITarball",
@@ -94,6 +97,7 @@ oci_tarball = rule(
     attrs = attrs,
     doc = doc,
     toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
     executable = True,

@@ -1,5 +1,7 @@
 "Implementation details for image rule"
 
+load("//oci/private:util.bzl", "util")
+
 _DOC = """Build an OCI compatible container image.
 
 Note, most users should use the wrapper macro instead of this rule directly.
@@ -76,6 +78,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
+    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _format_string_to_string_tuple(kv):
@@ -102,6 +105,7 @@ def _oci_image_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
+
     ctx.actions.expand_template(
         template = ctx.file._image_sh_tpl,
         output = launcher,
@@ -114,7 +118,7 @@ def _oci_image_impl(ctx):
         },
     )
 
-    inputs_depsets = []
+    inputs_depsets = [depset([launcher])]
     base = "oci:empty_base"
 
     if ctx.attr.base:
@@ -170,7 +174,7 @@ def _oci_image_impl(ctx):
         inputs = depset(transitive = inputs_depsets),
         arguments = [args],
         outputs = [output],
-        executable = launcher,
+        executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
         tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
@@ -187,6 +191,7 @@ oci_image = rule(
     attrs = _attrs,
     doc = _DOC,
     toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//oci:crane_toolchain_type",
         "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
