@@ -20,6 +20,7 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = [":util"],
 )
 
 bzl_library(
@@ -29,6 +30,7 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = [":util"],
 )
 
 bzl_library(
