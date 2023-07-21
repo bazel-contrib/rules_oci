@@ -79,6 +79,9 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    # Workaround for https://github.com/google/go-containerregistry/issues/1513
+    # We would prefer to not provide any tar file at all.
+    "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
 def _format_string_to_string_tuple(kv):
@@ -115,10 +118,11 @@ def _oci_image_impl(ctx):
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
+            "{{empty_tar}}": ctx.file._empty_tar.path,
         },
     )
 
-    inputs_depsets = [depset([launcher])]
+    inputs_depsets = [depset([launcher, ctx.file._empty_tar])]
     base = "oci:empty_base"
 
     if ctx.attr.base:
