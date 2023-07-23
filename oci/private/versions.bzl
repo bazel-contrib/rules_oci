@@ -49,3 +49,15 @@ ZOT_VERSIONS = {
         "linux-arm64": "sha256-57DAO3f8h5ZV3w6zH+nXsD6KpnJI5crywbksLri4RHE=",
     },
 }
+
+# Add new versions by running
+# ./scripts/mirror_releases.sh chainguard-dev/apko apko
+APKO_VERSIONS = {
+    "v0.9.0": {
+        "darwin_amd64": "sha256-E4b4rX4LfaBIgtsPbNTdLj/9ggxkaFnBGvKkZcZXyNc=",
+        "darwin_arm64": "sha256-j/lkCd4qHy66SlxN2pbGAF1mo0XLJueIYqcyDVpBXIk=",
+        "linux_386": "sha256-E0xSyHXc320nzLaHZEBoy5wA/eMRVQazXCvrIx4qXJ8=",
+        "linux_amd64": "sha256-/MzDYHouxhBQZp/cd9nuEmWpIrik8bOBZnd+/smGHRY=",
+        "linux_arm64": "sha256-iXjfAQswcJL57Gg965g3UwQNGIDhnMYuFq2/47YwxlE=",
+    },
+}

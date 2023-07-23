@@ -18,6 +18,11 @@ toolchain_type(
     visibility = ["//visibility:public"],
 )
 
+toolchain_type(
+    name = "apko_toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
 bzl_library(
     name = "repositories",
     srcs = ["repositories.bzl"],

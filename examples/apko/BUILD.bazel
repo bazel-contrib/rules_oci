@@ -1,0 +1,17 @@
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
+
+#############
+# Use case 1: simply call apko from a genrule
+genrule(
+    name = "gen_apko",
+    srcs = [],
+    outs = ["help.txt"],
+    cmd = "$(APKO_BIN) --help > $@",
+    toolchains = ["@oci_apko_toolchains//:current_toolchain"],
+)
+
+assert_contains(
+    name = "test_apko_genrule",
+    actual = "help.txt",
+    expected = "Build an image from a YAML configuration file",
+)

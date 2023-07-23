@@ -5,13 +5,14 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 RAW=$(mktemp)
 
 REPOSITORY=${1:-"google/go-containerregistry"}
+TOOL=${2:-"crane"}
 
-# per_page=1 to just miror the most recent release
+# per_page=1 to just mirror the most recent release
 (
   curl --silent \
     --header "Accept: application/vnd.github.v3+json" \
     https://api.github.com/repos/${REPOSITORY}/releases?per_page=1 \
-    | jq -f $SCRIPT_DIR/filter.jq
+    | jq -f "$SCRIPT_DIR/filter_${TOOL}.jq"
 ) > $RAW
 
 FIXED=$(mktemp)
@@ -25,7 +26,7 @@ for tag in $(jq -r 'keys | .[]' < $RAW); do
   done <<< "$checksums"
 done
 
-echo -n "CRANE_VERSIONS = "
+echo -n "$(echo "$TOOL" | tr '[:lower:]' '[:upper:]')_VERSIONS = "
 cat $RAW
 
 echo ""
