@@ -6,6 +6,7 @@ For example, given an `:image` target, you could write
 oci_tarball(
     name = "tarball",
     image = ":image",
+    image = ":image",
     repo_tags = ["my-repository:latest"],
 )
 ```

@@ -1,0 +1,44 @@
+load("//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+
+oci_image(
+    name = "image",
+    architecture = select({
+        "@platforms//cpu:arm64": "arm64",
+        "@platforms//cpu:x86_64": "amd64",
+    }),
+    os = "linux",
+)
+
+repo_tags = [
+    "gcr.io/empty_base:latest",
+    "two:is_a_company",
+    "three:is_a_crowd",  # Used to test support for more than two repo_tags.
+]
+
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    repo_tags = ":tags_file.txt",  # In particular we check whether empty (last line) of the file gets ignored.
+)
+
+genrule(
+    name = "tar_manifest",
+    srcs = [":tarball"],
+    outs = ["manifest.json"],
+    cmd = "tar -xOf ./$(location :tarball) manifest.json > $@",
+)
+
+write_file(
+    name = "expected_RepoTags",
+    out = "expected_RepoTags.json",
+    content = [str(repo_tags)],
+)
+
+assert_json_matches(
+    name = "check_tags",
+    file1 = ":tar_manifest",
+    file2 = ":expected_RepoTags",
+    filter1 = ".[0].RepoTags",
+)
