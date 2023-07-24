@@ -15,3 +15,16 @@ assert_contains(
     actual = "help.txt",
     expected = "Build an image from a YAML configuration file",
 )
+
+#############
+# Use case 2: Example from Chainguard getting started:
+# https://edu.chainguard.dev/open-source/apko/getting-started-with-apko/
+
+genrule(
+    name = "wolfi",
+    srcs = ["wolfi-base.yaml"],
+    outs = ["wolfi-test.tar"],
+    cmd = "$(APKO_BIN) build $< wolfi-base:test $@",
+    tags = ["requires-network"],
+    toolchains = ["@oci_apko_toolchains//:current_toolchain"],
+)
