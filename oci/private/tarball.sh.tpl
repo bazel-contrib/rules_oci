@@ -32,7 +32,7 @@ done
 repo_tags="${REPOTAGS}" \
 config="blobs/${CONFIG_DIGEST}" \
 layers="${LAYERS}" \
-"${YQ}" -v eval \
+"${YQ}" eval \
         --null-input '.[0] = {"Config": env(config), "RepoTags": "${repo_tags}" | envsubst | split("%") | map(select(. != "")) , "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${STAGING_DIR}/manifest.json"
 
