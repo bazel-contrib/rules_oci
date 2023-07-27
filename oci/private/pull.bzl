@@ -91,7 +91,9 @@ def _get_auth(rctx, state, registry):
                 elif "auth" in auth_val:
                     # base64 encoded plaintext username and password
                     raw_auth = auth_val["auth"]
-                    (login, password) = base64.decode(raw_auth).split(":", 1)
+                    login, sep, password = base64.decode(raw_auth).partition(":")
+                    if not sep:
+                        fail("Auth string must be in form username:password")
                     pattern = {
                         "type": "basic",
                         "login": login,
