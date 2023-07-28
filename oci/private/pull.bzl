@@ -500,7 +500,7 @@ or run the following command to change {rule} to use a digest:
 
 buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} {location}
     """.format(
-            location = "//MODULE.bazel:" + rctx.attr.name.split("~")[-1] if is_bzlmod_enabled() else "//WORKSPACE:" + rctx.attr.name,
+            location = "MODULE.bazel:" + rctx.attr.name.split("~")[-1] if is_bzlmod_enabled() else "WORKSPACE:" + rctx.attr.name,
             digest = digest,
             optional_platforms = optional_platforms,
             warning = "(make sure you use a recent buildozer release with MODULE.bazel support)" if is_bzlmod_enabled() else "",
