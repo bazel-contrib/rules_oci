@@ -1,6 +1,7 @@
 "Implementation details for oci_pull repository rules"
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
+load("@aspect_bazel_lib//lib:utils.bzl", "is_bzlmod_enabled")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("//oci/private:download.bzl", "download")
 load("//oci/private:util.bzl", "util")
@@ -53,7 +54,7 @@ _WWW_AUTH = {
         "realm": "cgr.dev/token",
         "service": "cgr.dev",
         "scope": "repository:{repository}:pull",
-    },    
+    },
 }
 
 def _strip_host(url):
@@ -77,7 +78,7 @@ def _get_auth(rctx, state, registry):
                 helper_val = config["credHelpers"][host_raw]
                 pattern = _fetch_auth_via_creds_helper(rctx, host_raw, helper_val)
 
-    # if no match for per registry credential helper for the host then look into auths dictionary 
+    # if no match for per registry credential helper for the host then look into auths dictionary
     if "auths" in config and len(pattern.keys()) == 0:
         for host_raw in config["auths"]:
             host = _strip_host(host_raw)
@@ -494,13 +495,16 @@ def _oci_alias_impl(rctx):
         util.warning(rctx, """\
 for reproducible builds, a digest is recommended.
 Either set 'reproducible = False' to silence this warning,
-or run the following command to change oci_pull to use a digest:
+or run the following command to change {rule} to use a digest:
+{warning}
 
-buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} WORKSPACE:{name}
+buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} {location}
     """.format(
-            name = rctx.attr.name,
+            location = "//MODULE.bazel:" + rctx.attr.name.split("~")[-1] if is_bzlmod_enabled() else "//WORKSPACE:" + rctx.attr.name,
             digest = digest,
             optional_platforms = optional_platforms,
+            warning = "(make sure you use a recent buildozer release with MODULE.bazel support)" if is_bzlmod_enabled() else "",
+            rule = "oci.pull" if is_bzlmod_enabled() else "oci_pull",
         ))
 
     build = ""
