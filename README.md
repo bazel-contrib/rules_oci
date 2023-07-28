@@ -18,12 +18,11 @@ _Need help?_ This ruleset has support provided by https://aspect.dev.
 
 ## Installation
 
-- Bazel >= 6.2.0 with `--enable_bzlmod`: start from <https://registry.bazel.build/modules/rules_oci>
-- Others: Copy the WORKSPACE snippet into your `WORKSPACE` file from a release: <https://github.com/bazel-contrib/rules_oci/releases>
+See the install instructions on the release notes: <https://github.com/bazel-contrib/rules_oci/releases>
 
 To use a commit rather than a release, you can point at any SHA of the repo.
 
-For example to use commit `abc123`:
+With bzlmod, you can use `archive_override` or `git_override`. For `WORKSPACE`, you modify the `http_archive` call; for example to use commit `abc123` with a `WORKSPACE` file:
 
 1. Replace `url = "https://github.com/bazel-contrib/rules_oci/releases/download/v0.1.0/rules_oci-v0.1.0.tar.gz"`
    with a GitHub-provided source archive like `url = "https://github.com/bazel-contrib/rules_oci/archive/abc123.tar.gz"`
