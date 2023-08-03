@@ -108,6 +108,8 @@ def _oci_image_impl(ctx):
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
 
+    output = ctx.actions.declare_directory(ctx.label.name)
+
     ctx.actions.expand_template(
         template = ctx.file._image_sh_tpl,
         output = launcher,
@@ -116,7 +118,7 @@ def _oci_image_impl(ctx):
             "{{registry_launcher_path}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
-            "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
+            "{{storage_dir}}": output.path,
             "{{empty_tar}}": ctx.file._empty_tar.path,
         },
     )
@@ -174,7 +176,7 @@ def _oci_image_impl(ctx):
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
 
-    output = ctx.actions.declare_directory(ctx.label.name)
+
     args.add(output.path, format = "--output=%s")
 
     action_env = {}

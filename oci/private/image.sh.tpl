@@ -6,7 +6,7 @@ set -o pipefail -o errexit -o nounset
 # NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
 
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
-readonly CRANE="{{crane_path}}"
+readonly CRANE="/Users/thesayyn/Documents/go-containerregistry/main"
 readonly JQ="{{jq_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
 
@@ -33,7 +33,7 @@ function get_option() {
 
 function empty_base() {
     local registry=$1
-    local ref="$registry/oci/empty_base:latest"
+    local ref="$registry/image:latest"
     ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f {{empty_tar}})"
     ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
     ref=$("${CRANE}" manifest "${ref}" | "${JQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
@@ -58,7 +58,7 @@ function base_from_layout() {
     local oci_layout_path=$1
     local registry=$2
 
-    "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}" > "${output}" 2>&1
+    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
 
     echo "${output}" >&2
 
@@ -77,6 +77,23 @@ EOF
     fi
 
     cat "${refs}"
+}
+
+# removes unreferenced blobs from oci-layout
+function gc() {
+    local ref="$1"
+    local digest=$("${CRANE}" digest "${ref}")
+    local blobs=($("${CRANE}" manifest "${ref}" | "${JQ}" -r --arg digest "$digest" '([.layers[].digest] + [.config.digest, $digest]) | flatten | .[]'))
+    for blob_dir in ${STORAGE_DIR}/blobs/* ; do
+        local algo="$(basename ${blob_dir})"
+        for blob_path in ${blob_dir}/* ; do
+            local blob_digest="$(basename ${blob_path})"
+            local hash="${algo}:${blob_digest}"
+            if ! [[ "${blobs[@]}" =~ "$hash" ]]; then
+                rm $blob_path
+            fi
+        done
+    done
 }
 
 # this will redirect stderr(2) to stderr file.
@@ -160,7 +177,11 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
 fi
 
 if [ -n "$OUTPUT" ]; then
-    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
+    # "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
+    # gc "${REF}"
+    stop_registry "${STORAGE_DIR}"
+    cat $STDERR
 fi
 
-} 2>> "${STDERR}"
+} 
+# 2>> "${STDERR}"
