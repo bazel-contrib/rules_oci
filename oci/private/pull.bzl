@@ -236,7 +236,10 @@ def _download_manifest(rctx, state, identifier, output):
     bytes = None
     manifest = None
 
-    result = _download(rctx, state, identifier, output, "manifests", allow_fail = True)
+    headers = {
+        "Accept": ", ".join(_SUPPORTED_MEDIA_TYPES["manifest"]),
+    }
+    result = _download(rctx, state, identifier, output, "manifests", headers = headers, allow_fail = True)
     fallback_to_curl = False
 
     if result.success:
