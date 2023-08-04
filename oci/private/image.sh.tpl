@@ -60,8 +60,6 @@ function base_from_layout() {
 
     "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
 
-    echo "${output}" >&2
-
     if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
 
@@ -79,7 +77,7 @@ EOF
     cat "${refs}"
 }
 
-# removes unreferenced blobs from oci-layout
+# removes unreferenced blobs from oci-layout and normalizes index.json
 function gc() {
     local ref="$1"
     local digest=$("${CRANE}" digest "${ref}")
@@ -94,6 +92,9 @@ function gc() {
             fi
         done
     done
+    mv "${STORAGE_DIR}/index.json" "${STORAGE_DIR}/temp.json"
+    "${JQ}" --arg digest "$digest" '.manifests |= [map(select(.digest == $digest and .annotations == null))[0]]' "${STORAGE_DIR}/temp.json" > "${STORAGE_DIR}/index.json"
+    rm "${STORAGE_DIR}/temp.json"
 }
 
 # this will redirect stderr(2) to stderr file.
@@ -177,11 +178,10 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
 fi
 
 if [ -n "$OUTPUT" ]; then
-    # "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
-    # gc "${REF}"
+
+    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
+    gc "${REF}"
     stop_registry "${STORAGE_DIR}"
-    cat $STDERR
 fi
 
-} 
-# 2>> "${STDERR}"
+} 2>> "${STDERR}"

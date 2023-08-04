@@ -10,9 +10,9 @@ function start_registry() {
     echo "$storage_dir" >&2
     cat > "${config_path}" <<EOF
 {
-    "storage":{ "rootDirectory": "$storage_dir/all",  "dedupe": false, "subPaths": {"/image": {"rootDirectory": "$storage_dir"}}},
+    "storage": { "rootDirectory": "$storage_dir/..", "dedupe": false, "commit": true },
     "http":{ "port": "0", "address": "127.0.0.1" },
-    "log":{ "level": "debug" }
+    "log":{ "level": "info" }
 }
 EOF
     HOME="${TMPDIR}" "${ZOT}" serve "${config_path}" >> $output 2>&1 &
@@ -33,7 +33,10 @@ EOF
     return 0
 }
 
+
+
 function stop_registry() {
     local storage_dir="$1"
-    rm "$storage_dir/config.json"
+    rm -r "${storage_dir}/.uploads"
+    rm -r "${storage_dir}/config.json"
 }
