@@ -12,7 +12,6 @@ _ARCH = [
         name = "decompress_" + architecture,
         srcs = ["@bash_{}//:layer".format(architecture)],
         outs = ["_{}.tar".format(architecture)],
-        tags = ["manual"],
         cmd = "xz --decompress --stdout $< >$@",
     )
     for architecture in _ARCH
@@ -23,7 +22,6 @@ _ARCH = [
         name = "image_" + architecture,
         architecture = architecture,
         os = "linux",
-        tags = ["manual"],
         tars = ["_{}.tar".format(architecture)],
     )
     for architecture in _ARCH
@@ -32,6 +30,5 @@ _ARCH = [
 oci_tarball(
     name = "tarball",
     image = ":image_amd64",
-    tags = ["manual"],
     repo_tags = ["test:test"],
 )
