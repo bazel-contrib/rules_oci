@@ -1,7 +1,6 @@
 load("//oci:defs.bzl", "oci_image", "oci_tarball")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@container_structure_test//:defs.bzl", "container_structure_test")
 
 oci_image(
     name = "image",
@@ -9,21 +8,7 @@ oci_image(
         "@platforms//cpu:arm64": "arm64",
         "@platforms//cpu:x86_64": "amd64",
     }),
-    cmd = [
-        "--arg1",
-        "--arg2",
-    ],
-    entrypoint = ["/custom_bin"],
-    env = {
-        "ENV": "/test",
-    },
     os = "linux",
-)
-
-container_structure_test(
-    name = "test",
-    configs = ["test.yaml"],
-    image = ":image",
 )
 
 repo_tags = [
@@ -35,7 +20,7 @@ repo_tags = [
 oci_tarball(
     name = "tarball",
     image = ":image",
-    repo_tags = repo_tags,
+    repo_tags = ":tags_file.txt",  # In particular we check whether empty (last line) of the file gets ignored.
 )
 
 genrule(

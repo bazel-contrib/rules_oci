@@ -4,6 +4,13 @@ set -o pipefail -o errexit -o nounset
 readonly YQ="{{yq_path}}"
 readonly COREUTILS="{{coreutils_path}}"
 
+# Only crete the directory if it doesn't already exist.
+# Otherwise we may attempt to modify permissions of an existing directory.
+# See https://github.com/bazel-contrib/rules_oci/pull/271
+function mkdirp() {
+    test -d "$1" || "${COREUTILS}" mkdir -p "$1"
+}
+
 function add_image() {
     local image_path="$1"
     local output_path="$2"
@@ -27,13 +34,13 @@ function copy_blob() {
     local output_path="$2"
     local blob_image_relative_path="$3"
     local dest_path="${output_path}/${blob_image_relative_path}"
-    "${COREUTILS}" mkdir -p "$(dirname "${dest_path}")"
+    mkdirp "$(dirname "${dest_path}")"
     "${COREUTILS}" cat "${image_path}/${blob_image_relative_path}" > "${dest_path}"
 }
 
 function create_oci_layout() {
     local path="$1"
-    "${COREUTILS}" mkdir -p "${path}"
+    mkdirp "${path}"
 
     echo '{"imageLayoutVersion": "1.0.0"}' > "${path}/oci-layout" 
     echo '{"schemaVersion": 2, "manifests": []}' > "${path}/index.json"

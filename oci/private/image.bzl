@@ -1,5 +1,7 @@
 "Implementation details for image rule"
 
+load("//oci/private:util.bzl", "util")
+
 _DOC = """Build an OCI compatible container image.
 
 Note, most users should use the wrapper macro instead of this rule directly.
@@ -49,7 +51,7 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
-    "tars": attr.label_list(allow_files = [".tar", ".tar.gz", ".tar.xz"], doc = """\
+    "tars": attr.label_list(allow_files = [".tar"], doc = """\
         List of tar files to add to the image as layers.
         Do not sort this list; the order is preserved in the resulting image.
         Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.
@@ -76,6 +78,10 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
+    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    # Workaround for https://github.com/google/go-containerregistry/issues/1513
+    # We would prefer to not provide any tar file at all.
+    "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
 def _format_string_to_string_tuple(kv):
@@ -102,6 +108,7 @@ def _oci_image_impl(ctx):
     yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
+
     ctx.actions.expand_template(
         template = ctx.file._image_sh_tpl,
         output = launcher,
@@ -111,10 +118,11 @@ def _oci_image_impl(ctx):
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{yq_path}}": yq.yqinfo.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
+            "{{empty_tar}}": ctx.file._empty_tar.path,
         },
     )
 
-    inputs_depsets = []
+    inputs_depsets = [depset([launcher, ctx.file._empty_tar])]
     base = "oci:empty_base"
 
     if ctx.attr.base:
@@ -166,11 +174,23 @@ def _oci_image_impl(ctx):
     output = ctx.actions.declare_directory(ctx.label.name)
     args.add(output.path, format = "--output=%s")
 
+    action_env = {}
+
+    # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
+    if ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+        # See https://www.msys2.org/wiki/Porting/:
+        # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
+        action_env["MSYS2_ARG_CONV_EXCL"] = "*"
+
+        # This one is for Windows Git MSys
+        action_env["MSYS_NO_PATHCONV"] = "1"
+
     ctx.actions.run(
         inputs = depset(transitive = inputs_depsets),
         arguments = [args],
         outputs = [output],
-        executable = launcher,
+        env = action_env,
+        executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
         tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, yq.yqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
@@ -187,6 +207,7 @@ oci_image = rule(
     attrs = _attrs,
     doc = _DOC,
     toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//oci:crane_toolchain_type",
         "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",

@@ -5,12 +5,7 @@ exports_files(
     visibility = ["//docs:__pkg__"],
 )
 
-exports_files([
-    "image.sh.tpl",
-    "image_index.sh.tpl",
-    "tarball.sh.tpl",
-    "push.sh.tpl",
-])
+exports_files(glob(["*.tpl"]) + ["empty.tar"])
 
 bzl_library(
     name = "tarball",
@@ -19,6 +14,7 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = [":util"],
 )
 
 bzl_library(
@@ -28,6 +24,7 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = [":util"],
 )
 
 bzl_library(
@@ -94,6 +91,7 @@ bzl_library(
     name = "auth_config_locator",
     srcs = ["auth_config_locator.bzl"],
     visibility = ["//oci:__subpackages__"],
+    deps = ["@aspect_bazel_lib//lib:repo_utils"],
 )
 
 bzl_library(

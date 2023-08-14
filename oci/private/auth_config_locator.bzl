@@ -1,5 +1,7 @@
 "repository rule that locates the .docker/config.json or containers/auth.json file."
 
+load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
+
 def _file_exists(rctx, path):
     result = rctx.execute(["stat", path])
     return result.return_code == 0
@@ -7,9 +9,11 @@ def _file_exists(rctx, path):
 # Path of the auth file is determined by the order described here;
 # https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
 def _get_auth_file_path(rctx):
+    HOME = repo_utils.get_env_var(rctx, "HOME", "ERR_NO_HOME_SET")
+
     # this is the standard path where registry credentials are stored
     # https://docs.docker.com/engine/reference/commandline/cli/#configuration-files
-    DOCKER_CONFIG = "{}/.docker".format(rctx.os.environ["HOME"])
+    DOCKER_CONFIG = "{}/.docker".format(HOME)
 
     # set DOCKER_CONFIG to $DOCKER_CONFIG env if present
     if "DOCKER_CONFIG" in rctx.os.environ:
@@ -21,7 +25,7 @@ def _get_auth_file_path(rctx):
         return config_path
 
     # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
-    XDG_RUNTIME_DIR = "{}/.config".format(rctx.os.environ["HOME"])
+    XDG_RUNTIME_DIR = "{}/.config".format(HOME)
 
     # set XDG_RUNTIME_DIR to $XDG_RUNTIME_DIR env if present
     if "XDG_RUNTIME_DIR" in rctx.os.environ:
