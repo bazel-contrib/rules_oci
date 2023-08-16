@@ -37,6 +37,7 @@ def _oci_extension(module_ctx):
                 digest = pull.digest,
                 tag = pull.tag,
                 reproducible = pull.reproducible,
+                is_bzlmod = True,
             )
         for toolchains in mod.tags.toolchains:
             if toolchains.name != "oci" and not mod.is_root:
