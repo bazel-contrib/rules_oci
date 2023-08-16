@@ -536,7 +536,7 @@ oci_alias = repository_rule(
             "target_name": attr.string(),
             "reproducible": attr.bool(default = True, doc = "Set to False to silence the warning about reproducibility when using `tag`"),
             "bzlmod_repository": attr.string(
-                doc = "For error reporting. When called from a module extension, provides the name of a repository in MODULE.bazel",
+                doc = "For error reporting. When called from a module extension, provides the original name of the repository prior to mapping",
             ),
         },
     ),
