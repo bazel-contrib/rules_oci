@@ -1,7 +1,6 @@
 "Implementation details for oci_pull repository rules"
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
-load("@aspect_bazel_lib//lib:utils.bzl", "is_bzlmod_enabled")
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
 load("//oci/private:download.bzl", "download")
 load("//oci/private:util.bzl", "util")
@@ -492,6 +491,7 @@ def _oci_alias_impl(rctx):
                 platforms.append('"{}"'.format("/".join(parts)))
             optional_platforms = "'add platforms {}'".format(" ".join(platforms))
 
+        is_bzlmod = hasattr(rctx.attr, "bzlmod_repository") and rctx.attr.bzlmod_repository
         util.warning(rctx, """\
 for reproducible builds, a digest is recommended.
 Either set 'reproducible = False' to silence this warning,
@@ -500,11 +500,11 @@ or run the following command to change {rule} to use a digest:
 
 buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} {location}
     """.format(
-            location = "MODULE.bazel:" + rctx.attr.name.split("~")[-1] if is_bzlmod_enabled() else "WORKSPACE:" + rctx.attr.name,
+            location = "MODULE.bazel:" + rctx.attr.bzlmod_repository if is_bzlmod else "WORKSPACE:" + rctx.attr.name,
             digest = digest,
             optional_platforms = optional_platforms,
-            warning = "(make sure you use a recent buildozer release with MODULE.bazel support)" if is_bzlmod_enabled() else "",
-            rule = "oci.pull" if is_bzlmod_enabled() else "oci_pull",
+            warning = "(make sure you use a recent buildozer release with MODULE.bazel support)" if is_bzlmod else "",
+            rule = "oci.pull" if is_bzlmod else "oci_pull",
         ))
 
     build = ""
@@ -535,6 +535,9 @@ oci_alias = repository_rule(
             "platform": attr.label(),
             "target_name": attr.string(),
             "reproducible": attr.bool(default = True, doc = "Set to False to silence the warning about reproducibility when using `tag`"),
+            "bzlmod_repository": attr.string(
+                doc = "For error reporting. When called from a module extension, provides the name of a repository in MODULE.bazel",
+            ),
         },
     ),
 )
