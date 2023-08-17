@@ -5,7 +5,8 @@ _ARCH = [
     "arm64",
 ]
 
-# crane doesn't do the right thing with compressed tarball inputs like .tar.gz or .tar.xz
+# Workaround: crane doesn't do the right thing with .tar.xz compression
+# so we simply decompress explicitly first.
 [
     genrule(
         name = "decompress_" + architecture,
