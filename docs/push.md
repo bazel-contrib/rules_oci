@@ -71,7 +71,7 @@ stamp_tags(
 oci_push(
     image = ":app_image",
     repository = "ghcr.io/<OWNER>/image",
-    tags = ":stamped",
+    remote_tags = ":stamped",
 )
 ```
 

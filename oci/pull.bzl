@@ -53,7 +53,7 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True):
+def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -83,6 +83,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             Exactly one of `tag` and `digest` must be set.
             Since tags are mutable, this is not reproducible, so a warning is printed.
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
+        is_bzlmod: whether the oci_pull is being called from a module extension
     """
 
     # Check syntax sugar for registry/repository in place of image
@@ -150,4 +151,5 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         # image attributes
         platforms = platform_to_image,
         platform = single_platform,
+        bzlmod_repository = name if is_bzlmod else None,
     )

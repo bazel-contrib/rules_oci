@@ -13,11 +13,12 @@ oci_tarball(
 and then run it in a container like so:
 
 ```
-bazel build //path/to:tarball
-docker load --input $(bazel cquery --output=files //path/to:tarball)
+bazel run :tarball
 docker run --rm my-repository:latest
 ```
 """
+
+load("//oci/private:util.bzl", "util")
 
 doc = """Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
 
@@ -31,8 +32,17 @@ attrs = {
             a file containing repo_tags, one per line.
             """,
         allow_single_file = [".txt"],
+        mandatory = True,
+    ),
+    "_run_template": attr.label(
+        default = Label("//oci/private:tarball_run.sh.tpl"),
+        doc = """ \
+              The template used to load the container. The default template uses Docker, but this template could be replaced to use podman, runc, or another runtime. Please reference the default template to see available substitutions. 
+        """,
+        allow_single_file = True,
     ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
+    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _tarball_impl(ctx):
@@ -40,6 +50,7 @@ def _tarball_impl(ctx):
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
     yq_bin = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo.bin
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+    repo_tags = ctx.file.repo_tags
 
     substitutions = {
         "{{yq}}": yq_bin.path,
@@ -48,7 +59,7 @@ def _tarball_impl(ctx):
     }
 
     if ctx.attr.repo_tags:
-        substitutions["{{tags}}"] = ctx.file.repo_tags.path
+        substitutions["{{tags}}"] = repo_tags.path
 
     ctx.actions.expand_template(
         template = ctx.file._tarball_sh,
@@ -58,16 +69,27 @@ def _tarball_impl(ctx):
     )
 
     ctx.actions.run(
-        executable = executable,
-        inputs = [image, ctx.file.repo_tags],
+        executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
+        inputs = [image, repo_tags, executable],
         outputs = [tarball],
         tools = [yq_bin],
         mnemonic = "OCITarball",
         progress_message = "OCI Tarball %{label}",
     )
 
+    exe = ctx.actions.declare_file(ctx.label.name + ".sh")
+
+    ctx.actions.expand_template(
+        template = ctx.file._run_template,
+        output = exe,
+        substitutions = {
+            "{{image_path}}": tarball.short_path,
+        },
+        is_executable = True,
+    )
+
     return [
-        DefaultInfo(files = depset([tarball])),
+        DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = [tarball]), executable = exe),
     ]
 
 oci_tarball = rule(
@@ -75,6 +97,8 @@ oci_tarball = rule(
     attrs = attrs,
     doc = doc,
     toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
+    executable = True,
 )

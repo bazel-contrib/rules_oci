@@ -1,14 +1,34 @@
-load("//oci:defs.bzl", "oci_image")
+load("//oci:defs.bzl", "oci_image", "oci_tarball")
+
+_ARCH = [
+    "amd64",
+    "arm64",
+]
+
+# Workaround: crane doesn't do the right thing with .tar.xz compression
+# so we simply decompress explicitly first.
+[
+    genrule(
+        name = "decompress_" + architecture,
+        srcs = ["@bash_{}//:layer".format(architecture)],
+        outs = ["_{}.tar".format(architecture)],
+        cmd = "xz --decompress --stdout $< >$@",
+    )
+    for architecture in _ARCH
+]
 
 [
     oci_image(
         name = "image_" + architecture,
         architecture = architecture,
         os = "linux",
-        tars = ["@bash_{}//:layer".format(architecture)],
+        tars = ["_{}.tar".format(architecture)],
     )
-    for architecture in [
-        "amd64",
-        "arm64",
-    ]
+    for architecture in _ARCH
 ]
+
+oci_tarball(
+    name = "tarball",
+    image = ":image_amd64",
+    repo_tags = ["test:test"],
+)

@@ -12,7 +12,34 @@ git archive --format=tar --prefix=${PREFIX}/ ${TAG} | gzip > $ARCHIVE
 SHA=$(shasum -a 256 $ARCHIVE | awk '{print $1}')
 
 cat << EOF
-WORKSPACE snippet:
+## Using bzlmod with Bazel 6 or later:
+
+1. Add \`common --enable_bzlmod\` to \`.bazelrc\`.
+
+2. Add to your \`MODULE.bazel\` file:
+
+\`\`\`starlark
+bazel_dep(name = "rules_oci", version = "${TAG:1}")
+# For testing, we also recommend https://registry.bazel.build/modules/container_structure_test
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+# Declare external images you need to pull, for example: 
+oci.pull(
+    name = "distroless_base",
+    # 'latest' is not reproducible, but it's convenient.
+    # During the build we print a WARNING message that includes recommended 'digest' and 'platforms'
+    # values which you can use here in place of 'tag' to pin for reproducibility.
+    tag = "latest",
+    image = "gcr.io/distroless/base",
+    platforms = ["linux/amd64"],
+)
+
+# For each oci.pull call, repeat the "name" here to expose them as dependencies.
+use_repo(oci, "distroless_base")
+\`\`\`
+
+## Using WORKSPACE:
 
 \`\`\`starlark
 

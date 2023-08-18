@@ -91,7 +91,9 @@ def _get_auth(rctx, state, registry):
                 elif "auth" in auth_val:
                     # base64 encoded plaintext username and password
                     raw_auth = auth_val["auth"]
-                    (login, password) = base64.decode(raw_auth).split(":")
+                    login, sep, password = base64.decode(raw_auth).partition(":")
+                    if not sep:
+                        fail("auth string must be in form username:password")
                     pattern = {
                         "type": "basic",
                         "login": login,
@@ -385,7 +387,8 @@ def _oci_pull_impl(rctx):
 
         # TODO: we should avoid eager-download of the layers ("shallow pull")
         downloader.download_blob(layer["digest"], hash)
-        tars.append(hash)
+        if hash not in tars:
+            tars.append(hash)
 
     # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
     # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
@@ -487,16 +490,20 @@ def _oci_alias_impl(rctx):
                 platforms.append('"{}"'.format("/".join(parts)))
             optional_platforms = "'add platforms {}'".format(" ".join(platforms))
 
+        is_bzlmod = hasattr(rctx.attr, "bzlmod_repository") and rctx.attr.bzlmod_repository
         util.warning(rctx, """\
 for reproducible builds, a digest is recommended.
 Either set 'reproducible = False' to silence this warning,
-or run the following command to change oci_pull to use a digest:
+or run the following command to change {rule} to use a digest:
+{warning}
 
-buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} WORKSPACE:{name}
+buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} {location}
     """.format(
-            name = rctx.attr.name,
+            location = "MODULE.bazel:" + rctx.attr.bzlmod_repository if is_bzlmod else "WORKSPACE:" + rctx.attr.name,
             digest = digest,
             optional_platforms = optional_platforms,
+            warning = "(make sure you use a recent buildozer release with MODULE.bazel support)" if is_bzlmod else "",
+            rule = "oci.pull" if is_bzlmod else "oci_pull",
         ))
 
     build = ""
@@ -527,6 +534,9 @@ oci_alias = repository_rule(
             "platform": attr.label(),
             "target_name": attr.string(),
             "reproducible": attr.bool(default = True, doc = "Set to False to silence the warning about reproducibility when using `tag`"),
+            "bzlmod_repository": attr.string(
+                doc = "For error reporting. When called from a module extension, provides the original name of the repository prior to mapping",
+            ),
         },
     ),
 )

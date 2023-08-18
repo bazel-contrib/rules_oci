@@ -34,8 +34,7 @@ function get_option() {
 function empty_base() {
     local registry=$1
     local ref="$registry/oci/empty_base:latest"
-    # TODO: https://github.com/google/go-containerregistry/issues/1513
-    ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f <(tar -cf tarfilename.tar -T /dev/null))"
+    ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f {{empty_tar}})"
     ref=$("${CRANE}" config "${ref}" | "${YQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
     ref=$("${CRANE}" manifest "${ref}" | "${YQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
 
@@ -95,9 +94,19 @@ for ARG in "$@"; do
         (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
         (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
         (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
-        (--env=*\${*}* | --env=*\$*) ENV_EXPANSIONS+=(${ARG#--env=}) ;;
         (--output=*) OUTPUT="${ARG#--output=}" ;;
         (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
+        (--env-file=*)
+          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
+          # file doesn't have a trailing newline.
+          while IFS= read -r in || [ -n "$in" ]; do
+            if [[ "${in}" = *\$* ]]; then
+              ENV_EXPANSIONS+=( "${in}" )
+            else
+              FIXED_ARGS+=( "--env=${in}" )
+            fi
+          done <"${ARG#--env-file=}"
+          ;;
         (--labels-file=*)
           # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
           # file doesn't have a trailing newline.
@@ -105,6 +114,8 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--label=$in")
           done <"${ARG#--labels-file=}"
           ;;
+          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
+          # file doesn't have a trailing newline.
         (--annotations-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--annotation=$in")
@@ -123,12 +134,12 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
     {parts: (.parts + [$raw[.prev:$match.offset], $envs[$match.captures[0].string]]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
     base_config=$("${CRANE}" config "${REF}")
-    base_env=$("${JQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
+    base_env=$("${YQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
     environment_args=()
     for expansion in "${ENV_EXPANSIONS[@]}"
     do
         IFS="=" read -r key value <<< "${expansion}"
-        value_from_base=$("${JQ}" -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
+        value_from_base=$("${YQ}" -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
         environment_args+=( --env "${key}=${value_from_base}" )
     done
     REF=$("${CRANE}" mutate "${REF}" ${environment_args[@]})
@@ -136,7 +147,7 @@ fi
 
 # TODO: https://github.com/google/go-containerregistry/issues/1515
 if [ -n "${WORKDIR}" ]; then
-    REF=$("${CRANE}" config "${REF}" | "${JQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
+    REF=$("${CRANE}" config "${REF}" | "${YQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
 fi
 
 if [ -n "$OUTPUT" ]; then

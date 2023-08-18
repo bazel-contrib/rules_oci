@@ -18,20 +18,22 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
-def oci_image(name, labels = None, annotations = None, **kwargs):
+def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
     See https://github.com/opencontainers/image-spec/blob/main/annotations.md
 
-    Label/annotation keys like `org.opencontainers.image.created` and `org.opencontainers.image.version`
-    may be supplied with non-deterministic information when bazel is run with `--stamp`; see the example in
+    Label/annotation/env can by configured using either dict(key->value) or a file that contains key=value pairs
+    (one per line). The file can be preprocessed using (e.g. using `jq`) to supply external (potentially not
+    deterministic) information when running with `--stamp` flag.  See the example in
     [/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
 
     Args:
         name: name of resulting oci_image_rule
         labels: Labels for the image config. See documentation above.
         annotations: Annotations for the image config. See documentation above.
+        env: Environment variables provisioned by default to the running container. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule)
     """
     if types.is_dict(annotations):
@@ -52,10 +54,20 @@ def oci_image(name, labels = None, annotations = None, **kwargs):
         )
         labels = labels_label
 
+    if types.is_dict(env):
+        env_label = "_{}_write_env".format(name)
+        write_file(
+            name = env_label,
+            out = "_{}.env.txt".format(name),
+            content = ["{}={}".format(key, value) for (key, value) in env.items()],
+        )
+        env = env_label
+
     oci_image_rule(
         name = name,
         annotations = annotations,
         labels = labels,
+        env = env,
         **kwargs
     )
 

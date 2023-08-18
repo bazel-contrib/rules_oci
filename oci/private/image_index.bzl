@@ -4,7 +4,7 @@ _DOC = """Build a multi-architecture OCI compatible container image.
 
 It takes number of `oci_image`s  to create a fat multi-architecture image.
 
-Requires `wc` and `shasum` to be installed on the execution machine.
+Requires `wc` and either `sha256sum` or `shasum` to be installed on the execution machine.
 
 ```starlark
 oci_image(
