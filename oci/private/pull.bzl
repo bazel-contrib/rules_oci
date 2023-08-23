@@ -121,9 +121,9 @@ def _get_auth(rctx, state, registry):
 def _get_token(rctx, state, registry, repository):
     pattern = _get_auth(rctx, state, registry)
 
-    for registryPattern in _WWW_AUTH.keys():
-        if (registry == registryPattern) or registry.endswith(registryPattern):
-            www_authenticate = _WWW_AUTH[registry]
+    for registry_pattern in _WWW_AUTH.keys():
+        if (registry == registry_pattern) or registry.endswith(registry_pattern):
+            www_authenticate = _WWW_AUTH[registry_pattern]
             url = "https://{realm}?scope={scope}&service={service}".format(
                 realm = www_authenticate["realm"].format(registry = registry),
                 service = www_authenticate["service"].format(registry = registry),
