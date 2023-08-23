@@ -121,8 +121,8 @@ def _get_auth(rctx, state, registry):
 def _get_token(rctx, state, registry, repository):
     pattern = _get_auth(rctx, state, registry)
 
-    if registryPattern in _WWW_AUTH:
-        if registry == registryPattern || registry.endswith(registryPattern):
+    for registryPattern in _WWW_AUTH.keys():
+        if (registry == registryPattern) || registry.endswith(registryPattern):
             www_authenticate = _WWW_AUTH[registry]
             url = "https://{realm}?scope={scope}&service={service}".format(
                 realm = www_authenticate["realm"].format(registry = registry),
@@ -158,7 +158,6 @@ def _get_token(rctx, state, registry, repository):
 
             # put the token into cache so that we don't do the token exchange again.
             state["token"][url] = pattern
-
     return pattern
 
 def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
