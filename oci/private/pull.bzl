@@ -137,10 +137,17 @@ def _get_token(rctx, state, registry, repository):
         )
         auth_raw = rctx.read("www-authenticate.json")
         auth = json.decode(auth_raw)
+        token = ""
+        if "token" in auth:
+            token = auth["token"]
+        if "access_token" in auth:
+            token = auth["access_token"]
+        if token == "":
+            fail("could not find token in neither field 'token' nor 'access_token' in the response from the registry")
         pattern = {
             "type": "pattern",
             "pattern": "Bearer <password>",
-            "password": auth["token"],
+            "password": token,
         }
 
         # put the token into cache so that we don't do the token exchange again.
