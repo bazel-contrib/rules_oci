@@ -40,19 +40,24 @@ _WWW_AUTH = {
         "service": "registry.docker.io",
     },
     "public.ecr.aws": {
-        "realm": "public.ecr.aws/token",
+        "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
-        "service": "public.ecr.aws",
+        "service": "{registry}",
     },
     "ghcr.io": {
-        "realm": "ghcr.io/token",
+        "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
-        "service": "ghcr.io/token",
+        "service": "{registry}/token",
     },
     "cgr.dev": {
-        "realm": "cgr.dev/token",
-        "service": "cgr.dev",
+        "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
+        "service": "{registry}s",
+    },
+    ".azurecr.io": {
+        "realm": "{registry}/oauth2/token",
+        "scope": "repository:{repository}:pull",
+        "service": "{registry}",
     },
 }
 
@@ -116,42 +121,43 @@ def _get_auth(rctx, state, registry):
 def _get_token(rctx, state, registry, repository):
     pattern = _get_auth(rctx, state, registry)
 
-    if registry in _WWW_AUTH:
-        www_authenticate = _WWW_AUTH[registry]
-        url = "https://{realm}?scope={scope}&service={service}".format(
-            realm = www_authenticate["realm"],
-            service = www_authenticate["service"],
-            scope = www_authenticate["scope"].format(repository = repository),
-        )
+    if registryPattern in _WWW_AUTH:
+        if registry == registryPattern || registry.endswith(registryPattern):
+            www_authenticate = _WWW_AUTH[registry]
+            url = "https://{realm}?scope={scope}&service={service}".format(
+                realm = www_authenticate["realm"].format(registry = registry),
+                service = www_authenticate["service"].format(registry = registry),
+                scope = www_authenticate["scope"].format(repository = repository),
+            )
 
-        # if a token for this repository and registry is acquired, use that instead.
-        if url in state["token"]:
-            return state["token"][url]
+            # if a token for this repository and registry is acquired, use that instead.
+            if url in state["token"]:
+                return state["token"][url]
 
-        rctx.download(
-            url = [url],
-            output = "www-authenticate.json",
-            # optionally, sending the credentials to authenticate using the credentials.
-            # this is for fetching from private repositories that require WWW-Authenticate
-            auth = {url: pattern},
-        )
-        auth_raw = rctx.read("www-authenticate.json")
-        auth = json.decode(auth_raw)
-        token = ""
-        if "token" in auth:
-            token = auth["token"]
-        if "access_token" in auth:
-            token = auth["access_token"]
-        if token == "":
-            fail("could not find token in neither field 'token' nor 'access_token' in the response from the registry")
-        pattern = {
-            "type": "pattern",
-            "pattern": "Bearer <password>",
-            "password": token,
-        }
+            rctx.download(
+                url = [url],
+                output = "www-authenticate.json",
+                # optionally, sending the credentials to authenticate using the credentials.
+                # this is for fetching from private repositories that require WWW-Authenticate
+                auth = {url: pattern},
+            )
+            auth_raw = rctx.read("www-authenticate.json")
+            auth = json.decode(auth_raw)
+            token = ""
+            if "token" in auth:
+                token = auth["token"]
+            if "access_token" in auth:
+                token = auth["access_token"]
+            if token == "":
+                fail("could not find token in neither field 'token' nor 'access_token' in the response from the registry")
+            pattern = {
+                "type": "pattern",
+                "pattern": "Bearer <password>",
+                "password": token,
+            }
 
-        # put the token into cache so that we don't do the token exchange again.
-        state["token"][url] = pattern
+            # put the token into cache so that we don't do the token exchange again.
+            state["token"][url] = pattern
 
     return pattern
 
