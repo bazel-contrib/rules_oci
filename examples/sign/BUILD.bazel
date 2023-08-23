@@ -1,6 +1,6 @@
 load("//cosign:defs.bzl", "cosign_sign")
 load("//oci:defs.bzl", "oci_image")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 pkg_tar(
     name = "app",
