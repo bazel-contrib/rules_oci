@@ -51,7 +51,7 @@ And finally the build rules for our image.
 
 ```python
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 filegroup(
     name = "static",
     srcs = ["index.html", "textfile.txt"],

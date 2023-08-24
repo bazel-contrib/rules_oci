@@ -1,6 +1,6 @@
 load("//oci:defs.bzl", "oci_image")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 
 pkg_tar(

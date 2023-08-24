@@ -126,7 +126,7 @@ rust_binary(
 After that, we package that binary into a layer using `pkg_tar`
 
 ```
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 # Step 2: Compress it to layer using pkg_tar
 pkg_tar(
@@ -163,7 +163,7 @@ Complete `BUILD.bazel` file
 
 ```
 load("@rules_rust//rust:defs.bzl", "rust_binary")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
 
 package(default_visibility = ["//visibility:public"])

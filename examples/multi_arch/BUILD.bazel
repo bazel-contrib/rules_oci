@@ -1,5 +1,5 @@
 load("//oci:defs.bzl", "oci_image", "oci_image_index")
-load("@rules_pkg//:pkg.bzl", "pkg_tar")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 load(":transition.bzl", "multi_arch")
 
