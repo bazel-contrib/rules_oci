@@ -8,7 +8,7 @@ def _auth_to_header(url, auth):
             auth_val = auth[auth_url]
 
             if "type" not in auth_val:
-              continue
+                continue
 
             if auth_val["type"] == "basic":
                 credentials = base64.encode("{}:{}".format(auth_val["login"], auth_val["password"]))
@@ -95,15 +95,20 @@ def _download(
     rctx.file(headers_output_path)
 
     result = rctx.execute(command)
+    _debug("""\nSTDOUT\n{}\nSTDERR\n{}""".format(result.stdout, result.stderr))
 
-    status_code = int(result.stdout.strip())
-    _debug("""\nSTATUS\n{}\nSTDOUT\n{}\nSTDERR\n{}""".format(status_code, result.stdout, result.stderr))
-
-    if result.return_code != 0 or status_code >= 400:
+    if result.return_code != 0:
         if allow_fail:
             return struct(success = False)
         else:
-            fail("Failed to fetch {} {}".format(url, result.stderr))
+            fail("Failed to execute curl {} {}".format(url, result.stderr))
+
+    status_code = int(result.stdout.strip())
+    if status_code >= 400:
+        if allow_fail:
+            return struct(success = False)
+        else:
+            fail("curl {} returned non-success status code {}".format(url, status_code))
 
     cache_it = rctx.download(
         url = "file://{}".format(output_path),
