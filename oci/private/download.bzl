@@ -1,6 +1,7 @@
 "Downloader functions "
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
+load("@bazel_skylib//lib:versions.bzl", "versions")
 
 def _auth_to_header(url, auth):
     for auth_url in auth:
@@ -70,6 +71,16 @@ def _download(
             _debug("{} is in cache".format(url))
             return cache_result
 
+    version_result = rctx.execute(["curl", "--version"])
+    if version_result.return_code != 0:
+        fail("Failed to execute curl --version:\n{}".format(version_result.stderr))
+
+    # parse from
+    # curl 8.1.2 (x86_64-apple-darwin22.0) libcurl/8.1.2 (SecureTransport) LibreSSL/3.3.6 zlib/1.2.11 nghttp2/1.51.0
+    # Release-Date: 2023-05-30
+    # ...
+    curl_version = version_result.stdout.split(" ")[1]
+
     headers_output_path = str(rctx.path(".output/header.txt"))
     output_path = str(rctx.path(".output/{}".format(output)))
     command = [
@@ -78,7 +89,6 @@ def _download(
         "--write-out",
         "%{http_code}",
         "--location",
-        "--no-progress-meter",
         "--request",
         method,
         "--create-dirs",
@@ -87,6 +97,12 @@ def _download(
         "--dump-header",
         headers_output_path,
     ]
+
+    # Detect more flags which may be supported based on changelog:
+    # https://curl.se/changes.html
+    if versions.is_at_least("7.67.0", curl_version):
+        command.append("--no-progress-meter")
+
     for (name, value) in headers.items():
         command.append("--header")
         command.append("{}: {}".format(name, value))
@@ -101,7 +117,7 @@ def _download(
         if allow_fail:
             return struct(success = False)
         else:
-            fail("Failed to execute curl {} {}".format(url, result.stderr))
+            fail("Failed to execute curl {} (version {}): {}".format(url, curl_version, result.stderr))
 
     status_code = int(result.stdout.strip())
     if status_code >= 400:
