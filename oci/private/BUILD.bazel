@@ -82,9 +82,8 @@ bzl_library(
 bzl_library(
     name = "download",
     srcs = ["download.bzl"],
-    visibility = [
-        "//oci:__subpackages__",
-    ],
+    visibility = ["//oci:__subpackages__"],
+    deps = ["@bazel_skylib//lib:versions"],
 )
 
 bzl_library(
