@@ -7,35 +7,32 @@ sh_binary(
     srcs = ["convert.bash"],
     data = [
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
+        "@oci_crane_registry_toolchains//:current_toolchain"
     ],
 )
 
 # Before building this example, you'll need to run ./create_base_image.bash to produce an
 # image.tar file. It's large so we .gitignore it.
 run_binary(
-    name = "convert_base",
+    name = "base",
     srcs = ["image.tar"],
-    outs = ["oci.tar"],
     args = [
+        "$@",
+        "$(location :image.tar)",
         "$(CRANE_BIN)",
         "$(LAUNCHER_WRAPPER)",
-        "$@",
     ],
-    tags = ["manual"],
     tool = ":convert",
     toolchains = [
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
+        "@oci_crane_registry_toolchains//:current_toolchain"
     ],
+    out_dirs = ["oci"],
 )
 
 oci_image(
     name = "image",
-    base = "oci.tar",
-    tars = [
-        # TODO
-    ],
+    base = ":base",
 )
 
 oci_tarball(
@@ -47,6 +44,5 @@ oci_tarball(
 container_structure_test(
     name = "test",
     configs = ["test.yaml"],
-    # TODO
-    image = ":tar",
+    image = ":image",
 )
