@@ -18,6 +18,6 @@ commandTests:
     exitCode: 2
 
 fileExistenceTests:
-  - name: "should remove /var/lib/apt/lists"
+  - name: "should not remove /var/lib/apt/lists"
     path: /var/lib/apt/lists
     shouldExist: true
