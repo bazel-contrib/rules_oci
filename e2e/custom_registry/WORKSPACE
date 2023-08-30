@@ -39,11 +39,9 @@ oci_pull(
 
 http_archive(
     name = "container_structure_test",
-    sha256 = "6913d8b5fa701b07d30ca236d2ab9e456ea0da415266cd8910a4537fb9222445",
-    strip_prefix = "container-structure-test-e5848342114f9a435e9a54f45bef99a7703c9173",
-    # Note, this commit not on main, it comes from
-    # https://github.com/GoogleContainerTools/container-structure-test/pull/347
-    urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/e5848342114f9a435e9a54f45bef99a7703c9173.zip"],
+    sha256 = "2da13da4c4fec9d4627d4084b122be0f4d118bd02dfa52857ff118fde88e4faa",
+    strip_prefix = "container-structure-test-1.16.0",
+    urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/v1.16.0.zip"],
 )
 
 load("@container_structure_test//:repositories.bzl", "container_structure_test_register_toolchain")

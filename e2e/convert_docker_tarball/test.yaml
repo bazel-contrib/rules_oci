@@ -1,0 +1,23 @@
+schemaVersion: "2.0.0"
+
+metadataTest:
+  envVars:
+    - key: "LC_ALL"
+      value: "C.UTF-8"
+    - key: "LANG"
+      value: "C.UTF-8"
+    - key: "LANGUAGE"
+      value: "C.UTF-8"
+  entrypoint: []
+  cmd: ["/bin/bash"]
+
+commandTests:
+  - name: "jq should be installed"
+    command: "jq"
+    expectedError: ["jq - commandline JSON processor"]
+    exitCode: 2
+
+fileExistenceTests:
+  - name: "should not remove /var/lib/apt/lists"
+    path: /var/lib/apt/lists
+    shouldExist: true
