@@ -13,12 +13,10 @@ rules_oci_dependencies()
 
 load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
 
-
 oci_register_toolchains(
     name = "oci",
-    crane_version = LATEST_CRANE_VERSION
+    crane_version = LATEST_CRANE_VERSION,
 )
-
 
 http_archive(
     name = "container_structure_test",
@@ -32,6 +30,3 @@ http_archive(
 load("@container_structure_test//:repositories.bzl", "container_structure_test_register_toolchain")
 
 container_structure_test_register_toolchain(name = "st")
-
-
-

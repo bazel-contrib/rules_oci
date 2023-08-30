@@ -6,8 +6,8 @@ sh_binary(
     name = "convert",
     srcs = ["convert.bash"],
     data = [
+        "@oci_crane_registry_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_crane_registry_toolchains//:current_toolchain"
     ],
 )
 
@@ -22,12 +22,12 @@ run_binary(
         "$(CRANE_BIN)",
         "$(LAUNCHER_WRAPPER)",
     ],
+    out_dirs = ["oci"],
     tool = ":convert",
     toolchains = [
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_crane_registry_toolchains//:current_toolchain"
+        "@oci_crane_registry_toolchains//:current_toolchain",
     ],
-    out_dirs = ["oci"],
 )
 
 oci_image(

@@ -5,5 +5,5 @@ In some cases, your legacy setup doesn't fetch a base image from a remote regist
 To generate it run;
 
 ```bash
-docker buildx build examples/convert_docker_tarball --output=type=docker,dest=examples/convert_docker_tarball/image.tar --builder=cool_swirles -t test:latest
+docker buildx build e2e/convert_docker_tarball --output=type=docker,dest=e2e/convert_docker_tarball/image.tar --builder=cool_swirles -t test:latest
 ```

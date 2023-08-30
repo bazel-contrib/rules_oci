@@ -15,8 +15,7 @@ commandTests:
   - name: "jq should be installed"
     command: "jq"
     expectedError: ["jq - commandline JSON processor"]
-    exitCode:  2
-
+    exitCode: 2
 
 fileExistenceTests:
   - name: "should remove /var/lib/apt/lists"
