@@ -10,6 +10,9 @@ load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
 load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
 load("//oci/private:push.bzl", _oci_push = "oci_push")
+load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
+load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
+load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
@@ -28,6 +31,9 @@ def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
     (one per line). The file can be preprocessed using (e.g. using `jq`) to supply external (potentially not
     deterministic) information when running with `--stamp` flag.  See the example in
     [/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
+
+    Produces a target `[name].digest`, whose default output is a file containing the sha256 digest of the resulting image.
+    This is similar to the same-named target created by rules_docker's `container_image` macro.
 
     Args:
         name: name of resulting oci_image_rule
@@ -69,6 +75,29 @@ def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
         labels = labels,
         env = env,
         **kwargs
+    )
+
+    # `oci_image_rule` produces a directory as default output.
+    # Label for the [name]/index.json file
+    directory_path(
+        name = "_{}_index_json".format(name),
+        directory = name,
+        path = "index.json",
+    )
+
+    copy_file(
+        name = "_{}_index_json_cp".format(name),
+        src = "_{}_index_json".format(name),
+        out = "_{}_index.json".format(name),
+    )
+
+    # Matches the [name].digest target produced by rules_docker container_image
+    jq(
+        name = name + ".digest",
+        args = ["--raw-output"],
+        srcs = ["_{}_index.json".format(name)],
+        filter = """.manifests[0].digest | sub("^sha256:"; "")""",
+        out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
     )
 
 def oci_push(name, remote_tags = None, **kwargs):
