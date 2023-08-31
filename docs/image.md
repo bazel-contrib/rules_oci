@@ -103,6 +103,9 @@ Label/annotation/env can by configured using either dict(key->value) or a file t
 deterministic) information when running with `--stamp` flag.  See the example in
 [/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
 
+Produces a target `[name].digest`, whose default output is a file containing the sha256 digest of the resulting image.
+This is similar to the same-named target created by rules_docker's `container_image` macro.
+
 
 **PARAMETERS**
 
