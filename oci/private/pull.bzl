@@ -205,6 +205,7 @@ _SUPPORTED_MEDIA_TYPES = {
     "manifest": [
         "application/vnd.docker.distribution.manifest.v2+json",
         "application/vnd.oci.image.manifest.v1+json",
+        "application/vnd.cncf.helm.config.v1+json",
     ],
 }
 
@@ -377,7 +378,12 @@ def _oci_pull_impl(rctx):
 
     mf, mf_len, mf_digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
 
-    if mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
+    if "mediaType" in mf:
+        media_type = mf["mediaType"]
+    else:
+        media_type = mf["config"]["mediaType"]
+
+    if media_type in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
             fail("{}/{} is a single-architecture image, so attribute 'platforms' should not be set.".format(rctx.attr.registry, rctx.attr.repository))
 
@@ -395,7 +401,7 @@ def _oci_pull_impl(rctx):
         image_mf, image_mf_len, image_digest = downloader.download_manifest(matching_mf["digest"], "manifest.json")
 
     else:
-        fail("Unrecognized mediaType {} in manifest file".format(mf["mediaType"]))
+        fail("Unrecognized mediaType {} in manifest file".format(media_type))
 
     image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
     downloader.download_blob(image_mf["config"]["digest"], image_config_file)
