@@ -183,6 +183,7 @@ _SUPPORTED_MEDIA_TYPES = {
     "manifest": [
         "application/vnd.docker.distribution.manifest.v2+json",
         "application/vnd.oci.image.manifest.v1+json",
+        "application/vnd.cncf.helm.config.v1+json",
     ],
 }
 
@@ -358,7 +359,12 @@ def _oci_pull_impl(rctx):
 
     mf, mf_len = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
 
-    if mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
+    if "mediaType" in mf:
+        media_type = mf["mediaType"]
+    else:
+        media_type = mf["config"]["mediaType"]
+
+    if media_type in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
             fail("{}/{} is a single-architecture image, so attribute 'platforms' should not be set.".format(rctx.attr.registry, rctx.attr.repository))
 
@@ -367,7 +373,7 @@ def _oci_pull_impl(rctx):
         image_digest = rctx.attr.identifier
         if _is_tag(rctx.attr.identifier):
             image_digest = "sha256:{}".format(util.sha256(rctx, "manifest.json"))
-    elif mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+    elif media_type in _SUPPORTED_MEDIA_TYPES["index"]:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
             fail("{}/{} is a multi-architecture image, so attribute 'platforms' is required.".format(rctx.attr.registry, rctx.attr.repository))
@@ -377,7 +383,7 @@ def _oci_pull_impl(rctx):
         image_digest = matching_mf["digest"]
         image_mf, image_mf_len = downloader.download_manifest(image_digest, "manifest.json")
     else:
-        fail("Unrecognized mediaType {} in manifest file".format(mf["mediaType"]))
+        fail("Unrecognized mediaType {} in manifest file".format(media_type))
 
     image_config_file = _trim_hash_algorithm(image_mf["config"]["digest"])
     downloader.download_blob(image_mf["config"]["digest"], image_config_file)
@@ -390,6 +396,11 @@ def _oci_pull_impl(rctx):
         downloader.download_blob(layer["digest"], hash)
         if hash not in tars:
             tars.append(hash)
+
+    if "mediaType" in image_mf:
+        image_media_type = image_mf["mediaType"]
+    else:
+        image_media_type = image_mf["config"]["mediaType"]
 
     # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
     # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
@@ -411,7 +422,7 @@ def _oci_pull_impl(rctx):
          }
       }
    ]
-}""" % (image_mf["mediaType"], image_mf_len, image_digest, arch, os)
+}""" % (image_media_type, image_mf_len, image_digest, arch, os)
     else:
         index_mf = """\
 {
@@ -424,7 +435,7 @@ def _oci_pull_impl(rctx):
          "digest": "%s"
       }
    ]
-}""" % (image_mf["mediaType"], image_mf_len, image_digest)
+}""" % (image_media_type, image_mf_len, image_digest)
 
     rctx.file("BUILD.bazel", content = _build_file.format(
         target_name = rctx.attr.target_name,
