@@ -28,22 +28,14 @@ genrule(
     ],
 )
 
-genrule(
-    name = "app_entrypoint",
-    srcs = [],
-    outs = ["app_entrypoint.txt"],
-    cmd = """
-    echo "env" > "$@"
-    echo "-" >> "$@"
-    """,
-    tools = [],
-)
-
 oci_image(
     name = "image",
     base = "@ubuntu",
     cmd = ":app_cmd",
-    entrypoint = ":app_entrypoint",
+    entrypoint = [
+        "env",
+        "-",
+    ],
     tars = [":app"],
 )
 
