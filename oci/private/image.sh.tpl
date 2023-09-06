@@ -135,7 +135,6 @@ for ARG in "$@"; do
     esac
 done
 
-echo "!!!: ${CRANE}" "${FIXED_ARGS[@]}"
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
