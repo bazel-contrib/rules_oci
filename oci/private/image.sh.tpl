@@ -122,15 +122,20 @@ for ARG in "$@"; do
           done <"${ARG#--annotations-file=}"
           ;;
         (--cmd-file=*)
-          FIXED_ARGS+=("--cmd=$(<"${ARG#--cmd-file=}")")
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--cmd=$in")
+          done <"${ARG#--cmd-file=}"
           ;;
         (--entrypoint-file=*)
-          FIXED_ARGS+=("--entrypoint=$(<"${ARG#--entrypoint-file=}")")
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--entrypoint=$in")
+          done <"${ARG#--entrypoint-file=}"
           ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
 done
 
+echo "!!!: ${CRANE}" "${FIXED_ARGS[@]}"
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 

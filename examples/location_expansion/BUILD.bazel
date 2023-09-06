@@ -17,16 +17,33 @@ genrule(
     name = "app_cmd",
     srcs = [],
     outs = ["app_cmd.txt"],
-    cmd = "echo $(rootpaths :test.bash) > \"$@\"",
+    cmd = """
+    echo $(rootpaths :test.bash) > "$@"
+    echo "a1" >> "$@"
+    echo "a2 b2" >> "$@"
+    echo " a3\tb3 " >> "$@"
+    """,
     tools = [
         ":test.bash",
     ],
+)
+
+genrule(
+    name = "app_entrypoint",
+    srcs = [],
+    outs = ["app_entrypoint.txt"],
+    cmd = """
+    echo "env" > "$@"
+    echo "-" >> "$@"
+    """,
+    tools = [],
 )
 
 oci_image(
     name = "image",
     base = "@ubuntu",
     cmd = ":app_cmd",
+    entrypoint = ":app_entrypoint",
     tars = [":app"],
 )
 

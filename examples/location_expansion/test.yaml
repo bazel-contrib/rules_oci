@@ -3,8 +3,9 @@ schemaVersion: "2.0.0"
 commandTests:
   - name: "echo hello"
     command: "bash"
-    args: ["examples/location_expansion/test.bash"]
-    expectedOutput: ["hello world!"]
+    args: ["examples/location_expansion/test.bash", "x", "y", "l1\nl2"]
+    expectedOutput: ["hello world!", "arg 0:x", "arg 1:y", "arg 2:l1", "l2"]
 
 metadataTest:
-  cmd: ["examples/location_expansion/test.bash"]
+  cmd: ["examples/location_expansion/test.bash", "a1", "a2 b2", " a3\tb3 "]
+  entrypoint: ["env", "-"]
