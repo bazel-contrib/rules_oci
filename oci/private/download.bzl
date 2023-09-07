@@ -124,7 +124,7 @@ def _download(
         if allow_fail:
             return struct(success = False)
         else:
-            fail("curl {} returned non-success status code {}".format(url, status_code))
+            fail("curl returned non-success status code {}. Full command:\n{}".format(status_code, command))
 
     cache_it = rctx.download(
         url = "file://{}".format(output_path),
