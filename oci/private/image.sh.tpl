@@ -121,6 +121,16 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--annotation=$in")
           done <"${ARG#--annotations-file=}"
           ;;
+        (--cmd-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--cmd=$in")
+          done <"${ARG#--cmd-file=}"
+          ;;
+        (--entrypoint-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--entrypoint=$in")
+          done <"${ARG#--entrypoint-file=}"
+          ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
 done
