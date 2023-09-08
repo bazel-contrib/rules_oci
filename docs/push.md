@@ -98,7 +98,7 @@ When running the pusher, you can pass flags:
 ## oci_push
 
 <pre>
-oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-remote_tags">remote_tags</a>, <a href="#oci_push-kwargs">kwargs</a>)
+oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-remote_tags">remote_tags</a>, <a href="#oci_push-tags">tags</a>, <a href="#oci_push-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_push_rule](#oci_push_rule).
@@ -113,6 +113,7 @@ Allows the remote_tags attribute to be a list of strings in addition to a text f
 | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  name of resulting oci_push_rule   |  none |
 | <a id="oci_push-remote_tags"></a>remote_tags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
+| <a id="oci_push-tags"></a>tags |  Tags to propagate to targets declared by this macro. Input will be filtered to well known tags only. See [propagate_well_known_tags] (https://github.com/aspect-build/bazel-lib/blob/main/docs/utils.md#propagate_well_known_tags) for details.   |  <code>[]</code> |
 | <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule).   |  none |
 
 
