@@ -134,8 +134,6 @@ def _oci_image_impl(ctx):
     args.add_all([
         "mutate",
         base,
-        "--tag",
-        "oci:registry/{}".format(ctx.label.name),
     ])
 
     # add platform
