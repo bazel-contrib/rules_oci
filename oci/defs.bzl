@@ -96,7 +96,7 @@ def oci_image(name, labels = None, annotations = None, env = None, **kwargs):
         name = name + ".digest",
         args = ["--raw-output"],
         srcs = ["_{}_index.json".format(name)],
-        filter = """.manifests[0].digest | sub("^sha256:"; "")""",
+        filter = """.manifests[0].digest""",
         out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
     )
 
