@@ -6,12 +6,17 @@ readonly YQ="{{yq_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly TAGS_FILE="{{tags}}"
 readonly FIXED_ARGS=({{fixed_args}})
+readonly REPOSITORY_FILE="{{repository_file}}"
+
+REPOSITORY=""
+if [ -f $REPOSITORY_FILE ] ; then
+  REPOSITORY=$(tr -d '\n' < "$REPOSITORY_FILE")
+fi
 
 # set $@ to be FIXED_ARGS+$@
 ALL_ARGS=(${FIXED_ARGS[@]} $@)
 set -- ${ALL_ARGS[@]}
 
-REPOSITORY="{{repository}}"
 TAGS=()
 ARGS=()
 

@@ -13,7 +13,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_push_rule
 
 <pre>
-oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-remote_tags">remote_tags</a>, <a href="#oci_push_rule-repository">repository</a>)
+oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-remote_tags">remote_tags</a>, <a href="#oci_push_rule-repository">repository</a>, <a href="#oci_push_rule-repository_file">repository_file</a>)
 </pre>
 
 Push an oci_image or oci_image_index to a remote registry.
@@ -90,7 +90,8 @@ When running the pusher, you can pass flags:
 | <a id="oci_push_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
 | <a id="oci_push_rule-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
 | <a id="oci_push_rule-remote_tags"></a>remote_tags |  a .txt file containing tags, one per line.         These are passed to [<code>crane tag</code>](         https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
-| <a id="oci_push_rule-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | required |  |
+| <a id="oci_push_rule-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | optional | "" |
+| <a id="oci_push_rule-repository_file"></a>repository_file |  The same as 'repository' but in a file. This allows pushing to different repositories based on stamping.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
 
 
 <a id="#oci_push"></a>
