@@ -1,0 +1,17 @@
+load("//oci:defs.bzl", "oci_image")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+
+oci_image(
+    name = "imagE",
+    architecture = "amd64",
+    cmd = ["noop"],
+    os = "linux",
+)
+
+
+build_test(
+    name = "test",
+    targets = [
+        ":imagE",
+    ],
+)
