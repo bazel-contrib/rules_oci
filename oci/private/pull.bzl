@@ -52,7 +52,7 @@ _WWW_AUTH = {
     "cgr.dev": {
         "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
-        "service": "{registry}s",
+        "service": "{registry}",
     },
     ".azurecr.io": {
         "realm": "{registry}/oauth2/token",
