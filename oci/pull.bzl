@@ -152,4 +152,5 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         platforms = platform_to_image,
         platform = single_platform,
         bzlmod_repository = name if is_bzlmod else None,
+        reproducible = reproducible,
     )
