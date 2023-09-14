@@ -16,6 +16,13 @@ oci_push(
 )
 
 oci_push(
+    name = "push_image_repository_file",
+    image = ":image",
+    remote_tags = ["latest"],
+    repository_file = ":repository.txt",
+)
+
+oci_push(
     name = "push_image_wo_tags",
     image = ":image",
     repository = "index.docker.io/<ORG>/image",
@@ -52,11 +59,13 @@ sh_test(
         "$(LAUNCHER_WRAPPER)",
         "$(location :push_image)",
         "$(location :push_image_index)",
+        "$(location :push_image_repository_file)",
         "$(location :push_image_wo_tags)",
     ],
     data = [
         ":push_image",
         ":push_image_index",
+        ":push_image_repository_file",
         ":push_image_wo_tags",
         "@oci_crane_toolchains//:current_toolchain",
         "@oci_zot_toolchains//:current_toolchain",

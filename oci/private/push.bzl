@@ -79,7 +79,12 @@ _attrs = {
         Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
         Digests and tags are not allowed.
         """,
-        mandatory = True,
+    ),
+    "repository_file": attr.label(
+        doc = """\
+        The same as 'repository' but in a file. This allows pushing to different repositories based on stamping.
+        """,
+        allow_single_file = True,
     ),
     "remote_tags": attr.label(
         doc = """\
@@ -102,6 +107,9 @@ def _impl(ctx):
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
 
+    if ctx.attr.repository and ctx.attr.repository_file:
+        fail("must specify exactly one of 'repository_file' or 'repository'")
+
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
 
@@ -115,8 +123,17 @@ def _impl(ctx):
         "{{crane_path}}": crane.crane_info.binary.short_path,
         "{{yq_path}}": yq.yqinfo.bin.short_path,
         "{{image_dir}}": ctx.file.image.short_path,
-        "{{fixed_args}}": " ".join(_quote_args(["--repository", ctx.attr.repository])),
+        "{{fixed_args}}": "",
     }
+
+    if ctx.attr.repository:
+        substitutions["{{fixed_args}}"] += " ".join(_quote_args(["--repository", ctx.attr.repository]))
+    elif ctx.attr.repository_file:
+        files.append(ctx.file.repository_file)
+        substitutions["{{repository_file}}"] = ctx.file.repository_file.short_path
+    else:
+        fail("must specify exactly one of 'repository_file' or 'repository'")
+
     if ctx.attr.remote_tags:
         files.append(ctx.file.remote_tags)
         substitutions["{{tags}}"] = ctx.file.remote_tags.short_path

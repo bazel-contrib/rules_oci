@@ -12,7 +12,8 @@ echo "Registry is running at ${REGISTRY}"
 
 readonly PUSH_IMAGE="$3"
 readonly PUSH_IMAGE_INDEX="$4"
-readonly PUSH_IMAGE_WO_TAGS="$5"
+readonly PUSH_IMAGE_REPOSITORY_FILE="$5"
+readonly PUSH_IMAGE_WO_TAGS="$6"
 
 
 # should push image with default tags
@@ -35,6 +36,14 @@ if [ -n "${TAGS}" ]; then
     echo "${TAGS}"
     exit 1
 fi
+
+
+# should push image to the repository defined in the file
+set -ex
+REPOSITORY="${REGISTRY}/repository-file"
+"${PUSH_IMAGE_REPOSITORY_FILE}" --repository "${REPOSITORY}"
+"${CRANE}" digest "$REPOSITORY:latest"
+
 
 # should push image with the --tag flag.
 REPOSITORY="${REGISTRY}/local-flag-tag" 
