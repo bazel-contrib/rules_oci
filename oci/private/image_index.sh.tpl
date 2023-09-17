@@ -35,7 +35,7 @@ function copy_blob() {
     local blob_image_relative_path="$3"
     local dest_path="${output_path}/${blob_image_relative_path}"
     mkdirp "$(dirname "${dest_path}")"
-    "${COREUTILS}" cat "${image_path}/${blob_image_relative_path}" > "${dest_path}"
+    "${COREUTILS}" ln -f "${image_path}/${blob_image_relative_path}" "${dest_path}"
 }
 
 function create_oci_layout() {
