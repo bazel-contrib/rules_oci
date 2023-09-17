@@ -1,0 +1,48 @@
+load("//oci:defs.bzl", "oci_bundle", "oci_image", "oci_tarball")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
+
+oci_image(
+    name = "image_arm64",
+    architecture = "arm64",
+    entrypoint = ["/custom_bin"],
+    os = "linux",
+)
+
+oci_image(
+    name = "image_amd64",
+    architecture = "amd64",
+    entrypoint = ["/custom_bin"],
+    os = "linux",
+)
+
+images = {
+    "app:arm64": ":image_arm64",
+    "app:amd64": ":image_amd64",
+}
+
+oci_bundle(
+    name = "bundle",
+    images = images,
+)
+
+genrule(
+    name = "bundle_manifest",
+    srcs = [":bundle"],
+    outs = ["index.json"],
+    cmd = "cp -f $</index.json $@",
+)
+
+write_file(
+    name = "expected_refs",
+    out = "expected_refs.json",
+    content = [str(images.keys())],
+)
+
+assert_json_matches(
+    name = "check_refs",
+    file1 = ":bundle_manifest",
+    file2 = ":expected_refs",
+    filter1 = "[.manifests[].annotations[\"org.opencontainers.image.ref.name\"]]",
+)
