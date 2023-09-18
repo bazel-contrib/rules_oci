@@ -144,6 +144,13 @@ def fetch_images():
         reproducible = False,
     )
 
+    oci_pull(
+        name = "gitlab_assets_ce",
+        # tag = "v15-11-0-ee",
+        image = "registry.gitlab.com/gitlab-org/gitlab/gitlab-assets-ce",
+        digest = "sha256:78fc30603a49cdabba4cd1c3a94f71cb78e606a98b5b17c690c781c5c8955f29",
+    )
+
     _DEB_TO_LAYER = """\
 alias(
     name = "layer",
