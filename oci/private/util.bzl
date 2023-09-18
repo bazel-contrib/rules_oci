@@ -112,9 +112,16 @@ if defined args (
 
     return win_launcher
 
+
+def _file_exists(rctx, path):
+    result = rctx.execute(["stat", path])
+    return result.return_code == 0
+
+
 util = struct(
     parse_image = _parse_image,
     sha256 = _sha256,
     warning = _warning,
     maybe_wrap_launcher_for_windows = _maybe_wrap_launcher_for_windows,
+    file_exists = _file_exists
 )

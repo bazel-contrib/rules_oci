@@ -1,10 +1,7 @@
 "repository rule that locates the .docker/config.json or containers/auth.json file."
 
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
-
-def _file_exists(rctx, path):
-    result = rctx.execute(["stat", path])
-    return result.return_code == 0
+load(":util.bzl", "util")
 
 # Path of the auth file is determined by the order described here;
 # https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package
@@ -21,7 +18,7 @@ def _get_auth_file_path(rctx):
 
     config_path = "{}/config.json".format(DOCKER_CONFIG)
 
-    if _file_exists(rctx, config_path):
+    if util.file_exists(rctx, config_path):
         return config_path
 
     # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
@@ -38,7 +35,7 @@ def _get_auth_file_path(rctx):
     if "REGISTRY_AUTH_FILE" in rctx.os.environ:
         config_path = rctx.os.environ["REGISTRY_AUTH_FILE"]
 
-    if _file_exists(rctx, config_path):
+    if util.file_exists(rctx, config_path):
         return config_path
 
     return None
@@ -54,11 +51,11 @@ def _oci_auth_config_locator_impl(rctx):
             "\n",
             "Running one of `podman login`, `docker login`, `crane login` may help.",
         ], quiet = False)
-        rctx.file("config.json", "{}")
+        rctx.file("standard_authorization_config_path", "")
     else:
-        rctx.symlink(config_path, "config.json")
+        rctx.file("standard_authorization_config_path", config_path)
 
-    rctx.file("BUILD.bazel", """exports_files(["config.json"])""")
+    rctx.file("BUILD.bazel", """exports_files(["standard_authorization_config_path"])""")
 
 oci_auth_config_locator = repository_rule(
     implementation = _oci_auth_config_locator_impl,
@@ -70,5 +67,7 @@ oci_auth_config_locator = repository_rule(
         # See: https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package for go implementation.
         "DOCKER_CONFIG",
         "REGISTRY_AUTH_FILE",
+        "XDG_RUNTIME_DIR",
+        "HOME",
     ],
 )
