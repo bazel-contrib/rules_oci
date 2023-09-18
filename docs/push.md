@@ -18,14 +18,21 @@ oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-im
 
 Push an oci_image or oci_image_index to a remote registry.
 
-By default, oci_push uses standard authorization config file located on the host that oci_push is
-running. Therefore following any of these documentation should help
+Internal rule used by the [oci_push macro](/docs/push.md#oci_push).
+Most users should use the macro.
+
+Authorization
+=============
+
+By default, oci_push uses the standard authorization config file located on the host where `oci_push` is running.
+Therefore the following documentation may be consulted:
 
 - https://docs.docker.com/engine/reference/commandline/login/
 - https://docs.podman.io/en/latest/markdown/podman-login.1.html
 - https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_auth_login.md
 
-Internal rule used by the [oci_push macro](/docs/push.md#oci_push).
+Behavior
+========
 
 Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur;
 
@@ -38,7 +45,23 @@ the remote registry.
 
 Any failure during pushing or tagging will be reported with non-zero exit code and cause remaining steps to be skipped.
 
-Push an oci_image to docker registry with latest tag
+Usage
+=====
+
+When running the pusher, you can pass flags to `bazel run`.
+
+1. Override `repository` by passing the `-r|--repository` flag.
+
+e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
+
+2. Supply tags in addition to `remote_tags` by passing the `-t|--tag` flag.
+
+e.g. `bazel run //myimage:push -- --tag latest`
+
+Examples
+========
+
+Push an oci_image to docker registry with 'latest' tag
 
 ```starlark
 oci_image(name = "image")
@@ -80,12 +103,6 @@ oci_push(
     remote_tags = ":stamped",
 )
 ```
-
-When running the pusher, you can pass flags:
-
-- Override `repository`; `-r|--repository` flag. e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
-- Tags in addition to remote_tags `remote_tags`; `-t|--tag` flag, e.g. `bazel run //myimage:push -- --tag latest`
-
 
 
 **ATTRIBUTES**
