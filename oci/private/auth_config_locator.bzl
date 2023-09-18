@@ -51,11 +51,11 @@ def _oci_auth_config_locator_impl(rctx):
             "\n",
             "Running one of `podman login`, `docker login`, `crane login` may help.",
         ], quiet = False)
-        rctx.file("path", "")
+        rctx.file("standard_authorization_config_path", "")
     else:
-        rctx.file("path", config_path)
+        rctx.file("standard_authorization_config_path", config_path)
 
-    rctx.file("BUILD.bazel", """exports_files(["path"])""")
+    rctx.file("BUILD.bazel", """exports_files(["standard_authorization_config_path"])""")
 
 oci_auth_config_locator = repository_rule(
     implementation = _oci_auth_config_locator_impl,
