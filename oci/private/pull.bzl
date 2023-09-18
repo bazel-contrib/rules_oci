@@ -444,7 +444,8 @@ _MULTI_PLATFORM_IMAGE_ALIAS_TMPL = """\
 alias(
     name = "{target_name}",
     actual = select(
-        {platform_map}
+        {platform_map},
+        no_match_error = \"\"\"could not find an image matching the target platform. \\navailable platforms are {available_platforms} \"\"\",
     ),
     visibility = ["//visibility:public"],
 )
@@ -466,22 +467,27 @@ def _oci_alias_impl(rctx):
 
     downloader = _create_downloader(rctx)
 
+    available_platforms = []
+
+    manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
+
+    if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+        for submanifest in manifest["manifests"]:
+            parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
+            if "variant" in submanifest["platform"]:
+                parts.append(submanifest["platform"]["variant"])
+            available_platforms.append('"{}"'.format("/".join(parts)))
+
     if _is_tag(rctx.attr.identifier) and rctx.attr.reproducible:
-        manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
+        is_bzlmod = hasattr(rctx.attr, "bzlmod_repository") and rctx.attr.bzlmod_repository
+
         optional_platforms = ""
 
-        if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
-            platforms = []
-            for submanifest in manifest["manifests"]:
-                parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
-                if "variant" in submanifest["platform"]:
-                    parts.append(submanifest["platform"]["variant"])
-                platforms.append('"{}"'.format("/".join(parts)))
-            optional_platforms = "'add platforms {}'".format(" ".join(platforms))
+        if len(available_platforms):
+            optional_platforms = "'add platforms {}'".format(" ".join(available_platforms))
 
-        is_bzlmod = hasattr(rctx.attr, "bzlmod_repository") and rctx.attr.bzlmod_repository
         util.warning(rctx, """\
-for reproducible builds, a digest is recommended.
+For reproducible builds, a digest is recommended.
 Either set 'reproducible = False' to silence this warning,
 or run the following command to change {rule} to use a digest:
 {warning}
@@ -500,6 +506,7 @@ buildozer 'set digest "{digest}"' 'remove tag' 'remove platforms' {optional_plat
         build = _MULTI_PLATFORM_IMAGE_ALIAS_TMPL.format(
             name = rctx.attr.name,
             target_name = rctx.attr.target_name,
+            available_platforms = ", ".join(available_platforms),
             platform_map = {
                 str(k): v
                 for k, v in rctx.attr.platforms.items()
