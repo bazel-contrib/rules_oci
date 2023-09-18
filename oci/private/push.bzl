@@ -4,6 +4,13 @@ load("//oci/private:util.bzl", "util")
 
 _DOC = """Push an oci_image or oci_image_index to a remote registry.
 
+By default, oci_push uses standard authorization config file located on the host that oci_push is
+running. Therefore following any of these documentation should help
+
+- https://docs.docker.com/engine/reference/commandline/login/
+- https://docs.podman.io/en/latest/markdown/podman-login.1.html
+- https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_auth_login.md
+
 Internal rule used by the [oci_push macro](/docs/push.md#oci_push).
 
 Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur;
@@ -15,8 +22,7 @@ Pushing and tagging are performed sequentially which MAY lead to non-atomic push
 In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `remote_tags` sequentially at
 the remote registry. 
 
-Any failure during pushing or tagging will be reported with non-zero exit code cause remaining steps to be skipped.
-
+Any failure during pushing or tagging will be reported with non-zero exit code and cause remaining steps to be skipped.
 
 Push an oci_image to docker registry with latest tag
 
