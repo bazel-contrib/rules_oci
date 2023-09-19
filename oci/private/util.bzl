@@ -118,10 +118,49 @@ def _file_exists(rctx, path):
     return result.return_code == 0
 
 
+_INDEX_JSON_TMPL="""\
+{{
+   "schemaVersion": 2,
+   "mediaType": "application/vnd.oci.image.index.v1+json",
+   "manifests": [
+      {{
+         "mediaType": "{}",
+         "size": {},
+         "digest": "{}"{optional_platform}
+      }}
+   ]
+}}"""
+
+def _build_manifest_json(media_type, size, digest, platform):
+
+    optional_platform = ""
+
+    if platform:
+        platform_parts = platform.split("/", 3)
+        
+        optional_variant = ""
+        if len(platform_parts) == 3:
+            optional_variant = ''',
+            "variant": "{}"'''.format(platform_parts[2])
+
+        optional_platform = """,
+         "platform": {{
+            "architecture": "{}",
+            "os": "{}"{optional_variant}
+         }}""".format(platform_parts[1], platform_parts[0], optional_variant = optional_variant)
+        
+    return _INDEX_JSON_TMPL.format(
+        media_type, 
+        size,
+        digest,
+        optional_platform = optional_platform
+    )
+
 util = struct(
     parse_image = _parse_image,
     sha256 = _sha256,
     warning = _warning,
     maybe_wrap_launcher_for_windows = _maybe_wrap_launcher_for_windows,
-    file_exists = _file_exists
+    file_exists = _file_exists,
+    build_manifest_json = _build_manifest_json
 )

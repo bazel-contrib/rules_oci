@@ -356,7 +356,6 @@ copy_to_directory(
         "index.json",
     ],
 )
-
 """
 
 def _find_platform_manifest(image_mf, platform_wanted):
@@ -410,36 +409,14 @@ def _oci_pull_impl(rctx):
         if hash not in tars:
             tars.append(hash)
 
-
-    # create index.json manifest entry
-    index_json_manifest = {
-        "mediaType": image_mf["mediaType"],
-        "size": image_mf_len,
-        "digest": image_digest
-    }
-
-    if rctx.attr.platform:
-        platform_parts = rctx.attr.platform.split("/", 2)
-        index_json_manifest["platform"] = {
-            "os": platform_parts[0],
-            "architecture": platform_parts[1],
-        }
-        # add variant if provided
-        if len(platform_parts) == 3:
-            index_json_manifest["platform"]["variant"] = platform_parts[1]
-
-    # create index.json
-    index_json = {
-        "schemaVersion": 2,
-        "mediaType": "application/vnd.oci.image.index.v1+json",
-        "manifests": [index_json_manifest],
-    }
-    oci_layout = {
-        "imageLayoutVersion": "1.0.0"
-    }
-
-    rctx.file("index.json", json.encode_indent(index_json, indent = "  "))
-    rctx.file("oci-layout", json.encode_indent(oci_layout, indent = "    "))
+    rctx.file("index.json", util.build_manifest_json(
+        media_type = image_mf["mediaType"],
+        size = image_mf_len,
+        digest = image_digest,
+        platform = rctx.attr.platform
+    ))
+    rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
+    
     rctx.file("BUILD.bazel", content = _build_file.format(
         target_name = rctx.attr.target_name,
         tars = tars,
