@@ -16,7 +16,12 @@ IMAGES_TO_TEST = {
     genrule(
         name = "pull_{}".format(repo_name),
         outs = [repo_name],
-        cmd = "$(CRANE_BIN) pull {reference} $@ --format=oci --platform={platform}".format(
+        cmd = """
+$(CRANE_BIN) pull {reference} $@ --format=oci --platform={platform}
+cat "$@/index.json" | $(JQ_BIN) --sort-keys -j '.' > "$@/index-tmp.json"
+rm "$@/index.json"
+mv "$@/index-tmp.json" "$@/index.json"
+""".format(
             platform = _PLATFORM,
             reference = reference,
         ),
@@ -29,6 +34,7 @@ IMAGES_TO_TEST = {
         tags = ["requires-network"],
         toolchains = [
             "@oci_crane_toolchains//:current_toolchain",
+            "@jq_toolchains//:resolved_toolchain"
         ],
         visibility = ["//visibility:public"],
     )
