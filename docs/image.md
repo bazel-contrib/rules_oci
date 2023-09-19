@@ -118,7 +118,7 @@ This is similar to the same-named target created by rules_docker's `container_im
 | <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-cmd"></a>cmd |  Command & argument configured by default in the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-entrypoint"></a>entrypoint |  Entrypoint configured by default in the running container. See documentation above.   |  <code>None</code> |
-| <a id="oci_image-tags"></a>tags |  Tags to propagate to targets declared by this macro. Input will be filtered to well known tags only. See [propagate_well_known_tags] (https://github.com/aspect-build/bazel-lib/blob/main/docs/utils.md#propagate_well_known_tags) for details.   |  <code>[]</code> |
+| <a id="oci_image-tags"></a>tags |  Tags to propagate to targets declared by this macro.   |  <code>[]</code> |
 | <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule)   |  none |
 
 
