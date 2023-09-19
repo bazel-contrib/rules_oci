@@ -257,6 +257,7 @@ def _download(rctx, state, identifier, output, resource, download_fn = download.
 def _download_manifest(rctx, state, identifier, output):
     bytes = None
     manifest = None
+    digest = None
 
     result = _download(rctx, state, identifier, output, "manifests", allow_fail = True)
     fallback_to_curl = False
@@ -264,6 +265,7 @@ def _download_manifest(rctx, state, identifier, output):
     if result.success:
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
+        digest = "sha256:{}".format(result.sha256)
         if manifest["schemaVersion"] == 1:
             util.warning(rctx, """\
 registry responded with a manifest that has schemaVersion=1. Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set.
@@ -290,8 +292,9 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
+        digest = "sha256:{}".format(util.sha256(rctx, output)) 
 
-    return manifest, len(bytes)
+    return manifest, len(bytes), digest
 
 def _get_auth_config_path(rctx):
     path = ""
@@ -390,7 +393,7 @@ def _find_platform_manifest(image_mf, platform_wanted):
 def _oci_pull_impl(rctx):
     downloader = _create_downloader(rctx)
 
-    mf, mf_len = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
+    mf, mf_len, mf_digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
 
     if mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
@@ -398,9 +401,8 @@ def _oci_pull_impl(rctx):
 
         image_mf = mf
         image_mf_len = mf_len
-        image_digest = rctx.attr.identifier
-        if _is_tag(rctx.attr.identifier):
-            image_digest = "sha256:{}".format(util.sha256(rctx, "manifest.json"))
+        image_digest = mf_digest
+
     elif mf["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
         # extra download to get the manifest for the selected arch
         if not rctx.attr.platform:
@@ -408,8 +410,8 @@ def _oci_pull_impl(rctx):
         matching_mf = _find_platform_manifest(mf, rctx.attr.platform)
         if not matching_mf:
             fail("No matching manifest found in image {}/{} for platform {}".format(rctx.attr.registry, rctx.attr.repository, rctx.attr.platform))
-        image_digest = matching_mf["digest"]
-        image_mf, image_mf_len = downloader.download_manifest(image_digest, "manifest.json")
+        image_mf, image_mf_len, image_digest = downloader.download_manifest(matching_mf["digest"], "manifest.json")
+
     else:
         fail("Unrecognized mediaType {} in manifest file".format(mf["mediaType"]))
 
@@ -511,9 +513,7 @@ def _oci_alias_impl(rctx):
     downloader = _create_downloader(rctx)
 
     if _is_tag(rctx.attr.identifier) and rctx.attr.reproducible:
-        manifest, _ = downloader.download_manifest(rctx.attr.identifier, "mf.json")
-        digest = util.sha256(rctx, "mf.json")
-
+        manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
         optional_platforms = ""
 
         if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
@@ -532,7 +532,7 @@ Either set 'reproducible = False' to silence this warning,
 or run the following command to change {rule} to use a digest:
 {warning}
 
-buildozer 'set digest "sha256:{digest}"' 'remove tag' 'remove platforms' {optional_platforms} {location}
+buildozer 'set digest "{digest}"' 'remove tag' 'remove platforms' {optional_platforms} {location}
     """.format(
             location = "MODULE.bazel:" + rctx.attr.bzlmod_repository if is_bzlmod else "WORKSPACE:" + rctx.attr.name,
             digest = digest,
