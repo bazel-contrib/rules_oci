@@ -13,7 +13,6 @@ load("//oci/private:push.bzl", _oci_push = "oci_push")
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
-load("@aspect_bazel_lib//lib:utils.bzl", "propagate_well_known_tags")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
@@ -43,10 +42,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env: Environment variables provisioned by default to the running container. See documentation above.
         cmd: Command & argument configured by default in the running container. See documentation above.
         entrypoint: Entrypoint configured by default in the running container. See documentation above.
-        tags: Tags to propagate to targets declared by this macro. Input will be filtered to well known tags only.
-            See [propagate_well_known_tags]
-            (https://github.com/aspect-build/bazel-lib/blob/main/docs/utils.md#propagate_well_known_tags)
-            for details.
+        tags: Tags to propagate to targets declared by this macro.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule)
     """
     if types.is_dict(annotations):
@@ -55,7 +51,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = annotations_label,
             out = "_{}.annotations.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         annotations = annotations_label
 
@@ -65,7 +61,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = labels_label,
             out = "_{}.labels.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in labels.items()],
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         labels = labels_label
 
@@ -75,7 +71,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = env_label,
             out = "_{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         env = env_label
 
@@ -85,7 +81,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = env_label,
             out = "_{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         env = env_label
 
@@ -95,7 +91,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = cmd_label,
             out = "_{}.cmd.txt".format(name),
             content = [",".join(cmd)],
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         cmd = cmd_label
 
@@ -105,7 +101,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = entrypoint_label,
             out = "_{}.entrypoint.txt".format(name),
             content = [",".join(entrypoint)],
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         entrypoint = entrypoint_label
 
@@ -116,7 +112,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env = env,
         cmd = cmd,
         entrypoint = entrypoint,
-        tags = propagate_well_known_tags(tags),
+        tags = tags,
         **kwargs
     )
 
@@ -126,14 +122,14 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         name = "_{}_index_json".format(name),
         directory = name,
         path = "index.json",
-        tags = propagate_well_known_tags(tags),
+        tags = tags,
     )
 
     copy_file(
         name = "_{}_index_json_cp".format(name),
         src = "_{}_index_json".format(name),
         out = "_{}_index.json".format(name),
-        tags = propagate_well_known_tags(tags),
+        tags = tags,
     )
 
     # Matches the [name].digest target produced by rules_docker container_image
@@ -143,7 +139,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         srcs = ["_{}_index.json".format(name)],
         filter = """.manifests[0].digest""",
         out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
-        tags = propagate_well_known_tags(tags),
+        tags = tags,
     )
 
 def oci_push(name, remote_tags = None, tags = [], **kwargs):
@@ -157,10 +153,7 @@ def oci_push(name, remote_tags = None, tags = [], **kwargs):
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
-        tags: Tags to propagate to targets declared by this macro. Input will be filtered to well known tags only.
-            See [propagate_well_known_tags]
-            (https://github.com/aspect-build/bazel-lib/blob/main/docs/utils.md#propagate_well_known_tags)
-            for details.
+        tags: Tags to propagate to targets declared by this macro.
         **kwargs: other named arguments to [oci_push_rule](#oci_push_rule).
     """
     if types.is_list(remote_tags):
@@ -169,14 +162,14 @@ def oci_push(name, remote_tags = None, tags = [], **kwargs):
             name = tags_label,
             out = "_{}.tags.txt".format(name),
             content = remote_tags,
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         remote_tags = tags_label
 
     oci_push_rule(
         name = name,
         remote_tags = remote_tags,
-        tags = propagate_well_known_tags(tags),
+        tags = tags,
         **kwargs
     )
 
@@ -191,10 +184,7 @@ def oci_tarball(name, repo_tags = None, tags = [], **kwargs):
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
-        tags: Tags to propagate to targets declared by this macro. Input will be filtered to well known tags only.
-            See [propagate_well_known_tags]
-            (https://github.com/aspect-build/bazel-lib/blob/main/docs/utils.md#propagate_well_known_tags)
-            for details.
+        tags: Tags to propagate to targets declared by this macro.
         **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule).
     """
     if types.is_list(repo_tags):
@@ -203,13 +193,13 @@ def oci_tarball(name, repo_tags = None, tags = [], **kwargs):
             name = tags_label,
             out = "_{}.tags.txt".format(name),
             content = repo_tags,
-            tags = propagate_well_known_tags(tags),
+            tags = tags,
         )
         repo_tags = tags_label
 
     oci_tarball_rule(
         name = name,
         repo_tags = repo_tags,
-        tags = propagate_well_known_tags(tags),
+        tags = tags,
         **kwargs
     )
