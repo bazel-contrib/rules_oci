@@ -1,5 +1,6 @@
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
-load(":stamp_tags.bzl", "stamp_tags")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 
 oci_image(
     name = "image",
@@ -35,13 +36,23 @@ oci_image_index(
     ],
 )
 
-stamp_tags(
-    name = "stamped",
-    remote_tags = [
-        # With --stamp, use the --embed_label value, otherwise use 0.0.0
-        """($stamp.BUILD_EMBED_LABEL // "0.0.0")""",
+write_file(
+    name = "tags_tmpl",
+    out = "tags.txt.tmpl",
+    content = [
+        "BUILD_VERSION",
         "nightly",
     ],
+)
+
+# Use the value of --embed_label under --stamp, otherwise use a deterministic constant
+# value to ensure cache hits for actions that depend on this.
+expand_template(
+    name = "stamped",
+    out = "_stamped.tags.txt",
+    stamp_substitutions = {"BUILD_VERSION": "{{BUILD_EMBED_LABEL}}"},
+    substitutions = {"BUILD_VERSION": "0.0.0"},
+    template = "tags_tmpl",
 )
 
 oci_push(

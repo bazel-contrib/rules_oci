@@ -1,5 +1,6 @@
 load("//oci:defs.bzl", "oci_image")
-load("@aspect_bazel_lib//lib:jq.bzl", "jq")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 
@@ -8,24 +9,20 @@ pkg_tar(
     srcs = ["test.bash"],
 )
 
-# We don't actually work with JSON, but the jq rule happens to be stamp-aware so we can (ab)use it
-# to put (non-deterministic) version information in our labels/annotations.
-# You'd typically use that only when building release artifacts, not for testing, as it causes
-# action cache misses.
-jq(
-    name = "env",
-    srcs = [],
-    out = "env.txt",
-    args = ["--raw-output"],
-    filter = """\
-        # See docs for jq rule about stamping:
-        # https://docs.aspect.build/rules/aspect_bazel_lib/docs/jq
-        $ARGS.named.STAMP as $stamp |
+write_file(
+    name = "env_tmpl",
+    out = "env.txt.tmpl",
+    content = ["BUILD_VERSION=EMBED_LABEL"],
+)
 
-        # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
-        # value to ensure cache hits for actions that depend on this.
-        "BUILD_VERSION=" + ($stamp.BUILD_VERSION // "1.2.3")
-    """,
+# Use the value of --embed_label under --stamp, otherwise use a deterministic constant
+# value to ensure cache hits for actions that depend on this.
+expand_template(
+    name = "env",
+    out = "env.txt",
+    stamp_substitutions = {"EMBED_LABEL": "{{BUILD_EMBED_LABEL}}"},
+    substitutions = {"EMBED_LABEL": "1.2.3"},
+    template = "env_tmpl",
 )
 
 oci_image(

@@ -77,10 +77,22 @@ oci_image_index(
     ]
 )
 
-# This is defined in our /examples/push
-stamp_tags(
+write_file(
+    name = "tags_tmpl",
+    out = "tags.txt.tmpl",
+    content = [
+        "BUILD_VERSION",
+    ],
+)
+
+# Use the value of --embed_label under --stamp, otherwise use a deterministic constant
+# value to ensure cache hits for actions that depend on this.
+expand_template(
     name = "stamped",
-    remote_tags = [\"\"\"($stamp.BUILD_EMBED_LABEL // "0.0.0")\"\"\"],
+    out = "_stamped.tags.txt",
+    template = "tags_tmpl",
+    substitutions = {"BUILD_VERSION": "0.0.0"},
+    stamp_substitutions = {"BUILD_VERSION": "{{BUILD_EMBED_LABEL}}"},
 )
 
 oci_push(
