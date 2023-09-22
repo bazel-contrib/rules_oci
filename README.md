@@ -69,7 +69,8 @@ rules_oci supports two different registry implementation for the temporary stora
   using Chainguard's [apko](https://apko.dev).
 - Debian: The `apt-get` utility installs `.deb` files, which are already archives
   that may be used directly as image layers. See `/examples/deb` in this repository.
-  Note that you must enumerate every `.deb` file to install, including transitive dependencies.
+  This solution is incomplete since `apt` does some other tasks which you may need.
+  See https://github.com/bazel-contrib/rules_oci/issues/375 for details.
 - RHEL/CentOS/Amazon Linux: we don't have any support for this yet. Please consider donating to the project!
 
 ### Construct image layers
