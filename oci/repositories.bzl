@@ -1,9 +1,9 @@
 """Repository rules for fetching external tools"""
 
 load("@aspect_bazel_lib//lib:repositories.bzl", "register_copy_to_directory_toolchains", "register_coreutils_toolchains", "register_jq_toolchains", "register_yq_toolchains")
+load("//oci/private:auth_config_locator.bzl", "oci_auth_config_locator")
 load("//oci/private:toolchains_repo.bzl", "PLATFORMS", "toolchains_repo")
 load("//oci/private:versions.bzl", "CRANE_VERSIONS", "ZOT_VERSIONS")
-load("//oci/private:auth_config_locator.bzl", "oci_auth_config_locator")
 
 LATEST_CRANE_VERSION = CRANE_VERSIONS.keys()[0]
 LATEST_ZOT_VERSION = ZOT_VERSIONS.keys()[0]

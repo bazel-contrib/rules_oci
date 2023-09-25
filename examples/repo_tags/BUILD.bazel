@@ -1,6 +1,6 @@
-load("//oci:defs.bzl", "oci_image", "oci_tarball")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//oci:defs.bzl", "oci_image", "oci_tarball")
 
 oci_image(
     name = "image",

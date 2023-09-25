@@ -1,6 +1,8 @@
 "Bazel dependencies"
-bazel_dep(name = "container_structure_test", dev_dependency = True, version = "1.15.0")
-bazel_dep(name = "rules_oci", dev_dependency = True, version = "0.0.0")
+
+bazel_dep(name = "container_structure_test", version = "1.15.0", dev_dependency = True)
+bazel_dep(name = "rules_oci", version = "0.0.0", dev_dependency = True)
+
 bazel_dep(name = "platforms", version = "0.0.5")
 bazel_dep(name = "aspect_bazel_lib", version = "1.32.0")
 bazel_dep(name = "bazel_skylib", version = "1.1.1")
@@ -11,7 +13,6 @@ local_path_override(
 )
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
-
 oci.pull(
     name = "distroless_base",
     digest = "sha256:ccaef5ee2f1850270d453fdf700a5392534f8d1a8ca2acda391fbb6a06b81c86",
@@ -21,5 +22,4 @@ oci.pull(
         "linux/arm64",
     ],
 )
-
 use_repo(oci, "distroless_base")

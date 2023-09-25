@@ -1,6 +1,6 @@
-load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
 
 oci_image(
     name = "image",

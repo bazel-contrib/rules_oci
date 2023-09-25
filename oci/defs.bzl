@@ -6,15 +6,15 @@ load("@rules_oci//oci:defs.bzl", ...)
 ```
 """
 
-load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
-load("//oci/private:image.bzl", _oci_image = "oci_image")
-load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
-load("//oci/private:push.bzl", _oci_push = "oci_push")
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//oci/private:image.bzl", _oci_image = "oci_image")
+load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
+load("//oci/private:push.bzl", _oci_push = "oci_push")
+load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
 
 oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image

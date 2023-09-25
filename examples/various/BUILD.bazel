@@ -1,5 +1,5 @@
-load("//oci:defs.bzl", "oci_image")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//oci:defs.bzl", "oci_image")
 
 oci_image(
     name = "imagE",
@@ -7,7 +7,6 @@ oci_image(
     cmd = ["noop"],
     os = "linux",
 )
-
 
 build_test(
     name = "test",

@@ -292,7 +292,7 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
-        digest = "sha256:{}".format(util.sha256(rctx, output)) 
+        digest = "sha256:{}".format(util.sha256(rctx, output))
 
     return manifest, len(bytes), digest
 
