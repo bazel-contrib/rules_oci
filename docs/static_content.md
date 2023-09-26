@@ -26,16 +26,13 @@ Next lets create our static content files.
 **./frontend/index.html**
 
 ```html
-
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<body>
+  <body>
+    <h1>Our Homepage</h1>
 
-<h1>Our Homepage</h1>
-
-<p>Hello from index.html</p>
-
-</body>
+    <p>Hello from index.html</p>
+  </body>
 </html>
 ```
 

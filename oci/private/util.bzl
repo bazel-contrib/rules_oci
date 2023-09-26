@@ -112,11 +112,9 @@ if defined args (
 
     return win_launcher
 
-
 def _file_exists(rctx, path):
     result = rctx.execute(["stat", path])
     return result.return_code == 0
-
 
 _INDEX_JSON_TMPL="""\
 {{
@@ -162,5 +160,5 @@ util = struct(
     warning = _warning,
     maybe_wrap_launcher_for_windows = _maybe_wrap_launcher_for_windows,
     file_exists = _file_exists,
-    build_manifest_json = _build_manifest_json
+    build_manifest_json = _build_manifest_json,
 )

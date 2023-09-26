@@ -33,10 +33,11 @@ load("@container_structure_test//:repositories.bzl", "container_structure_test_r
 
 container_structure_test_register_toolchain(name = "container_structure_test")
 
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
 ############################################
 # Gazelle, for generating bzl_library targets
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
-load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 go_rules_dependencies()
 

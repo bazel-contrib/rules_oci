@@ -2,7 +2,7 @@ load("@rules_oci//oci:defs.bzl", "oci_image")
 
 oci_image(
     name = "empty_image",
-    visibility = ["//visibility:public"],
+    architecture = "arm64",
     os = "linux",
-    architecture = "arm64"
+    visibility = ["//visibility:public"],
 )
