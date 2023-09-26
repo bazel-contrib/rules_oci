@@ -329,23 +329,6 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 package(default_visibility = ["//visibility:public"])
 
-# Mimic the output of crane pull [image] layout --format=oci
-write_file(
-    name = "write_layout",
-    out = "oci-layout",
-    content = [
-        "{{",
-        "    \\"imageLayoutVersion\\": \\"1.0.0\\"",
-        "}}",
-    ],
-)
-
-write_file(
-    name = "write_index",
-    out = "index.json",
-    content = [\"\"\"{index_content}\"\"\"],
-)
-
 copy_file(
     name = "manifest",
     src = "manifest.json",
@@ -373,7 +356,6 @@ copy_to_directory(
         "index.json",
     ],
 )
-
 """
 
 def _find_platform_manifest(image_mf, platform_wanted):
@@ -427,45 +409,17 @@ def _oci_pull_impl(rctx):
         if hash not in tars:
             tars.append(hash)
 
-    # To make testing against `crane pull` simple, we take care to produce a byte-for-byte-identical
-    # index.json file, which means we can't use jq (it produces a trailing newline) or starlark
-    # json.encode_indent (it re-orders keys in the dictionary).
-    if rctx.attr.platform:
-        os, arch = rctx.attr.platform.split("/", 1)
-        index_mf = """\
-{
-   "schemaVersion": 2,
-   "mediaType": "application/vnd.oci.image.index.v1+json",
-   "manifests": [
-      {
-         "mediaType": "%s",
-         "size": %s,
-         "digest": "%s",
-         "platform": {
-            "architecture": "%s",
-            "os": "%s"
-         }
-      }
-   ]
-}""" % (image_mf["mediaType"], image_mf_len, image_digest, arch, os)
-    else:
-        index_mf = """\
-{
-   "schemaVersion": 2,
-   "mediaType": "application/vnd.oci.image.index.v1+json",
-   "manifests": [
-      {
-         "mediaType": "%s",
-         "size": %s,
-         "digest": "%s"
-      }
-   ]
-}""" % (image_mf["mediaType"], image_mf_len, image_digest)
-
+    rctx.file("index.json", util.build_manifest_json(
+        media_type = image_mf["mediaType"],
+        size = image_mf_len,
+        digest = image_digest,
+        platform = rctx.attr.platform
+    ))
+    rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
+    
     rctx.file("BUILD.bazel", content = _build_file.format(
         target_name = rctx.attr.target_name,
         tars = tars,
-        index_content = index_mf,
         image_digest = _trim_hash_algorithm(image_digest),
         config_file = image_config_file,
     ))
