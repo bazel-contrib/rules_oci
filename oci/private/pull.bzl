@@ -205,6 +205,7 @@ _SUPPORTED_MEDIA_TYPES = {
     "manifest": [
         "application/vnd.docker.distribution.manifest.v2+json",
         "application/vnd.oci.image.manifest.v1+json",
+        # See https://helm.sh/blog/helm-oci-mediatypes/
         "application/vnd.cncf.helm.config.v1+json",
     ],
 }
@@ -293,7 +294,7 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
-        digest = "sha256:{}".format(util.sha256(rctx, output)) 
+        digest = "sha256:{}".format(util.sha256(rctx, output))
 
     return manifest, len(bytes), digest
 
@@ -373,16 +374,20 @@ def _find_platform_manifest(image_mf, platform_wanted):
             return mf
     return None
 
+def _determine_media_type(mf):
+    if "mediaType" in mf:
+        return mf["mediaType"]
+    elif "config" in mf and "mediaType" in mf["config"]:
+        # Allow for manifests that are malformed, like some Helm charts, see #349
+        return mf["config"]["mediaType"]
+    else:
+        fail("Unable to determine mediaType from manifest {}".format(mf))
+
 def _oci_pull_impl(rctx):
     downloader = _create_downloader(rctx)
 
     mf, mf_len, mf_digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
-
-    if "mediaType" in mf:
-        media_type = mf["mediaType"]
-    else:
-        media_type = mf["config"]["mediaType"]
-
+    media_type = _determine_media_type(mf)
     if media_type in _SUPPORTED_MEDIA_TYPES["manifest"]:
         if rctx.attr.platform:
             fail("{}/{} is a single-architecture image, so attribute 'platforms' should not be set.".format(rctx.attr.registry, rctx.attr.repository))
@@ -416,13 +421,13 @@ def _oci_pull_impl(rctx):
             tars.append(hash)
 
     rctx.file("index.json", util.build_manifest_json(
-        media_type = image_mf["mediaType"],
+        media_type = _determine_media_type(image_mf),
         size = image_mf_len,
         digest = image_digest,
-        platform = rctx.attr.platform
+        platform = rctx.attr.platform,
     ))
     rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
-    
+
     rctx.file("BUILD.bazel", content = _build_file.format(
         target_name = rctx.attr.target_name,
         tars = tars,
