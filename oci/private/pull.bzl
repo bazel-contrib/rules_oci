@@ -69,6 +69,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "container_registry",
     },
+    ".app.snowflake.com": {
+        "realm": "{registry}/v2/token",
+        "scope": "repository:{repository}:pull",
+        "service": "{registry}",
+    },
 }
 
 def _strip_host(url):
@@ -292,7 +297,7 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
-        digest = "sha256:{}".format(util.sha256(rctx, output)) 
+        digest = "sha256:{}".format(util.sha256(rctx, output))
 
     return manifest, len(bytes), digest
 
