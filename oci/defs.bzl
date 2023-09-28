@@ -9,6 +9,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
+load("@aspect_bazel_lib//lib:utils.bzl", "propagate_common_rule_attributes")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
@@ -45,6 +46,8 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         tags: Tags to propagate to targets declared by this macro.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule)
     """
+    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+
     if types.is_dict(annotations):
         annotations_label = "_{}_write_annotations".format(name)
         write_file(
@@ -52,6 +55,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             out = "_{}.annotations.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
             tags = tags,
+            **forwarded_kwargs,
         )
         annotations = annotations_label
 
@@ -62,6 +66,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             out = "_{}.labels.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in labels.items()],
             tags = tags,
+            **forwarded_kwargs,
         )
         labels = labels_label
 
@@ -72,6 +77,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             out = "_{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
             tags = tags,
+            **forwarded_kwargs,
         )
         env = env_label
 
@@ -82,6 +88,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             out = "_{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
             tags = tags,
+            **forwarded_kwargs,
         )
         env = env_label
 
@@ -92,6 +99,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             out = "_{}.cmd.txt".format(name),
             content = [",".join(cmd)],
             tags = tags,
+            **forwarded_kwargs,
         )
         cmd = cmd_label
 
@@ -102,6 +110,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             out = "_{}.entrypoint.txt".format(name),
             content = [",".join(entrypoint)],
             tags = tags,
+            **forwarded_kwargs,
         )
         entrypoint = entrypoint_label
 
@@ -123,6 +132,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         directory = name,
         path = "index.json",
         tags = tags,
+        **forwarded_kwargs,
     )
 
     copy_file(
@@ -130,6 +140,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         src = "_{}_index_json".format(name),
         out = "_{}_index.json".format(name),
         tags = tags,
+        **forwarded_kwargs,
     )
 
     # Matches the [name].digest target produced by rules_docker container_image
@@ -140,6 +151,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         filter = """.manifests[0].digest""",
         out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
         tags = tags,
+        **forwarded_kwargs,
     )
 
 def oci_push(name, remote_tags = None, tags = [], **kwargs):
@@ -187,6 +199,8 @@ def oci_tarball(name, repo_tags = None, tags = [], **kwargs):
         tags: Tags to propagate to targets declared by this macro.
         **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule).
     """
+    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+
     if types.is_list(repo_tags):
         tags_label = "_{}_write_tags".format(name)
         write_file(
@@ -194,6 +208,7 @@ def oci_tarball(name, repo_tags = None, tags = [], **kwargs):
             out = "_{}.tags.txt".format(name),
             content = repo_tags,
             tags = tags,
+            **forwarded_kwargs,
         )
         repo_tags = tags_label
 
