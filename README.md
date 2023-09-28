@@ -1,11 +1,15 @@
 # Bazel rules for OCI containers
 
-This is a "barebones" alternative to [rules_docker](https://github.com/bazelbuild/rules_docker).
+This is a "barebones" alternative to [rules_docker](https://github.com/bazelbuild/rules_docker) based on the Open Containers Initiative: <https://opencontainers.org/>
 
 A lot of companies have already done a successful migration from `rules_docker`. Please let us know about yours on our adoption discussion!
 <https://github.com/bazel-contrib/rules_oci/discussions/299>
 
-We start from first principles and avoided some pitfalls we learned in maintaining that repo:
+_Need help?_ This ruleset has support provided by https://aspect.dev.
+
+## Design
+
+We started from first principles and avoided some pitfalls we learned in maintaining that repo:
 
 - Use a toolchain consisting of off-the-shelf, pre-built layer and container manipulation tools.
 - Don't write language-specific rules, as we cannot be experts on all languages, nor can users deal with the versioning issues
@@ -13,8 +17,6 @@ We start from first principles and avoided some pitfalls we learned in maintaini
 - Don't be docker-specific, now that it has a commercial license and other container runtimes exist ([podman](https://podman.io/) for example).
 - Use our toolchain hermetically: don't assume there is a docker pre-installed on the machine.
 - Keep a tight complexity budget for the project so we are able to commit to effective maintenance.
-
-_Need help?_ This ruleset has support provided by https://aspect.dev.
 
 ## Installation
 
@@ -47,6 +49,7 @@ rules_oci does not contain language-specific rules, but we do have limited docum
 - [WASM](https://github.com/bazel-contrib/rules_oci/tree/main/e2e/wasm) (see https://docs.docker.com/desktop/wasm/)
 - [Static Content](docs/static_content.md) (such as a html/javascript frontend)
 
+> [!NOTE]
 > Your language not listed above? Please contribute engineering resources or financially through our Sponsor link!
 
 There are some generic examples of usage in the [examples](https://github.com/bazel-contrib/rules_oci/tree/main/examples) folder.
@@ -81,18 +84,17 @@ rules_oci supports two different registry implementation for the temporary stora
 
 ### Pull and Push
 
-- [oci_pull](docs/pull.md) Pulls image layers using Bazel's downloader.
-- [oci_push](docs/push.md) Push an oci_image or oci_image_index to a remote registry.
+- [oci_pull](docs/pull.md) Pull image layers using Bazel's downloader. Falls back to using `curl` in some cases.
+- [oci_push](docs/push.md) Push an `oci_image` or `oci_image_index` to a remote registry.
 
 ### Testing
 
-- We recommend [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test#running-structure-tests-through-bazel) to run tests against an `oci_image` or `oci_tarball` target.
-
-<!-- Currently undocumented, as it's not public API in 1.0
+- We recommend [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test#running-structure-tests-through-bazel) to run tests against an `oci_image` target (with `driver="docker"`) or an `oci_tarball` target (with `driver="tar"`).
 
 ### Signing
 
-- [cosign_sign](docs/cosign_sign.md) Sign an `oci_image` using `cosign` binary at a remote registry.
-- [cosign_attest](docs/cosign_attest.md) Add an attachment to an `oci_image` at a remote registry using `cosign`.
+> [!WARNING]  
+> Signing images is a developer preview, not part of public API yet.
 
--->
+- [cosign_sign](https://github.com/bazel-contrib/rules_oci/blob/main/cosign/private/sign.bzl): Sign an `oci_image` using `cosign` binary at a remote registry.
+- [cosign_attest](https://github.com/bazel-contrib/rules_oci/blob/main/cosign/private/attest.bzl) Add an attachment to an `oci_image` at a remote registry using `cosign`.
