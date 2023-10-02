@@ -34,5 +34,15 @@ layers="${LAYERS}" \
         --null-input '.[0] = {"Config": env(config), "RepoTags": "${repo_tags}" | envsubst | split("%") | map(select(. != "")) , "Layers": env(layers) | map( "blobs/" + . + ".tar.gz") }' \
         --output-format json > "${STAGING_DIR}/manifest.json"
 
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  reproducible_flags="--mtime=2000-01-01 --owner=0 --group=0 --numeric-owner"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+  # FIXME: add necessary attributes or wait for tar toolchain.
+  reproducible_flags=""
+else
+  # FIXME: add necessary attributes or wait for tar toolchain.
+  reproducible_flags=""
+fi
+
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/217
-tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs
+tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" $reproducible_flags manifest.json blobs
