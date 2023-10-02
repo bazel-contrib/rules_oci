@@ -29,6 +29,22 @@ jobs:
       # Will look like ["<version from .bazelversion>", "5.3.2"]
       bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
 
+    matrix-prep-os:
+      # Prepares the 'os' axis of the test matrix
+      runs-on: ubuntu-latest
+      env:
+        TC_CLOUD_TOKEN: ${{ secrets.TC_CLOUD_TOKEN }}
+      steps:
+        - id: linux
+          run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
+        - id: rbe
+          run: echo "os=macos-latest" >> $GITHUB_OUTPUT
+          # Don't run MocOS if there is no API token which is the case on forks
+          if: ${{ env.TC_CLOUD_TOKEN != '' }}
+      outputs:
+        # Will look like ["ubuntu-latest", "macos-latest"]
+        os: ${{ toJSON(steps.*.outputs.os) }}
+
   test:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
@@ -38,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         bazelversion: ${{ fromJSON(needs.matrix-prep-bazelversion.outputs.bazelversions) }}
         folder:
           - .
@@ -84,6 +100,13 @@ jobs:
       - name: Configure Bazel version
         working-directory: ${{ matrix.folder }}
         run: echo "${{ matrix.bazelversion }}" > .bazelversion
+
+      - name: Setup Testcontainers Cloud Client
+        uses: atomicjar/testcontainers-cloud-setup-action@v1
+        # Our Linux runners have a local docker daemon we can use
+        if: matrix.os == 'macos-latest'
+        with:
+          token: ${{ secrets.TC_CLOUD_TOKEN }}
 
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
