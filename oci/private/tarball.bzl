@@ -1,4 +1,5 @@
 """Create a tarball from oci_image that can be loaded by runtimes such as podman and docker.
+Intended for use with `bazel run`.
 
 For example, given an `:image` target, you could write
 
@@ -14,7 +15,7 @@ and then run it in a container like so:
 
 ```
 bazel run :tarball
-docker run --rm my-repository:latest
+docker run my-repository:latest
 ```
 """
 
@@ -23,6 +24,30 @@ load("//oci/private:util.bzl", "util")
 doc = """Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
+
+### Outputs
+
+The default output is an mtree specification file.
+This is because producing the tarball in `bazel build` is expensive, and should typically not be an input to any other build actions,
+so producing it only creates unnecessary load on the action cache.
+
+If needed, the `tarball` output group allows you to depend on the tar output from another rule.
+
+On the command line, `bazel build //path/to:my_tarball --output_groups=tarball`
+
+or in a BUILD file:
+
+```starlark
+oci_tarball(
+    name = "my_tarball",
+    ...
+)
+filegroup(
+    name = "my_tarball.tar",
+    srcs = [":my_tarball"],
+    output_group = "tarball",
+)
+```
 """
 
 attrs = {
@@ -57,6 +82,11 @@ attrs = {
         executable = True,
         cfg = "target",
     ),
+    "_oci_layout": attr.label(
+        doc = "JSON file used as oci-layout content in tarball root",
+        default = Label("//oci/private:oci-layout"),
+        allow_single_file = True,
+    ),
     "_run_template": attr.label(
         default = Label("//oci/private:tarball_run.sh.tpl"),
         doc = """ \
@@ -76,8 +106,11 @@ def _tarball_impl(ctx):
 
     image = ctx.file.image
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
+    mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
     bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+    # Represents either manifest.json or index.json depending on the image format
+    image_json = ctx.actions.declare_file("{}/_tarball.json".format(ctx.label.name))
     repo_tags = ctx.file.repo_tags
 
     substitutions = {
@@ -85,7 +118,9 @@ def _tarball_impl(ctx):
         "{{jq_path}}": jq.bin.path,
         "{{tar}}": bsdtar.tarinfo.binary.path,
         "{{image_dir}}": image.path,
-        "{{tarball_path}}": tarball.path,
+        "{{output}}": mtree_spec.path,
+        "{{oci_layout}}": ctx.file._oci_layout.path,
+        "{{json_out}}": image_json.path,
     }
 
     if ctx.attr.repo_tags:
@@ -98,20 +133,30 @@ def _tarball_impl(ctx):
         substitutions = substitutions,
     )
 
-    # TODO(2.0): this oci_tarball rule should just produce an mtree manifest instead,
-    # and then the tar rule can be composed in the oci_tarball macro in defs.bzl.
-    # To make it a non-breaking change, call the tar program from within this action instead.
+    # inputs both for creating the mtree spec and also invoking `tar --create`
+    tar_inputs = depset(
+        direct = [image, repo_tags, executable, ctx.file._oci_layout],
+        transitive = [bsdtar.default.files],
+    )
+    mtree_outputs = [mtree_spec, image_json]
     ctx.actions.run(
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
-        inputs = depset(
-            direct = [image, repo_tags, executable],
-            transitive = [bsdtar.default.files],
-        ),
-        outputs = [tarball],
+        inputs = tar_inputs,
+        outputs = mtree_outputs,
         tools = [jq.bin],
-        mnemonic = "OCITarball",
-        progress_message = "OCI Tarball %{label}",
-        toolchain = None,
+        mnemonic = "OCITarballManifest",
+    )
+
+    tar_args = ctx.actions.args()
+    tar_args.add_all(["--create", "--no-xattr", "--no-mac-metadata"])
+    tar_args.add("--file", tarball)
+    tar_args.add(mtree_spec, format = "@%s")
+    ctx.actions.run(
+        executable = bsdtar.tarinfo.binary,
+        inputs = depset(direct = mtree_outputs, transitive = [tar_inputs]),
+        outputs = [tarball],
+        arguments = [tar_args],
+        mnemonic = "Tar",
     )
 
     exe = ctx.actions.declare_file(ctx.label.name + ".sh")
@@ -130,7 +175,8 @@ def _tarball_impl(ctx):
         runfiles.append(ctx.file.loader)
 
     return [
-        DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
+        DefaultInfo(files = depset([mtree_spec]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
+        OutputGroupInfo(tarball = depset([tarball])),
     ]
 
 oci_tarball = rule(

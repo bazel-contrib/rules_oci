@@ -8,7 +8,10 @@ exports_files(
 exports_files(glob([
     "*.tpl",
     "*.sh",
-]) + ["empty.tar"])
+]) + [
+    "empty.tar",
+    "oci-layout",
+])
 
 bzl_library(
     name = "tarball",

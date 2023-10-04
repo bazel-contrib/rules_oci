@@ -32,10 +32,20 @@ repo_tags = [
     "three:is_a_crowd",  # Used to test support for more than two repo_tags.
 ]
 
+# Intended to be `bazel run` to load the tarball into a container runtime.
+# Produces only an mtree specification as the default output.
 oci_tarball(
     name = "tarball",
     image = ":image",
     repo_tags = repo_tags,
+)
+
+# Not typically recommended: ask the tarball rule to write the .tar file
+# that would have been created when `bazel run`.
+filegroup(
+    name = "tarball.tar",
+    srcs = [":tarball"],
+    output_group = "tarball",
 )
 
 genrule(
