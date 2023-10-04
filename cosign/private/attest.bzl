@@ -46,7 +46,7 @@ _attrs = {
 
 def _cosign_attest_impl(ctx):
     cosign = ctx.toolchains["@rules_oci//cosign:toolchain_type"]
-    yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
+    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
     if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
         fail("repository attribute should not contain digest or tag.")
@@ -67,7 +67,7 @@ def _cosign_attest_impl(ctx):
         is_executable = True,
         substitutions = {
             "{{cosign_path}}": cosign.cosign_info.binary.short_path,
-            "{{yq_path}}": yq.yqinfo.bin.short_path,
+            "{{jq_path}}": jq.jqinfo.bin.short_path,
             "{{image_dir}}": ctx.file.image.short_path,
             "{{fixed_args}}": " ".join(fixed_args),
             "{{type}}": ctx.attr.type,
@@ -75,7 +75,7 @@ def _cosign_attest_impl(ctx):
     )
 
     runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.predicate])
-    runfiles = runfiles.merge(yq.default.default_runfiles)
+    runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
@@ -87,6 +87,6 @@ cosign_attest = rule(
     executable = True,
     toolchains = [
         "@rules_oci//cosign:toolchain_type",
-        "@aspect_bazel_lib//lib:yq_toolchain_type",
+        "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],
 )

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly YQ="{{yq_path}}"
+readonly JQ="{{jq_path}}"
 readonly COREUTILS="{{coreutils_path}}"
 
 # Only crete the directory if it doesn't already exist.
@@ -15,17 +15,18 @@ function add_image() {
     local image_path="$1"
     local output_path="$2"
 
-    local manifests=$("${YQ}" eval '.manifests[]' "${image_path}/index.json")
+    local manifests=$("${JQ}" -c '.manifests[]' "${image_path}/index.json")
 
     for manifest in "${manifests}"; do
-        local manifest_blob_path=$("${YQ}" '.digest | sub(":"; "/")' <<< ${manifest})
-        local config_blob_path=$("${YQ}" '.config.digest | sub(":"; "/")' "${image_path}/blobs/${manifest_blob_path}")
+        local manifest_blob_path=$("${JQ}" -r '.digest | sub(":"; "/")' <<< ${manifest})
+        local config_blob_path=$("${JQ}" -r '.config.digest | sub(":"; "/")' "${image_path}/blobs/${manifest_blob_path}")
 
-        local platform=$("${YQ}" --output-format=json '{"os": .os, "architecture": .architecture, "variant": .variant, "os.version": .["os.version"], "os.features": .["os.features"]} | with_entries(select( .value != null ))' "${image_path}/blobs/${config_blob_path}")
-
-        platform="${platform}" \
-        manifest="${manifest}" \
-        "${YQ}" --inplace --output-format=json '.manifests += [env(manifest) + {"platform": env(platform)}]' "${output_path}/manifest_list.json"
+        local platform=$("${JQ}" -c '{"os": .os, "architecture": .architecture, "variant": .variant, "os.version": .["os.version"], "os.features": .["os.features"]} | with_entries(select( .value != null ))' "${image_path}/blobs/${config_blob_path}")
+        "${JQ}" --argjson platform "${platform}" \
+                --argjson manifest "${manifest}" \
+                '.manifests |= [$manifest + {"platform": $platform}]'\
+                "${output_path}/manifest_list.json" > "${output_path}/manifest_list.new.json"
+        cat "${output_path}/manifest_list.new.json" > "${output_path}/manifest_list.json"
     done
 }
 
@@ -60,9 +61,10 @@ for ARG in "$@"; do
 done
 
 
-export checksum=$("${COREUTILS}" sha256sum "${OUTPUT}/manifest_list.json" | "${COREUTILS}" cut -f 1 -d " ")
-export size=$("${COREUTILS}" wc -c < "${OUTPUT}/manifest_list.json")
+checksum=$("${COREUTILS}" sha256sum "${OUTPUT}/manifest_list.json" | "${COREUTILS}" cut -f 1 -d " ")
+size=$("${COREUTILS}" wc -c < "${OUTPUT}/manifest_list.json")
 
-"${YQ}" --inplace --output-format=json '.manifests += [{"mediaType": "application/vnd.oci.image.index.v1+json", "size": env(size), "digest": "sha256:" + env(checksum)}]' "$OUTPUT/index.json"
-
+"${JQ}" -n --arg checksum "${checksum}" --argjson size "${size}" \
+        '.manifests = [{"mediaType": "application/vnd.oci.image.index.v1+json", "size": $size, "digest": ("sha256:" + $checksum) }]' > "$OUTPUT/index.json"
+cat "$OUTPUT/index.json"
 "${COREUTILS}" mv "${OUTPUT}/manifest_list.json" "$OUTPUT/blobs/sha256/${checksum}"
