@@ -2,10 +2,9 @@
 set -o pipefail -o errexit -o nounset
 
 readonly FORMAT="{{format}}"
-readonly STAGING_DIR=$(mktemp -d)
 readonly JQ="{{jq_path}}"
+readonly TAR="{{tar}}"
 readonly IMAGE_DIR="{{image_dir}}"
-readonly BLOBS_DIR="${STAGING_DIR}/blobs"
 readonly TARBALL_PATH="{{tarball_path}}"
 readonly REPOTAGS=($(cat "{{tags}}"))
 readonly INDEX_FILE="${IMAGE_DIR}/index.json"
@@ -84,6 +83,7 @@ MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
 
 CONFIG_DIGEST=$(${JQ} -r '.config.digest  | sub(":"; "/")' ${MANIFEST_BLOB_PATH})
 CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
+add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
 LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH})
 
@@ -100,5 +100,7 @@ repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
         --arg config "blobs/${CONFIG_DIGEST}" \
         --argjson layers "${LAYERS}" > "${STAGING_DIR}/manifest.json"
 
-# TODO: https://github.com/bazel-contrib/rules_oci/issues/217
-tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs
+add_to_tar "${manifest_json}" "manifest.json"
+
+# We've created the manifest, now hand it off to tar to create our final output
+"${TAR}" --create --file "${TARBALL_PATH}" "@${mtree}"

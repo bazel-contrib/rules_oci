@@ -1,6 +1,6 @@
 """Repository rules for fetching external tools"""
 
-load("@aspect_bazel_lib//lib:repositories.bzl", "register_copy_to_directory_toolchains", "register_coreutils_toolchains", "register_jq_toolchains")
+load("@aspect_bazel_lib//lib:repositories.bzl", "register_copy_to_directory_toolchains", "register_coreutils_toolchains", "register_jq_toolchains", "register_tar_toolchains")
 load("//oci/private:toolchains_repo.bzl", "PLATFORMS", "toolchains_repo")
 load("//oci/private:versions.bzl", "CRANE_VERSIONS", "ZOT_VERSIONS")
 
@@ -113,6 +113,7 @@ def oci_register_toolchains(name, crane_version, zot_version = None, register = 
             Should be True for WORKSPACE users, but false when used under bzlmod extension
     """
     register_jq_toolchains(register = register)
+    register_tar_toolchains(register = register)
     register_coreutils_toolchains(register = register)
     register_copy_to_directory_toolchains(register = register)
 
