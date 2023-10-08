@@ -54,29 +54,31 @@ function empty_base() {
 function base_from_layout() {
     # TODO: https://github.com/google/go-containerregistry/issues/1514
     local refs=$(mktemp)
+    local flattened_refs=$(mktemp)
     local output=$(mktemp)
     local oci_layout_path=$1
     local registry=$2
 
     "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}" > "${output}" 2>&1
+    "${CRANE}" flatten $(cat $refs) > "${flattened_refs}"
 
     echo "${output}" >&2
 
     if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
 
-zot registry does not support docker manifests. 
+zot registry does not support docker manifests.
 
 crane registry does support both oci and docker images, but is more memory hungry.
 
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
+If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains".
 
 EOF
 
         exit 1
     fi
 
-    cat "${refs}"
+    cat "${flattened_refs}"
 }
 
 # this will redirect stderr(2) to stderr file.
@@ -130,6 +132,11 @@ for ARG in "$@"; do
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
+          ;;
+        (--flatten=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--flatten=$in")
+          done <"${ARG#--flatten=}"
           ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
