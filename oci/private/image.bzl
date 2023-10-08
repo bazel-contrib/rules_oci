@@ -120,6 +120,7 @@ def _oci_image_impl(ctx):
             "{{jq_path}}": jq.jqinfo.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
             "{{empty_tar}}": ctx.file._empty_tar.path,
+            "{{flatten}}": str(ctx.attr.flatten),
         },
     )
 
@@ -170,10 +171,6 @@ def _oci_image_impl(ctx):
 
     if ctx.attr.annotations:
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
-        inputs_depsets.append(depset([ctx.file.annotations]))
-
-    if ctx.attr.flatten:
-        args.add(ctx.file.annotations.path, format = "--flatten=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
 
     output = ctx.actions.declare_directory(ctx.label.name)

@@ -9,6 +9,7 @@ readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
 readonly CRANE="{{crane_path}}"
 readonly JQ="{{jq_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
+readonly FLATTEN="{{flatten}}"
 
 readonly STDERR=$(mktemp)
 
@@ -54,14 +55,11 @@ function empty_base() {
 function base_from_layout() {
     # TODO: https://github.com/google/go-containerregistry/issues/1514
     local refs=$(mktemp)
-    local flattened_refs=$(mktemp)
     local output=$(mktemp)
     local oci_layout_path=$1
     local registry=$2
 
     "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}" > "${output}" 2>&1
-    "${CRANE}" flatten $(cat $refs) > "${flattened_refs}"
-
     echo "${output}" >&2
 
     if grep -q "MANIFEST_INVALID" "${output}"; then
@@ -78,7 +76,11 @@ EOF
         exit 1
     fi
 
-    cat "${flattened_refs}"
+    if [[ $FLATTEN == "True" ]]; then
+        "${CRANE}" flatten $(cat $refs) > "${refs}"
+    fi
+
+    cat "${refs}"
 }
 
 # this will redirect stderr(2) to stderr file.
