@@ -38,7 +38,7 @@ oci_image(
 ```
 
 
-<a id="#oci_pull"></a>
+<a id="oci_pull"></a>
 
 ## oci_pull
 
@@ -52,8 +52,8 @@ To use the resulting image, you can use the `@wkspc` shorthand label, for exampl
 if `name = "distroless_base"`, then you can just use `base = "@distroless_base"`
 in rules like `oci_image`.
 
-> This shorthand syntax is broken on the command-line prior to Bazel 6.2.
-> See https://github.com/bazelbuild/bazel/issues/4385
+&gt; This shorthand syntax is broken on the command-line prior to Bazel 6.2.
+&gt; See https://github.com/bazelbuild/bazel/issues/4385
 
 
 **PARAMETERS**

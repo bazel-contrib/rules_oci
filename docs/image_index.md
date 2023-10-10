@@ -2,7 +2,7 @@
 
 Implementation details for oci_image_index rule
 
-<a id="#oci_image_index"></a>
+<a id="oci_image_index"></a>
 
 ## oci_image_index
 
@@ -40,7 +40,7 @@ oci_image_index(
 
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
-| <a id="oci_image_index-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="oci_image_index-images"></a>images |  List of labels to oci_image targets.   | <a href="https://bazel.build/docs/build-ref.html#labels">List of labels</a> | required |  |
+| <a id="oci_image_index-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="oci_image_index-images"></a>images |  List of labels to oci_image targets.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | required |  |
 
 
