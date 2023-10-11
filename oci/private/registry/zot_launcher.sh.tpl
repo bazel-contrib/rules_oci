@@ -37,6 +37,6 @@ EOF
 
 function stop_registry() {
     local storage_dir="$1"
-    rm -r "${storage_dir}/.uploads"
+    rm -rf "${storage_dir}/.uploads"
     rm -r "${storage_dir}/config.json"
 }

@@ -77,26 +77,6 @@ EOF
     cat "${refs}"
 }
 
-# removes unreferenced blobs from oci-layout and normalizes index.json
-function gc() {
-    local ref="$1"
-    local digest=$("${CRANE}" digest "${ref}")
-    local blobs=($("${CRANE}" manifest "${ref}" | "${JQ}" -r --arg digest "$digest" '([.layers[].digest] + [.config.digest, $digest]) | flatten | .[]'))
-    for blob_dir in ${STORAGE_DIR}/blobs/* ; do
-        local algo="$(basename ${blob_dir})"
-        for blob_path in ${blob_dir}/* ; do
-            local blob_digest="$(basename ${blob_path})"
-            local hash="${algo}:${blob_digest}"
-            if ! [[ "${blobs[@]}" =~ "$hash" ]]; then
-                rm $blob_path
-            fi
-        done
-    done
-    mv "${STORAGE_DIR}/index.json" "${STORAGE_DIR}/temp.json"
-    "${JQ}" --arg digest "$digest" '.manifests |= [map(select(.digest == $digest and .annotations == null))[0]]' "${STORAGE_DIR}/temp.json" > "${STORAGE_DIR}/index.json"
-    rm "${STORAGE_DIR}/temp.json"
-}
-
 # this will redirect stderr(2) to stderr file.
 {
 source "${REGISTRY_LAUNCHER}" 
@@ -178,9 +158,7 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
 fi
 
 if [ -n "$OUTPUT" ]; then
-
-    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
-    gc "${REF}"
+    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --prune
     stop_registry "${STORAGE_DIR}"
 fi
 
