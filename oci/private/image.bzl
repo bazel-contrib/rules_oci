@@ -84,10 +84,8 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
-def _format_string_to_string_tuple(kv):
-    if type(kv) != "tuple":
-        fail("argument `kv` must be a tuple.")
-    return "%s=%s" % kv
+def _owner_label(f):
+    return str(f.owner)
 
 def _platform_str(os, arch, variant = None):
     parts = [os, arch]
@@ -144,6 +142,7 @@ def _oci_image_impl(ctx):
     for layer in ctx.attr.tars:
         inputs_depsets.append(layer[DefaultInfo].files)
         args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
+        args.add_all(layer[DefaultInfo].files, format_each = "--history=%s", map_each = _owner_label)
 
     if ctx.attr.entrypoint:
         args.add(ctx.file.entrypoint.path, format = "--entrypoint-file=%s")

@@ -88,6 +88,7 @@ OUTPUT=""
 WORKDIR=""
 FIXED_ARGS=()
 ENV_EXPANSIONS=()
+HISTORY=()
 
 for ARG in "$@"; do
     case "$ARG" in
@@ -96,6 +97,7 @@ for ARG in "$@"; do
         (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
         (--output=*) OUTPUT="${ARG#--output=}" ;;
         (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
+        (--history=*) HISTORY+=("${ARG#--history=}") ;;
         (--env-file=*)
           # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
           # file doesn't have a trailing newline.
@@ -136,6 +138,15 @@ for ARG in "$@"; do
 done
 
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
+
+# Workaround for https://github.com/google/go-containerregistry/issues/1819
+if [ ${#HISTORY[@]} -ne 0 ]; then 
+    history_filter='.history[(.history | length - 1) - $idx] *= {"author": "bazel", "created_by": "bazel build \($lbl)"}'
+    for i in "${!HISTORY[@]}"; do
+        label="${HISTORY[$i]}"
+        REF=$("${CRANE}" config "${REF}" | "${JQ}" -c --argjson idx "$i" --arg lbl "$label" "$history_filter" | "${CRANE}" edit config "${REF}")
+    done
+fi
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
     env_expansion_filter=\
