@@ -10,7 +10,7 @@ REPOSITORY=${1:-"google/go-containerregistry"}
 (
   curl --silent \
     --header "Accept: application/vnd.github.v3+json" \
-    https://api.github.com/repos/${REPOSITORY}/releases?per_page=1 \
+    https://api.github.com/repos/${REPOSITORY}/releases?per_page=4 \
     | jq -f $SCRIPT_DIR/filter.jq
 ) > $RAW
 

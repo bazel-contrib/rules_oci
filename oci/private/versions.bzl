@@ -1,6 +1,6 @@
 "Mirror of release info"
 
-# WARNING: only v0.12.0 and above is supported.
+# WARNING: only v0.15.1 and above is supported due to --workdir feature.
 CRANE_VERSIONS = {
     "v0.16.1": {
         "go-containerregistry-0": "sha256-KHa1NgQVE4cW1YN6aeHBFhgOSOz2KmP1MBw1HVoS+Zs=",

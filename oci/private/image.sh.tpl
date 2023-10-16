@@ -79,6 +79,10 @@ EOF
     cat "${refs}"
 }
 
+function history() {
+  local ref="$1"
+}
+
 # this will redirect stderr(2) to stderr file.
 {
 source "${REGISTRY_LAUNCHER}" 
@@ -86,7 +90,6 @@ REGISTRY=
 REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
 
 OUTPUT=""
-WORKDIR=""
 FIXED_ARGS=()
 ENV_EXPANSIONS=()
 
@@ -96,7 +99,6 @@ for ARG in "$@"; do
         (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
         (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
         (--output=*) OUTPUT="${ARG#--output=}" ;;
-        (--workdir=*) WORKDIR="${ARG#--workdir=}" ;;
         (--env-file=*)
           # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
           # file doesn't have a trailing newline.
@@ -159,11 +161,6 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
         environment_args+=( --env "${key}=${value_from_base}" )
     done
     REF=$("${CRANE}" mutate "${REF}" ${environment_args[@]})
-fi
-
-# TODO: https://github.com/google/go-containerregistry/issues/1515
-if [ -n "${WORKDIR}" ]; then 
-    REF=$("${CRANE}" config "${REF}" | "${JQ}"  --arg workdir "${WORKDIR}" '.config.WorkingDir = $workdir' | "${CRANE}" edit config "${REF}")
 fi
 
 if [ -n "$OUTPUT" ]; then
