@@ -118,6 +118,6 @@ This is similar to the same-named target created by rules_docker's `container_im
 | <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-cmd"></a>cmd |  Command & argument configured by default in the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-entrypoint"></a>entrypoint |  Entrypoint configured by default in the running container. See documentation above.   |  <code>None</code> |
-| <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule) and [common rule attribtes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
+| <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule) and [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
 
 

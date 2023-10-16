@@ -149,6 +149,6 @@ Allows the remote_tags attribute to be a list of strings in addition to a text f
 | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  name of resulting oci_push_rule   |  none |
 | <a id="oci_push-remote_tags"></a>remote_tags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
-| <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule) and [common rule attribtes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
+| <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule) and [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
 
 

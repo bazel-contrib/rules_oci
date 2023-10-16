@@ -44,7 +44,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         cmd: Command & argument configured by default in the running container. See documentation above.
         entrypoint: Entrypoint configured by default in the running container. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
-            [common rule attribtes](https://bazel.build/reference/be/common-definitions#common-attributes).
+            [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
@@ -156,7 +156,7 @@ def oci_push(name, remote_tags = None, **kwargs):
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
         **kwargs: other named arguments to [oci_push_rule](#oci_push_rule) and
-            [common rule attribtes](https://bazel.build/reference/be/common-definitions#common-attributes).
+            [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
@@ -188,7 +188,7 @@ def oci_tarball(name, repo_tags = None, **kwargs):
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
         **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule) and
-            [common rule attribtes](https://bazel.build/reference/be/common-definitions#common-attributes).
+            [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
