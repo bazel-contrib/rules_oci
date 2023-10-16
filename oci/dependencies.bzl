@@ -29,7 +29,7 @@ def rules_oci_dependencies():
 
     http_archive(
         name = "aspect_bazel_lib",
-        sha256 = "f1c181b910f821072f38ee45bb87db6b56275458c7f832c54c54ba6334119eca",
-        strip_prefix = "bazel-lib-1.32.0",
-        url = "https://github.com/aspect-build/bazel-lib/releases/download/v1.32.0/bazel-lib-v1.32.0.tar.gz",
+        sha256 = "e9505bd956da64b576c433e4e41da76540fd8b889bbd17617fe480a646b1bfb9",
+        strip_prefix = "bazel-lib-1.35.0",
+        url = "https://github.com/aspect-build/bazel-lib/releases/download/v1.35.0/bazel-lib-v1.35.0.tar.gz",
     )
