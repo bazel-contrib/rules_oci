@@ -70,7 +70,7 @@ registry_toolchain(
 
 def _zot_repo_impl(repository_ctx):
     platform = repository_ctx.attr.platform.replace("_", "-")
-    url = "https://github.com/project-zot/zot/releases/download/{version}/zot-{platform}".format(
+    url = "https://github.com/project-zot/zot/releases/download/{version}/zot-{platform}-minimal".format(
         version = repository_ctx.attr.zot_version,
         platform = platform,
     )

@@ -6,8 +6,8 @@ JQ_FILTER=\
 'map({
     "key": .tag_name, 
     "value": .assets 
-        | map( select( (.name | startswith("zot-")) and (.name | endswith("-debug") | not) and (.name | endswith("-minimal") | not) ) )
-        | map({ key: .name | ltrimstr("zot-"), value: "sha256-" })
+        | map( select( (.name | startswith("zot-")) and (.name | endswith("-debug") | not) and (.name | endswith("-minimal") ) ) )
+        | map({ key: .name | ltrimstr("zot-") | rtrimstr("-minimal"), value: "sha256-" })
         | from_entries 
 }) | from_entries
 '
@@ -20,7 +20,7 @@ INFO="$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.gi
 # TODO: remove this for loop once https://github.com/project-zot/zot/issues/715 is fixed.
 for VERSION in $(jq -r 'keys | join("\n")' <<< $INFO); do 
     for PLATFORM in $(jq -r ".[\"$VERSION\"] | keys | join(\"\n\")" <<< $INFO); do 
-        SHA256=$(curl -fLs "https://github.com/project-zot/zot/releases/download/$VERSION/zot-$PLATFORM" | sha256sum | xxd -r -p | base64)
+        SHA256=$(curl -fLs "https://github.com/project-zot/zot/releases/download/$VERSION/zot-$PLATFORM" | shasum -a 256 | xxd -r -p | base64)
         INFO=$(jq ".[\"$VERSION\"][\"$PLATFORM\"] = \"sha256-$SHA256\"" <<< $INFO)
     done
 done
