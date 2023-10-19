@@ -14,7 +14,7 @@ if [ -f $REPOSITORY_FILE ] ; then
 fi
 
 # set $@ to be FIXED_ARGS+$@
-ALL_ARGS=(${FIXED_ARGS[@]} $@)
+ALL_ARGS=(${FIXED_ARGS[@]+"${FIXED_ARGS[@]}"} $@)
 set -- ${ALL_ARGS[@]}
 
 TAGS=()
