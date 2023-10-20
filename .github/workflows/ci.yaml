@@ -37,7 +37,7 @@ jobs:
     steps:
       - id: linux
         run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
-      - id: rbe
+      - id: macos
         run: echo "os=macos-latest" >> $GITHUB_OUTPUT
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
