@@ -39,8 +39,7 @@ jobs:
         run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
       - id: rbe
         run: echo "os=macos-latest" >> $GITHUB_OUTPUT
-        # Don't run MocOS if there is no TestContainers API token which is the case on forks
-        # We expect to use it at some point for tests that need a docker daemon.
+        # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
     outputs:
       # Will look like ["ubuntu-latest", "macos-latest"]
