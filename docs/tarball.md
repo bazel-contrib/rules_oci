@@ -20,7 +20,7 @@ docker run --rm my-repository:latest
 ```
 
 
-<a id="#oci_tarball"></a>
+<a id="oci_tarball"></a>
 
 ## oci_tarball
 
@@ -38,8 +38,8 @@ Passing anything other than oci_image to the image attribute will lead to build 
 
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
-| <a id="oci_tarball-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="oci_tarball-image"></a>image |  Label of a directory containing an OCI layout, typically <code>oci_image</code>   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
-| <a id="oci_tarball-repo_tags"></a>repo_tags |  a file containing repo_tags, one per line.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
+| <a id="oci_tarball-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="oci_tarball-image"></a>image |  Label of a directory containing an OCI layout, typically <code>oci_image</code>   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="oci_tarball-repo_tags"></a>repo_tags |  a file containing repo_tags, one per line.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 
 

@@ -8,7 +8,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 ```
 
 
-<a id="#oci_push_rule"></a>
+<a id="oci_push_rule"></a>
 
 ## oci_push_rule
 
@@ -52,7 +52,7 @@ When running the pusher, you can pass flags to `bazel run`.
 
 1. Override `repository` by passing the `-r|--repository` flag.
 
-e.g. `bazel run //myimage:push -- --repository index.docker.io/<ORG>/image`
+e.g. `bazel run //myimage:push -- --repository index.docker.io/&lt;ORG&gt;/image`
 
 2. Supply tags in addition to `remote_tags` by passing the `-t|--tag` flag.
 
@@ -68,7 +68,7 @@ oci_image(name = "image")
 
 oci_push(
     image = ":image",
-    repository = "index.docker.io/<ORG>/image",
+    repository = "index.docker.io/&lt;ORG&gt;/image",
     remote_tags = ["latest"]
 )
 ```
@@ -111,7 +111,7 @@ expand_template(
 
 oci_push(
     image = ":app_image",
-    repository = "ghcr.io/<OWNER>/image",
+    repository = "ghcr.io/&lt;OWNER&gt;/image",
     remote_tags = ":stamped",
 )
 ```
@@ -122,19 +122,19 @@ oci_push(
 
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
-| <a id="oci_push_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/docs/build-ref.html#name">Name</a> | required |  |
-| <a id="oci_push_rule-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | required |  |
-| <a id="oci_push_rule-remote_tags"></a>remote_tags |  a .txt file containing tags, one per line.         These are passed to [<code>crane tag</code>](         https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
-| <a id="oci_push_rule-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | optional | "" |
-| <a id="oci_push_rule-repository_file"></a>repository_file |  The same as 'repository' but in a file. This allows pushing to different repositories based on stamping.   | <a href="https://bazel.build/docs/build-ref.html#labels">Label</a> | optional | None |
+| <a id="oci_push_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="oci_push_rule-image"></a>image |  Label to an oci_image or oci_image_index   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="oci_push_rule-remote_tags"></a>remote_tags |  a .txt file containing tags, one per line.         These are passed to [<code>crane tag</code>](         https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
+| <a id="oci_push_rule-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: <code>index.docker.io/&lt;user&gt;/image</code>.         Digests and tags are not allowed.   | String | optional | <code>""</code> |
+| <a id="oci_push_rule-repository_file"></a>repository_file |  The same as 'repository' but in a file. This allows pushing to different repositories based on stamping.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
 
 
-<a id="#oci_push"></a>
+<a id="oci_push"></a>
 
 ## oci_push
 
 <pre>
-oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-remote_tags">remote_tags</a>, <a href="#oci_push-tags">tags</a>, <a href="#oci_push-kwargs">kwargs</a>)
+oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-remote_tags">remote_tags</a>, <a href="#oci_push-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_push_rule](#oci_push_rule).
@@ -149,7 +149,6 @@ Allows the remote_tags attribute to be a list of strings in addition to a text f
 | :------------- | :------------- | :------------- |
 | <a id="oci_push-name"></a>name |  name of resulting oci_push_rule   |  none |
 | <a id="oci_push-remote_tags"></a>remote_tags |  a list of tags to apply to the image after pushing, or a label of a file containing tags one-per-line. See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl) as one example of a way to produce such a file.   |  <code>None</code> |
-| <a id="oci_push-tags"></a>tags |  Tags to propagate to targets declared by this macro.   |  <code>[]</code> |
-| <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule).   |  none |
+| <a id="oci_push-kwargs"></a>kwargs |  other named arguments to [oci_push_rule](#oci_push_rule) and [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
 
 
