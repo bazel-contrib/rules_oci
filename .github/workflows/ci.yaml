@@ -119,9 +119,9 @@ jobs:
             wait: true
             token: ${{ secrets.TC_CLOUD_TOKEN }}
       
-      - name: Setup Remote Docker
+      - name: Configure Remote Docker Host
         if: ${{ matrix.os == 'macos-latest' }}
-        run: echo "DOCKER_HOST=$(cat ~/.testcontainers.properties | grep 'docker.host' | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
+        run: echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
 
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
