@@ -69,6 +69,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "container_registry",
     },
+    ".app.snowflake.com": {
+        "realm": "{registry}/v2/token",
+        "scope": "repository:{repository}:pull",
+        "service": "{registry}",
+    },
 }
 
 def _strip_host(url):
