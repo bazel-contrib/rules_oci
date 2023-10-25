@@ -131,6 +131,11 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
+	(--exposed-ports-file=*)
+	  while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--exposed-ports=$in")
+          done <"${ARG#--exposed-ports-file=}"
+          ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
 done
