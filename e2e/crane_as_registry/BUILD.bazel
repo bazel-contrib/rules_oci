@@ -12,6 +12,7 @@ oci_image(
         "--arg2",
     ],
     entrypoint = ["/custom_bin"],
+    workdir = "/custom_dir",
     env = {
         "ENV": "/test",
     },
