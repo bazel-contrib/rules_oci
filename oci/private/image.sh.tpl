@@ -88,6 +88,7 @@ OUTPUT=""
 WORKDIR=""
 FIXED_ARGS=()
 ENV_EXPANSIONS=()
+CREATED_TIMESTAMP_FILE=""
 
 for ARG in "$@"; do
     case "$ARG" in
@@ -131,11 +132,16 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
+        (--created-timestamp-file=*) CREATED_TIMESTAMP_FILE="${ARG#--created-timestamp-file=}" ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
 done
 
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
+
+if [ -n "${CREATED_TIMESTAMP_FILE}" ]; then
+  REF=$("${CRANE}" config "${REF}" | "${JQ}" ".created = \"$(cat ${CREATED_TIMESTAMP_FILE})"\" | "${CRANE}" edit config "${REF}")
+fi
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
     env_expansion_filter=\
