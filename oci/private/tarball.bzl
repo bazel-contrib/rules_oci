@@ -26,6 +26,11 @@ Passing anything other than oci_image to the image attribute will lead to build 
 """
 
 attrs = {
+    "format": attr.string(
+        default = "docker",
+        doc = "Format of image to generate. Options are: docker, oci. Currently, when the input image is an image_index, only oci is supported, and when the input image is an image, only docker is supported. Conversions between formats may be supported in the future.",
+        values = ["docker", "oci"],
+    ),
     "image": attr.label(mandatory = True, allow_single_file = True, doc = "Label of a directory containing an OCI layout, typically `oci_image`"),
     "repo_tags": attr.label(
         doc = """\
@@ -53,6 +58,7 @@ def _tarball_impl(ctx):
     repo_tags = ctx.file.repo_tags
 
     substitutions = {
+        "{{format}}": ctx.attr.format,
         "{{yq}}": yq_bin.path,
         "{{image_dir}}": image.path,
         "{{tarball_path}}": tarball.path,
