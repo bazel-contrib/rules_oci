@@ -3,6 +3,7 @@ set -o pipefail -o errexit -o nounset
 
 readonly CRANE="{{crane_path}}"
 readonly YQ="{{yq_path}}"
+readonly COREUTILS="{{coreutils_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly TAGS_FILE="{{tags}}"
 readonly FIXED_ARGS=({{fixed_args}})
@@ -36,7 +37,7 @@ while (( $# > 0 )); do
     (--repository=*)
       REPOSITORY="${1#--repository=}"
       shift;;
-    (*) 
+    (*)
       ARGS+=( "$1" )
       shift;;
   esac
@@ -44,14 +45,14 @@ done
 
 DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
-REFS=$(mktemp)
+REFS=$("${COREUTILS}" mktemp)
 "${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
 
 for tag in "${TAGS[@]+"${TAGS[@]}"}"
 do
-  "${CRANE}" tag $(cat "${REFS}") "${tag}"
+  "${CRANE}" tag $("${COREUTILS}" cat "${REFS}") "${tag}"
 done
 
 if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs -n1 "${CRANE}" tag $(cat "${REFS}")
+  "${COREUTILS}" cat "${TAGS_FILE}" | xargs -n1 "${CRANE}" tag $("${COREUTILS}" cat "${REFS}")
 fi
