@@ -8,9 +8,10 @@ set -o pipefail -o errexit -o nounset
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
 readonly CRANE="{{crane_path}}"
 readonly JQ="{{jq_path}}"
+readonly COREUTILS="{{coreutils_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
 
-readonly STDERR=$(mktemp)
+readonly STDERR=$("${COREUTILS}" mktemp)
 
 silent_on_success() {
     CODE=$?
@@ -53,8 +54,8 @@ function empty_base() {
 
 function base_from_layout() {
     # TODO: https://github.com/google/go-containerregistry/issues/1514
-    local refs=$(mktemp)
-    local output=$(mktemp)
+    local refs=$("${COREUTILS}" mktemp)
+    local output=$("${COREUTILS}" mktemp)
     local oci_layout_path=$1
     local registry=$2
 
