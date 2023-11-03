@@ -84,6 +84,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
+# buildifier: disable=unused-variable
 def _format_string_to_string_tuple(kv):
     if type(kv) != "tuple":
         fail("argument `kv` must be a tuple.")
