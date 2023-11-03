@@ -34,7 +34,7 @@ function copy_blob() {
     local output_path="$2"
     local blob_image_relative_path="$3"
     local dest_path="${output_path}/${blob_image_relative_path}"
-    mkdirp "$(dirname "${dest_path}")"
+    mkdirp "$("${COREUTILS}" dirname "${dest_path}")"
     "${COREUTILS}" ln -f "${image_path}/${blob_image_relative_path}" "${dest_path}"
 }
 
