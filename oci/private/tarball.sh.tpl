@@ -1,23 +1,24 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
+readonly COREUTILS="{{coreutils}}"
 readonly FORMAT="{{format}}"
-readonly STAGING_DIR=$(mktemp -d)
+readonly STAGING_DIR=$("${COREUTILS}" mktemp -d)
 readonly YQ="{{yq}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly BLOBS_DIR="${STAGING_DIR}/blobs"
 readonly TARBALL_PATH="{{tarball_path}}"
-readonly REPOTAGS=($(cat "{{tags}}"))
+readonly REPOTAGS=($("${COREUTILS}" cat "{{tags}}"))
 readonly INDEX_FILE="${IMAGE_DIR}/index.json"
 
 cp_f_with_mkdir() {
   SRC="$1"
   DST="$2"
-  mkdir -p "$(dirname "${DST}")"
-  cp -f "${SRC}" "${DST}"
+  "${COREUTILS}" mkdir -p "$("${COREUTILS}" dirname "${DST}")"
+  "${COREUTILS}" cp -f "${SRC}" "${DST}"
 }
 
-MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
+MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
 
 MANIFESTS_LENGTH=$("${YQ}" eval '.manifests | length' "${INDEX_FILE}")
 if [[ "${MANIFESTS_LENGTH}" != 1 ]]; then
@@ -48,7 +49,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
 
   echo -n '{"imageLayoutVersion": "1.0.0"}' > "${STAGING_DIR}/oci-layout"
 
-  INDEX_FILE_MANIFEST_DIGEST=$("${YQ}" eval '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
+  INDEX_FILE_MANIFEST_DIGEST=$("${YQ}" eval '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
   INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"
 
   cp_f_with_mkdir "${INDEX_FILE_MANIFEST_BLOB_PATH}" "${BLOBS_DIR}/${INDEX_FILE_MANIFEST_DIGEST}"
