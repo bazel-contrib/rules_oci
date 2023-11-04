@@ -1,5 +1,7 @@
 "Mirror of release info"
 
+# Also update latest version in MODULE.bazel when adding a new version.
+
 # WARNING: only v0.12.0 and above is supported.
 CRANE_VERSIONS = {
     "v0.15.2": {
