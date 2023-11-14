@@ -78,14 +78,9 @@ load("@rules_oci//oci:defs.bzl", "oci_image")
 
 oci_image(
     name = "image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@distroless_base",
     tars = [":tar"],
     entrypoint = ["/app"],
-    os = "linux",
 )
 ```
 

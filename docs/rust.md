@@ -143,14 +143,9 @@ load("@rules_oci//oci:defs.bzl", "oci_image")
 # Step 3: Build image and add built layer to it
 oci_image(
     name = "hello_image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@distroless_cc",
     tars = [":hello_bin_layer"],
     entrypoint = ["/hello_bin"],
-    os = "linux",
 )
 
 ```
@@ -186,13 +181,8 @@ pkg_tar(
 # Step 3: Build image and add built layer to it
 oci_image(
     name = "hello_image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
     base = "@distroless_cc",
     tars = [":hello_bin_layer"],
     entrypoint = ["/hello_bin"],
-    os = "linux",
 )
 ```
