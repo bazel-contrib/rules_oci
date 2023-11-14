@@ -6,7 +6,7 @@ function start_registry() {
     local output="$2"
     local deadline="${3:-5}"
 
-    "${CRANE_REGISTRY_BIN}" registry serve>> $output 2>&1 &
+    "${CRANE_REGISTRY_BIN}" registry serve --blobs-to-disk >> $output 2>&1 &
 
     local timeout=$((SECONDS+${deadline}))
 
