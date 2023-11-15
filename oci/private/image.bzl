@@ -77,6 +77,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
+    "flatten": attr.bool(doc = "Whether to flatten the base image. Can only be set if a base image is specified."),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     # Workaround for https://github.com/google/go-containerregistry/issues/1513
@@ -119,6 +120,7 @@ def _oci_image_impl(ctx):
             "{{jq_path}}": jq.jqinfo.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
             "{{empty_tar}}": ctx.file._empty_tar.path,
+            "{{flatten}}": str(ctx.attr.flatten),
         },
     )
 

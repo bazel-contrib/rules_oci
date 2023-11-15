@@ -9,6 +9,7 @@ readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
 readonly CRANE="{{crane_path}}"
 readonly JQ="{{jq_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
+readonly FLATTEN="{{flatten}}"
 
 readonly STDERR=$(mktemp)
 
@@ -59,21 +60,24 @@ function base_from_layout() {
     local registry=$2
 
     "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}" > "${output}" 2>&1
-
     echo "${output}" >&2
 
     if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
 
-zot registry does not support docker manifests. 
+zot registry does not support docker manifests.
 
 crane registry does support both oci and docker images, but is more memory hungry.
 
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
+If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains".
 
 EOF
 
         exit 1
+    fi
+
+    if [[ $FLATTEN == "True" ]]; then
+        "${CRANE}" flatten $(cat $refs) > "${refs}"
     fi
 
     cat "${refs}"
@@ -130,6 +134,11 @@ for ARG in "$@"; do
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
+          ;;
+        (--flatten=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--flatten=$in")
+          done <"${ARG#--flatten=}"
           ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
