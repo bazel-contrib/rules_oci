@@ -129,7 +129,7 @@ for LAYER in $(${YQ} ".[]" <<< $LAYERS); do
   cp_f_with_mkdir "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
-repo_tags="${REPOTAGS[@]}" \
+repo_tags="${REPOTAGS[@]+"${REPOTAGS[@]}"}" \
 config="blobs/${CONFIG_DIGEST}" \
 layers="${LAYERS}" \
 "${YQ}" eval \
