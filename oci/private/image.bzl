@@ -77,6 +77,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
+    "created_timestamp": attr.label(doc = "A file containing the `created` timestamp of the container.", allow_single_file = True),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     # Workaround for https://github.com/google/go-containerregistry/issues/1513
@@ -170,6 +171,10 @@ def _oci_image_impl(ctx):
     if ctx.attr.annotations:
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
+
+    if ctx.attr.created_timestamp:
+        args.add(ctx.file.created_timestamp.path, format = "--created-timestamp-file=%s")
+        inputs_depsets.append(depset([ctx.file.created_timestamp]))
 
     output = ctx.actions.declare_directory(ctx.label.name)
     args.add(output.path, format = "--output=%s")

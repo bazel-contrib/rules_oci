@@ -22,7 +22,7 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
-def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, **kwargs):
+def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, created_timestamp = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
@@ -43,6 +43,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env: Environment variables provisioned by default to the running container. See documentation above.
         cmd: Command & argument configured by default in the running container. See documentation above.
         entrypoint: Entrypoint configured by default in the running container. See documentation above.
+        created_timestamp: A file containing the `created` timestamp of the image in ISO8601 format. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
@@ -115,6 +116,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env = env,
         cmd = cmd,
         entrypoint = entrypoint,
+        created_timestamp = created_timestamp,
         **kwargs
     )
 
