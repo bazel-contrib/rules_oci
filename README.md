@@ -60,7 +60,7 @@ Note that these examples rely on the setup code in the `/WORKSPACE` file in the 
 rules_oci supports two different registry implementation for the temporary storage within actions spawned by bazel.
 
 1. By default we recommend using `zot` as it stores blobs on disk, however it doesn't support `Docker`-format images.
-2. `crane` is less tested alternative, however, it supports both `OCI` and `Docker` formats which is required to make images with `Docker` media types work.
+2. `crane` is a better alternative as it supports both `OCI` and `Docker` formats which is required to make images with `Docker` media types work. However, it might not support everything that zot does.
 
 ## Public API Docs
 
