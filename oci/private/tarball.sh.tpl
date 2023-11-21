@@ -53,7 +53,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
 
   cp_f_with_mkdir "${INDEX_FILE_MANIFEST_BLOB_PATH}" "${BLOBS_DIR}/${INDEX_FILE_MANIFEST_DIGEST}"
 
-  IMAGE_MANIFESTS_DIGESTS=($("${JQ}" '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
+  IMAGE_MANIFESTS_DIGESTS=($("${JQ}" -r '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
 
   for IMAGE_MANIFEST_DIGEST in "${IMAGE_MANIFESTS_DIGESTS[@]}"; do
     IMAGE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${IMAGE_MANIFEST_DIGEST}"
@@ -64,53 +64,16 @@ if [[ "${FORMAT}" == "oci" ]]; then
     cp_f_with_mkdir "${CONFIG_BLOB_PATH}" "${BLOBS_DIR}/${CONFIG_DIGEST}"
 
     LAYER_DIGESTS=$("${JQ}" -r '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
-    for LAYER_DIGEST in $("${JQ}" ".[]" <<< $LAYER_DIGESTS); do
+    for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYER_DIGESTS); do
       cp_f_with_mkdir "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" ${BLOBS_DIR}/${LAYER_DIGEST}
     done
   done
 
-  # Fill in repo tags as per https://github.com/opencontainers/image-spec/issues/796
-  # If there's more than one repo tag, we need to duplicate the manifest entry, so we have one copy per repo tag.
-  MANIFEST_COPIES=".manifests"
-  if [[ "${#REPOTAGS[@]}" -gt 1 ]]; then
-    for i in $(seq 2 "${#REPOTAGS[@]}"); do
-      MANIFEST_COPIES="${MANIFEST_COPIES} + .manifests"
-    done
-  fi
-  # Convert:
-  # {
-  #   "schemaVersion": 2,
-  #   "manifests": [
-  #     {
-  #       "mediaType": "application/vnd.oci.image.index.v1+json",
-  #       "size": 668,
-  #       "digest": "sha256:41981de3b7207f5260fd94fac77272218518d58a6335d843136d88d91341e3d9"
-  #     }
-  #   ]
-  # }
-  # Into:
-  # {
-  #   "schemaVersion": 2,
-  #   "manifests": [
-  #     {
-  #       "mediaType": "application/vnd.oci.image.index.v1+json",
-  #       "size": 668,
-  #       "digest": "sha256:41981de3b7207f5260fd94fac77272218518d58a6335d843136d88d91341e3d9",
-  #       "annotations": {
-  #         "org.opencontainers.image.ref.name": "repo-tag:1"
-  #       }
-  #     },
-  #     {
-  #       "mediaType": "application/vnd.oci.image.index.v1+json",
-  #       "size": 668,
-  #       "digest": "sha256:41981de3b7207f5260fd94fac77272218518d58a6335d843136d88d91341e3d9",
-  #       "annotations": {
-  #         "org.opencontainers.image.ref.name": "repo-tag:2"
-  #       }
-  #     }
-  #   ]
-  # }
-  repo_tags="${REPOTAGS[@]}" "${JQ}" -r "(.manifests = ${MANIFEST_COPIES}) *d {\"manifests\": (env(repo_tags) | split \" \" | map {\"annotations\": {\"org.opencontainers.image.ref.name\": .}})}" "${INDEX_FILE}" > "${STAGING_DIR}/index.json"
+
+  # Repeat the first manifest entry once per repo tag.
+  repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
+  "${JQ}" -r --arg repo_tags "$repotags" \
+   '.manifests[0] as $manifest | .manifests = ($repo_tags | split(" ") | map($manifest * {annotations:{"org.opencontainers.image.ref.name":.}}))' "${INDEX_FILE}" > "${STAGING_DIR}/index.json"
 
   tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" index.json blobs oci-layout
   exit 0
@@ -130,14 +93,12 @@ for LAYER in $(${JQ} -r ".[]" <<< $LAYERS); do
   cp_f_with_mkdir "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
 done
 
-repo_tags="$(cat "${TAGS_FILE}" | ${JQ} --null-input --raw-input 'reduce (inputs) as $line ([]; . + ([$line])) | map(select(. != ""))')"
-config="blobs/${CONFIG_DIGEST}"
-layers="${LAYERS}"
 
-"${JQ}" -n '.[0] = {"Config": $config, "RepoTags": $repo_tags, "Layers": $layers | map( "blobs/" + . + ".tar.gz") }' \
-        --argjson repo_tags "${repo_tags}" \
-        --arg config "${config}" \
-        --argjson layers "${layers}" > "${STAGING_DIR}/manifest.json"
+repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
+"${JQ}" -n '.[0] = {"Config": $config, "RepoTags": ($repo_tags | split(" ") | map(select(. != ""))), "Layers": $layers | map( "blobs/" + . + ".tar.gz") }' \
+        --arg repo_tags "$repotags" \
+        --arg config "blobs/${CONFIG_DIGEST}" \
+        --argjson layers "${LAYERS}" > "${STAGING_DIR}/manifest.json"
 
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/217
 tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs
