@@ -20,7 +20,7 @@ INFO="$(curl --silent -H "Accept: application/vnd.github.v3+json" https://api.gi
 # TODO: remove this for loop once https://github.com/project-zot/zot/issues/715 is fixed.
 for VERSION in $(jq -r 'keys | join("\n")' <<< $INFO); do 
     for PLATFORM in $(jq -r ".[\"$VERSION\"] | keys | join(\"\n\")" <<< $INFO); do 
-        SHA256=$(curl -fLs "https://github.com/project-zot/zot/releases/download/$VERSION/zot-$PLATFORM" | shasum -a 256 | xxd -r -p | base64)
+        SHA256=$(curl -fLs "https://github.com/project-zot/zot/releases/download/$VERSION/zot-$PLATFORM-minimal" | shasum -a 256 | xxd -r -p | base64)
         INFO=$(jq ".[\"$VERSION\"][\"$PLATFORM\"] = \"sha256-$SHA256\"" <<< $INFO)
     done
 done
