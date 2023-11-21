@@ -79,10 +79,6 @@ EOF
     cat "${refs}"
 }
 
-function history() {
-  local ref="$1"
-}
-
 # this will redirect stderr(2) to stderr file.
 {
 source "${REGISTRY_LAUNCHER}" 
