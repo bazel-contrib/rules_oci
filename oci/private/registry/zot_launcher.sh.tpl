@@ -15,7 +15,7 @@ function start_registry() {
     "log": { "level": "info" }
 }
 EOF
-    "${ZOT}" serve "${config_path}" >> $output 2>&1 &
+    HOME="${TMPDIR}" "${ZOT}" serve "${config_path}" >> $output 2>&1 &
 
     local timeout=$((SECONDS+${deadline}))
 

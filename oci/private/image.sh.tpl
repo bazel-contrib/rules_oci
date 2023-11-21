@@ -81,8 +81,9 @@ EOF
 
 # this will redirect stderr(2) to stderr file.
 {
-source "${REGISTRY_LAUNCHER}"
-readonly REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
+source "${REGISTRY_LAUNCHER}" 
+REGISTRY=
+REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
 
 OUTPUT=""
 WORKDIR=""

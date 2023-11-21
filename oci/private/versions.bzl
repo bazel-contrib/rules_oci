@@ -56,10 +56,12 @@ CRANE_VERSIONS = {
 }
 
 ZOT_VERSIONS = {
-    "v1.4.3-rc3": {
-        "darwin-amd64": "sha256-AGyGP/DKR5QCrcdzB7P6TjBEAMNMPG0nmY/eUcmxH3I=",
-        "darwin-arm64": "sha256-C7uoK2STgfq9XXXHLSLKu3Fs8XmX94bIb0RHpwoqjzk=",
-        "linux-amd64": "sha256-BdeBe7bBOYCy/VfRHZsz7EC+7b4TC+kSa0g7CI1HKd0=",
-        "linux-arm64": "sha256-57DAO3f8h5ZV3w6zH+nXsD6KpnJI5crywbksLri4RHE=",
-    },
+  "v2.0.0-rc7": {
+    "darwin-amd64": "sha256-CgQgQBbT2MDf9H9ttWZXSCP1SJfHvI1U1JX8WcExsqc=",
+    "darwin-arm64": "sha256-z+7Tn1mhAfvx9JlAeMq2WxtpMx6lcLjvycUhSAANX1U=",
+    "freebsd-amd64": "sha256-ex4IzW3299cegSnW2Q4LCk/sBJfaIPIxzujo1ocWnRY=",
+    "freebsd-arm64": "sha256-byEVM7MsYNNfC94bmqxCG+VyP1CoMVPQgfQEyVQro7M=",
+    "linux-amd64": "sha256-pAiaOvyD+Tvi/d6MGAFytJFmYYttCukucxaxbAmnX5w=",
+    "linux-arm64": "sha256-+TLMTCs+eYPmxWAbbvb2PFNwGvHsMI40yxeY3wVGepM="
+  }
 }
