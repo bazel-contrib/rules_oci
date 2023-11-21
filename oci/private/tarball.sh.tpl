@@ -17,15 +17,15 @@ cp_f_with_mkdir() {
   cp -f "${SRC}" "${DST}"
 }
 
-MANIFEST_DIGEST=$(${YQ} eval '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
+MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
 
-MANIFESTS_LENGTH=$("${YQ}" eval '.manifests | length' "${INDEX_FILE}")
+MANIFESTS_LENGTH=$("${JQ}" -r '.manifests | length' "${INDEX_FILE}")
 if [[ "${MANIFESTS_LENGTH}" != 1 ]]; then
   echo >&2 "Expected exactly one manifest in ${INDEX_FILE}"
   exit 1
 fi
 
-MEDIA_TYPE=$("${YQ}" eval ".manifests[0].mediaType" "${INDEX_FILE}")
+MEDIA_TYPE=$("${JQ}" -r ".manifests[0].mediaType" "${INDEX_FILE}")
 
 # Check that we know how to generate the output format given the input format.
 # We may expand the supported options here in the future, but for now,
@@ -48,23 +48,23 @@ if [[ "${FORMAT}" == "oci" ]]; then
 
   echo -n '{"imageLayoutVersion": "1.0.0"}' > "${STAGING_DIR}/oci-layout"
 
-  INDEX_FILE_MANIFEST_DIGEST=$("${YQ}" eval '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
+  INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
   INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"
 
   cp_f_with_mkdir "${INDEX_FILE_MANIFEST_BLOB_PATH}" "${BLOBS_DIR}/${INDEX_FILE_MANIFEST_DIGEST}"
 
-  IMAGE_MANIFESTS_DIGESTS=($("${YQ}" '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
+  IMAGE_MANIFESTS_DIGESTS=($("${JQ}" '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
 
   for IMAGE_MANIFEST_DIGEST in "${IMAGE_MANIFESTS_DIGESTS[@]}"; do
     IMAGE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${IMAGE_MANIFEST_DIGEST}"
     cp_f_with_mkdir "${IMAGE_MANIFEST_BLOB_PATH}" "${BLOBS_DIR}/${IMAGE_MANIFEST_DIGEST}"
 
-    CONFIG_DIGEST=$("${YQ}" eval '.config.digest  | sub(":"; "/")' ${IMAGE_MANIFEST_BLOB_PATH})
+    CONFIG_DIGEST=$("${JQ}" -r '.config.digest  | sub(":"; "/")' ${IMAGE_MANIFEST_BLOB_PATH})
     CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
     cp_f_with_mkdir "${CONFIG_BLOB_PATH}" "${BLOBS_DIR}/${CONFIG_DIGEST}"
 
-    LAYER_DIGESTS=$("${YQ}" eval '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
-    for LAYER_DIGEST in $("${YQ}" ".[]" <<< $LAYER_DIGESTS); do
+    LAYER_DIGESTS=$("${JQ}" -r '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
+    for LAYER_DIGEST in $("${JQ}" ".[]" <<< $LAYER_DIGESTS); do
       cp_f_with_mkdir "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" ${BLOBS_DIR}/${LAYER_DIGEST}
     done
   done
@@ -110,7 +110,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
   #     }
   #   ]
   # }
-  repo_tags="${REPOTAGS[@]}" "${YQ}" -o json eval "(.manifests = ${MANIFEST_COPIES}) *d {\"manifests\": (env(repo_tags) | split \" \" | map {\"annotations\": {\"org.opencontainers.image.ref.name\": .}})}" "${INDEX_FILE}" > "${STAGING_DIR}/index.json"
+  repo_tags="${REPOTAGS[@]}" "${JQ}" -r "(.manifests = ${MANIFEST_COPIES}) *d {\"manifests\": (env(repo_tags) | split \" \" | map {\"annotations\": {\"org.opencontainers.image.ref.name\": .}})}" "${INDEX_FILE}" > "${STAGING_DIR}/index.json"
 
   tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" index.json blobs oci-layout
   exit 0
