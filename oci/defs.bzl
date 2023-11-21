@@ -22,7 +22,7 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
-def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, **kwargs):
+def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
@@ -43,6 +43,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env: Environment variables provisioned by default to the running container. See documentation above.
         cmd: Command & argument configured by default in the running container. See documentation above.
         entrypoint: Entrypoint configured by default in the running container. See documentation above.
+        exposed_ports: Exposed ports in the running container. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
@@ -108,6 +109,16 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         )
         entrypoint = entrypoint_label
 
+    if types.is_list(exposed_ports):
+        exposed_ports_label = "_{}_write_exposed_ports".format(name)
+        write_file(
+            name = exposed_ports_label,
+            out = "_{}.exposed_ports.txt".format(name),
+            content = [",".join(exposed_ports)],
+            **forwarded_kwargs,
+        )
+        exposed_ports = exposed_ports_label
+
     oci_image_rule(
         name = name,
         annotations = annotations,
@@ -115,6 +126,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env = env,
         cmd = cmd,
         entrypoint = entrypoint,
+        exposed_ports = exposed_ports,
         **kwargs
     )
 
