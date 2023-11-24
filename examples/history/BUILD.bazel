@@ -1,0 +1,39 @@
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//oci:defs.bzl", "oci_image")
+
+pkg_tar(
+    name = "app"
+)
+
+oci_image(
+    name = "image",
+    architecture = "amd64", 
+    tars = [
+        "app"
+    ],
+    os = "linux",
+)
+
+genrule(
+    name = "config",
+    srcs = [":image"],
+    outs = ["config.json"],
+    cmd = "cat ./$(location :image)/blobs/sha256/5f9b028d47d01ba324812f7ccd9fe4ad12dba8145171c704ce3109856f8a7abb > $@",
+)
+
+write_file(
+    name = "expected_history",
+    out = "expected_history.json",
+    content = [
+        '{"created":"0001-01-01T00:00:00Z","author":"bazel","created_by":"bazel build @//examples/history:app"}'
+    ],
+)
+
+assert_json_matches(
+    name = "check_history",
+    file1 = ":config",
+    file2 = ":expected_history",
+    filter1 = ".history[0]",
+)

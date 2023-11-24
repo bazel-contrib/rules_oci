@@ -43,5 +43,5 @@ genrule(
 assert_contains(
     name = "check_digest",
     actual = ":hash",
-    expected = "sha256:7dc510461a627051f9276ec21a26ed9a314e87e94eac1be996fcf48be6cc9aa2",
+    expected = "sha256:14389e339b5c3872ce2435e7e84a164c53c5f25d4d4725ab8082b471ac6e7d8d",
 )
