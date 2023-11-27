@@ -2,10 +2,14 @@ readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 readonly REGISTRY_BIN="${SCRIPT_DIR}/registry_/registry"
 
 function start_registry() {
+    local storage_dir="$1"
     local output="$2"
     local deadline="${3:-5}"
+    local registry_pid="$1/proc.pid"
 
+    mkdir -p "${storage_dir}"
     "${REGISTRY_BIN}" >> $output 2>&1 &
+    echo "$!" > "${registry_pid}"
 
     local timeout=$((SECONDS+${deadline}))
 
@@ -20,5 +24,17 @@ function start_registry() {
         return 1
     fi
     echo "127.0.0.1:${port}"
+    return 0
+}
+
+function stop_registry() {
+    local storage_dir="$1"
+    local registry_pid="$1/proc.pid"
+    if [[ ! -f "${registry_pid}" ]]; then
+        echo "Registry not started" >&2
+        return 0
+    fi
+    echo "Stopping registry process" >&2
+    kill -9 "$(cat "${registry_pid}")" || true
     return 0
 }
