@@ -6,7 +6,7 @@ set -o pipefail -o errexit -o nounset
 # NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
 
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
-readonly CRANE="/Users/thesayyn/Documents/go-containerregistry/main"
+readonly CRANE="{{crane_path}}"
 readonly JQ="{{jq_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
 
