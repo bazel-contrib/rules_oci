@@ -85,6 +85,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
+# buildifier: disable=unused-variable
 def _format_string_to_string_tuple(kv):
     if type(kv) != "tuple":
         fail("argument `kv` must be a tuple.")
@@ -107,6 +108,7 @@ def _oci_image_impl(ctx):
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
 
@@ -118,6 +120,7 @@ def _oci_image_impl(ctx):
             "{{registry_launcher_path}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
+            "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
             "{{storage_dir}}": "/".join([ctx.bin_dir.path, ctx.label.package, "storage_%s" % ctx.label.name]),
             "{{empty_tar}}": ctx.file._empty_tar.path,
         },
@@ -196,7 +199,7 @@ def _oci_image_impl(ctx):
         outputs = [output],
         env = action_env,
         executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
-        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
     )
@@ -216,5 +219,6 @@ oci_image = rule(
         "@rules_oci//oci:crane_toolchain_type",
         "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
     ],
 )
