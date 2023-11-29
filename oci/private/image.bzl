@@ -85,11 +85,6 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
-def _format_string_to_string_tuple(kv):
-    if type(kv) != "tuple":
-        fail("argument `kv` must be a tuple.")
-    return "%s=%s" % kv
-
 def _platform_str(os, arch, variant = None):
     parts = [os, arch]
     if variant:
@@ -104,9 +99,12 @@ def _oci_image_impl(ctx):
     if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
+    util.assert_crane_version_at_least(ctx, "0.15.1", "oci_image")
+
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
 

@@ -1,4 +1,5 @@
 """Utilities"""
+load("@bazel_skylib//lib:versions.bzl", "versions")
 
 def _parse_image(image):
     """Support syntax sugar in oci_pull where multiple data fields are in a single string, "image"
@@ -154,6 +155,12 @@ def _build_manifest_json(media_type, size, digest, platform):
         optional_platform = optional_platform
     )
 
+def _assert_crane_version_at_least(ctx, at_least, rule):
+    toolchain = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
+    if not versions.is_at_least(at_least, toolchain.crane_info.version):
+        fail("rule {} requires crane version >={}".format(rule, at_least))
+
+
 util = struct(
     parse_image = _parse_image,
     sha256 = _sha256,
@@ -161,4 +168,5 @@ util = struct(
     maybe_wrap_launcher_for_windows = _maybe_wrap_launcher_for_windows,
     file_exists = _file_exists,
     build_manifest_json = _build_manifest_json,
+    assert_crane_version_at_least = _assert_crane_version_at_least
 )

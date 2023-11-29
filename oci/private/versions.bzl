@@ -2,6 +2,20 @@
 
 # WARNING: only v0.15.1 and above is supported due to --workdir feature.
 CRANE_VERSIONS = {
+    "v0.17.0": {
+        "go-containerregistry-0": "sha256-d54x77NFqxSOlIQuk2D+BOBFAw8w5hXhOQQcuF0zLsk=",
+        "darwin_arm64": "sha256-pYM/Dh0C0pnT71cv0f+qFgZE65la5Nuvi8gEFdEVnoo=",
+        "darwin_x86_64": "sha256-yIaqqLuR2RD1G3HscYukk0n2/wn84CAec+p6lYNA4FY=",
+        "linux_arm64": "sha256-JHTVYComLxMx2JVVjnByN38/iTX6q2HBtFweqHD0F6c=",
+        "linux_armv6": "sha256-AWVqUDWJ1h3u8xWn8u7Na1O7SRi8lwPFWdpnyErCa3o=",
+        "linux_i386": "sha256-+0fF8Q9jWOk0q4Xsv0Da+LKEsU+nwAEOiA91+SPMfMA=",
+        "linux_ppc64le": "sha256-nwqKvxy4JHzRoekgeTVMGfd/X8CiuOtYty/6w//gGvU=",
+        "linux_s390x": "sha256-fWnvl6iGsIaP3YJeQxwfco2ze8ZpTgF2jAgGXTgDcoU=",
+        "linux_x86_64": "sha256-G00+4eIUd2vXS4h0HM8bBw6O1WYAVvBa9jKho5n+IcY=",
+        "windows_arm64": "sha256-OdP9MOp/3HwIOjB0WdPY1bnLkLD2XzR3RS90HK5EyJs=",
+        "windows_armv6": "sha256-c8OHU6DKiYE+ZTG32RTY9Nn7t7RaPVS/MXshGiAmkXc=",
+        "windows_x86_64": "sha256-NyebS5afExgDW5rTAEsysws6D3ruBJeqZfJeW0b7rU8="
+    },
     "v0.16.1": {
         "go-containerregistry-0": "sha256-KHa1NgQVE4cW1YN6aeHBFhgOSOz2KmP1MBw1HVoS+Zs=",
         "darwin_arm64": "sha256-OgSfRI2SluHc01ZsWALiQbzU4Yc/mYoSKCRlXiDg10Q=",
