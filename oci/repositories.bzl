@@ -15,7 +15,8 @@ load("@rules_oci//oci:toolchain.bzl", "crane_toolchain")
 
 crane_toolchain(
     name = "crane_toolchain", 
-    crane = "{binary}"
+    crane = "{binary}",
+    version = "{version}"
 )
 
 registry_toolchain(
@@ -45,7 +46,10 @@ def _crane_repo_impl(repository_ctx):
     )
     repository_ctx.file(
         "BUILD.bazel",
-        CRANE_BUILD_TMPL.format(binary = binary),
+        CRANE_BUILD_TMPL.format(
+            binary = binary,
+            version = repository_ctx.attr.crane_version
+        ),
     )
 
 crane_repositories = repository_rule(
