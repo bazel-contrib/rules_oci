@@ -22,3 +22,7 @@ function start_registry() {
     echo "127.0.0.1:${port}"
     return 0
 }
+
+function stop_registry() {
+    :
+}

@@ -33,7 +33,7 @@ function get_option() {
 
 function empty_base() {
     local registry=$1
-    local ref="$registry/image:latest"
+    local ref="$registry/oci/empty_base:latest"
     ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f {{empty_tar}})"
     ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
     ref=$("${CRANE}" manifest "${ref}" | "${JQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
@@ -158,8 +158,12 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
 fi
 
 if [ -n "$OUTPUT" ]; then
-    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --prune
-    stop_registry "${STORAGE_DIR}"
+    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --annotate-ref
+    mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
+    "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
+    rm "${OUTPUT}/temp.json"
+    "${CRANE}" layout gc "./${OUTPUT}"
+    stop_registry "${OUTPUT}"
 fi
 
 } 2>> "${STDERR}"

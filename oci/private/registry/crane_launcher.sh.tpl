@@ -1,5 +1,5 @@
 readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-readonly CRANE_REGISTRY_BIN="/Users/thesayyn/Documents/go-containerregistry/main"
+readonly CRANE_REGISTRY_BIN="${SCRIPT_DIR}/{{CRANE}}"
 
 function start_registry() {
     local storage_dir="$1"

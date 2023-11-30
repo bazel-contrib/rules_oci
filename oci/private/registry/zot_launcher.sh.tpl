@@ -7,7 +7,6 @@ function start_registry() {
     local deadline="${3:-5}"
     local config_path="$storage_dir/config.json"
 
-    echo "$storage_dir" >&2
     cat > "${config_path}" <<EOF
 {
     "storage": { "rootDirectory": "$storage_dir/..", "dedupe": false, "commit": true },
@@ -32,8 +31,6 @@ EOF
     echo "127.0.0.1:${port}"
     return 0
 }
-
-
 
 function stop_registry() {
     local storage_dir="$1"
