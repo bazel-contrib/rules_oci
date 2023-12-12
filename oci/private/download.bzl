@@ -81,7 +81,6 @@ def _download(
     # ...
     curl_version = version_result.stdout.split(" ")[1]
 
-    headers_output_path = str(rctx.path(".output/header.txt"))
     output_path = str(rctx.path(".output/{}".format(output)))
     command = [
         "curl",
@@ -94,8 +93,6 @@ def _download(
         "--create-dirs",
         "--output",
         output_path,
-        "--dump-header",
-        headers_output_path,
     ]
 
     # Detect more flags which may be supported based on changelog:
@@ -108,7 +105,6 @@ def _download(
         command.append("{}: {}".format(name, value))
 
     command.extend(_auth_to_header(url, auth))
-    rctx.file(headers_output_path)
 
     result = rctx.execute(command)
     _debug("""\nSTDOUT\n{}\nSTDERR\n{}""".format(result.stdout, result.stderr))
