@@ -39,10 +39,8 @@ function stop_registry() {
     local storage_dir="$1"
     local registry_pid="$1/proc.pid"
     if [[ ! -f "${registry_pid}" ]]; then
-        echo "Registry not started" >&2
         return 0
     fi
-    echo "Stopping registry process" >&2
     kill -9 "$(cat "${registry_pid}")" || true
     return 0
 }
