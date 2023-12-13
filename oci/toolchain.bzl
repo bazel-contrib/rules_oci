@@ -87,7 +87,7 @@ registry_toolchain = rule(
     implementation = _registry_toolchain_impl,
     attrs = {
         "launcher": attr.label(
-            doc = "A bash launcher script defining a bash function named `start_registry` that takes the following arguments `storage_dir, output, deadline`",
+            doc = "A bash launcher script defining a bash function named `start_registry` that takes the following arguments `storage_dir, output, deadline`; `stop_registry` stops the registry.",
             mandatory = True,
             executable = True,
             cfg = "exec",
