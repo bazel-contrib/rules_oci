@@ -39,6 +39,15 @@ attrs = {
         allow_single_file = [".txt"],
         mandatory = True,
     ),
+    "container_cli_tool": attr.label(
+        doc = """\
+            target for a container cli tool (i.e. docker or podman or other) that will be used to load the image into the local engine when using 'bazel run //my/image'.",
+            """,
+        allow_single_file = True,
+        mandatory = False,
+        executable = True,
+        cfg = "target",
+    ),
     "_run_template": attr.label(
         default = Label("//oci/private:tarball_run.sh.tpl"),
         doc = """ \
@@ -90,12 +99,16 @@ def _tarball_impl(ctx):
         output = exe,
         substitutions = {
             "{{image_path}}": tarball.short_path,
+            "{{container_cli_tool}}": ctx.file.container_cli_tool.path if ctx.file.container_cli_tool else "",
         },
         is_executable = True,
     )
+    runfiles = [tarball]
+    if ctx.file.container_cli_tool:
+        runfiles.append(ctx.file.container_cli_tool)
 
     return [
-        DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = [tarball]), executable = exe),
+        DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
     ]
 
 oci_tarball = rule(
