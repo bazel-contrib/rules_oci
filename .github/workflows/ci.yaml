@@ -41,8 +41,13 @@ jobs:
         run: echo "os=macos-latest" >> $GITHUB_OUTPUT
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
+      - id: windows
+        run: echo "os=windows-latest" >> $GITHUB_OUTPUT
+        # Only run on main branch (not PRs) to minimize windows minutes (billed at 2X)
+        # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes
+        if: (github.ref == 'refs/heads/main' || contains(github.head_ref, 'windows'))
     outputs:
-      # Will look like ["ubuntu-latest", "macos-latest"]
+      # Will look like ["ubuntu-latest", "macos-latest", "windows-latest"]
       os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
@@ -75,7 +80,8 @@ jobs:
             folder: e2e/crane_as_registry
           - os: macos-latest
             bazelversion: 5.3.2
-
+          # Windows is mostly broken, so we allow-list below instead.
+          - os: windows-latest
           # Don't test bzlmod with Bazel 5 (not supported)
           - bazelversion: 5.3.2
             bzlmodEnabled: true
@@ -85,6 +91,12 @@ jobs:
           # TODO: fix
           - folder: e2e/wasm
             bzlmodEnabled: true
+        include:
+          # This is approx. what the BCR presubmit will run
+          - os: windows-latest
+            bzlmodEnabled: true
+            folder: e2e/smoke
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -128,8 +140,7 @@ jobs:
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
-  
+        run: bazel --bazelrc=${{ github.workspace }}/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
   test-auth:
     runs-on: ubuntu-latest
     steps:

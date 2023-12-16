@@ -1,10 +1,8 @@
 "Bazel dependencies"
-
-bazel_dep(name = "container_structure_test", version = "1.15.0", dev_dependency = True)
-bazel_dep(name = "rules_oci", version = "0.0.0", dev_dependency = True)
-
+bazel_dep(name = "container_structure_test", dev_dependency = True, version = "1.16.0")
+bazel_dep(name = "rules_oci", dev_dependency = True, version = "0.0.0")
 bazel_dep(name = "platforms", version = "0.0.5")
-bazel_dep(name = "aspect_bazel_lib", version = "1.32.0")
+bazel_dep(name = "aspect_bazel_lib", version = "1.33.0")
 bazel_dep(name = "bazel_skylib", version = "1.1.1")
 
 local_path_override(

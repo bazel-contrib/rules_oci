@@ -1,11 +1,7 @@
 bcr_test_module:
   module_path: "e2e/crane_as_registry"
   matrix:
-    # TODO(#97): add windows
-    # File "C:/b/eznkjcld/external/rules_oci~override/oci/repositories.bzl", line 100, column 64, in _stucture_test_repo_impl
-    # integrity = ST_VERSIONS[repository_ctx.attr.st_version][platform],
-    # Error: key "windows-amd64" not found in dictionary
-    platform: ["debian10", "macos", "ubuntu2004"]
+    platform: ["debian10", "macos", "ubuntu2004", "windows"]
   tasks:
     run_tests:
       name: "Run test module"
