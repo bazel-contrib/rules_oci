@@ -6,7 +6,8 @@ module(
     compatibility_level = 1,
 )
 
-bazel_dep(name = "aspect_bazel_lib", version = "1.35.0")
+# Lower-bound dependency constraints. Don't bump these unless needed.
+bazel_dep(name = "aspect_bazel_lib", version = "1.36.0")
 bazel_dep(name = "bazel_skylib", version = "1.4.1")
 bazel_dep(name = "platforms", version = "0.0.5")
 
