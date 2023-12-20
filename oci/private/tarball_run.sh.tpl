@@ -2,7 +2,7 @@
 set -o pipefail -o errexit -o nounset
 
 readonly IMAGE="{{image_path}}"
-if [ -e "{{container_cli_tool}}" ]; then
+if [ -e "{{command}}" ]; then
     CONTAINER_CLI="{{container_cli_tool}}"
 elif command -v docker &> /dev/null; then
     CONTAINER_CLI="docker"

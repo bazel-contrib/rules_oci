@@ -39,7 +39,7 @@ attrs = {
         allow_single_file = [".txt"],
         mandatory = True,
     ),
-    "container_cli_tool": attr.label(
+    "command": attr.label(
         doc = """\
             target for a container cli tool (i.e. docker or podman or other) that will be used to load the image into the local engine when using 'bazel run //my/image'.",
             """,
@@ -99,13 +99,13 @@ def _tarball_impl(ctx):
         output = exe,
         substitutions = {
             "{{image_path}}": tarball.short_path,
-            "{{container_cli_tool}}": ctx.file.container_cli_tool.path if ctx.file.container_cli_tool else "",
+            "{{command}}": ctx.file.command.path if ctx.file.command else "",
         },
         is_executable = True,
     )
     runfiles = [tarball]
-    if ctx.file.container_cli_tool:
-        runfiles.append(ctx.file.container_cli_tool)
+    if ctx.file.command:
+        runfiles.append(ctx.file.command)
 
     return [
         DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
