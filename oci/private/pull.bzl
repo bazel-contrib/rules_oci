@@ -376,8 +376,8 @@ def _oci_pull_impl(rctx):
         manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "manifest.json")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(manifest["mediaType"]))
-    
-    # symlink manifest.json to blobs with it's digest. 
+
+    # symlink manifest.json to blobs with it's digest.
     # it is okay to use symlink here as copy_to_directory will dereference it when creating the TreeArtifact.
     rctx.symlink("manifest.json", _digest_into_blob_path(digest))
 
@@ -398,7 +398,7 @@ def _oci_pull_impl(rctx):
     rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
 
     rctx.file("BUILD.bazel", content = _BUILD_FILE_TMPL.format(
-        target_name = rctx.attr.target_name
+        target_name = rctx.attr.target_name,
     ))
 
 oci_pull = repository_rule(

@@ -14,9 +14,8 @@ SHA=$(shasum -a 256 $ARCHIVE | awk '{print $1}')
 cat << EOF
 ## Using bzlmod with Bazel 6 or later:
 
-1. Add \`common --enable_bzlmod\` to \`.bazelrc\`.
-
-2. Add to your \`MODULE.bazel\` file:
+- (Bazel 6) Add \`common --enable_bzlmod\` to \`.bazelrc\`.
+- Add to your \`MODULE.bazel\` file:
 
 \`\`\`starlark
 bazel_dep(name = "rules_oci", version = "${TAG:1}")
