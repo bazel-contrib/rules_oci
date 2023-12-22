@@ -63,6 +63,7 @@ jobs:
           - e2e/wasm
           - e2e/smoke
           - e2e/crane_as_registry
+          - e2e/pull
 
         bzlmodEnabled: [true, false]
         exclude:
@@ -73,9 +74,13 @@ jobs:
             folder: e2e/wasm
           - os: macos-latest 
             folder: e2e/crane_as_registry
+          - os: macos-latest 
+            folder: e2e/pull
           - os: macos-latest
             bazelversion: 5.3.2
-
+          # e2e/pull is bzlmod only but it has test for both cases.
+          - folder: e2e/pull
+            bzlmodEnabled: false
           # Don't test bzlmod with Bazel 5 (not supported)
           - bazelversion: 5.3.2
             bzlmodEnabled: true
@@ -130,30 +135,3 @@ jobs:
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
   
-  test-auth:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup bats
-        uses: mig4/setup-bats@v1
-        with:
-          bats-version: "1.8.2"
-
-      - name: Setup bats helpers
-        uses: brokenpip3/setup-bats-libs@0.0.3
-        with:
-          support-path: /usr/lib/bats/bats-support
-          support-version: "0.3.0"
-          assert-path: /usr/lib/bats/bats-assert
-          assert-version: "2.1.0"
-
-      - name: bats -r .
-        working-directory: e2e/auth
-        run: |
-          for i in {1..5}; do bats -r . && break || sleep 5; done
-
-      - name: bats -r . --enable_bzlmod
-        working-directory: e2e/auth
-        run: |
-          echo "build --enable_bzlmod" >> .bazelrc.user
-          for i in {1..5}; do bats -r . && break || sleep 5; done
