@@ -26,7 +26,7 @@ _IMAGE_REFERENCE_ATTRS = {
     ),
     "config": attr.label(
         # TODO(2.0): remove
-        doc = "Label to a .docker/config.json file. `config` attribute overrides `config_path` attribute. DEPRECATED, will be removed in 2.0",
+        doc = "Label to a .docker/ file. `config` attribute overrides `config_path` attribute. DEPRECATED, will be removed in 2.0",
         allow_single_file = True,
     ),
     "config_path": attr.label(
