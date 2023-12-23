@@ -1,12 +1,11 @@
 "Bazel dependencies"
 
 bazel_dep(name = "rules_oci", version = "0.0.0", dev_dependency = True)
-
-bazel_dep(name = "platforms", version = "0.0.5")
+bazel_dep(name = "platforms", version = "0.0.7")
 
 local_path_override(
     module_name = "rules_oci",
-    path = "../..",
+    path = "../../..",
 )
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
