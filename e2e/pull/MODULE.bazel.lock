@@ -1,6 +1,6 @@
 {
   "lockFileVersion": 3,
-  "moduleFileHash": "03d70338825f93875531bda857fb2e1b5454cefd1ddc4dc1114592c0024fc655",
+  "moduleFileHash": "20c27ce017f08246513cfeb86500ec6c321f348618832ee0a6dcee3dfcc834f7",
   "flags": {
     "cmdRegistries": [
       "https://bcr.bazel.build/"
@@ -1155,7 +1155,7 @@
     },
     "@@aspect_bazel_lib~override//lib:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "D9NGMaw53hNLhqsipT5N5JOjyatdhrGiDk/Mg5YZb6A=",
+        "bzlTransitiveDigest": "HXMGHZdDogvmoLajx4Q2hz59Wh5bnrV/zOeiqFD7IDI=",
         "accumulatedFileDigests": {},
         "envVariables": {},
         "generatedRepoSpecs": {
