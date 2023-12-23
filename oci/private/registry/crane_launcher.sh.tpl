@@ -8,12 +8,9 @@ function start_registry() {
     local registry_pid="$1/proc.pid"
 
     mkdir -p "${storage_dir}"
-    # --blobs-to-disk uses go's os.TempDir() function which is equal to TMPDIR under *nix.
-    # https://pkg.go.dev/os#TempDir
-    TMPDIR="${storage_dir}" TMP="${storage_dir}" \
-    "${CRANE_REGISTRY_BIN}" registry serve --blobs-to-disk >> $output 2>&1 &
+    "${CRANE_REGISTRY_BIN}" registry serve --disk="${storage_dir}" --address=localhost:0 >> $output 2>&1 &
     echo "$!" > "${registry_pid}"
-
+    
     local timeout=$((SECONDS+${deadline}))
 
     while [ "${SECONDS}" -lt "${timeout}" ]; do
@@ -34,7 +31,6 @@ function stop_registry() {
     local storage_dir="$1"
     local registry_pid="$1/proc.pid"
     if [[ ! -f "${registry_pid}" ]]; then
-        echo "Registry not started" >&2
         return 0
     fi
     kill -9 "$(cat "${registry_pid}")" || true
