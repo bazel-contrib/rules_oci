@@ -10,7 +10,7 @@ elif command -v podman &> /dev/null; then
     CONTAINER_CLI="podman"
 else
     echo >&2 "Neither docker or podman could be found."
-    echo >&2 "If you wish to use another container runtime, you can pass an executable to the `command` attribute."
+    echo >&2 "If you wish to use another container runtime, you can pass an executable to the 'command' attribute."
     exit 1
 fi
 
