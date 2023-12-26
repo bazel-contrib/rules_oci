@@ -333,8 +333,7 @@ copy_to_directory(
     # Always use hardlink to avoid having copies of the blobs from external repository in the output-tree.
     hardlink = "on",
     include_external_repositories = ["*"],
-    srcs = [
-        "blobs",
+    srcs = glob(["blobs/**"]) + [
         "oci-layout",
         "index.json",
     ],
