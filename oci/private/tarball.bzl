@@ -44,10 +44,12 @@ attrs = {
             Alternative target for a container cli tool that will be
             used to load the image into the local engine when using `bazel run` on this oci_tarball.
 
-            By default, we look for `docker` or `podman` on the PATH.
+            By default, we look for `docker` or `podman` on the PATH, and run the `load` command.
+            
+            > Note that rules_docker has an "incremental loader" which has better performance, see
+            > Follow https://github.com/bazel-contrib/rules_oci/issues/454 for similar behavior in rules_oci.
 
             See the _run_template attribute for the script that calls this loader tool.
-            This shows what arguments will be passed to it when it is executed.
             """,
         allow_single_file = True,
         mandatory = False,
