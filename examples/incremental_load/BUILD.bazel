@@ -1,11 +1,6 @@
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("//oci:defs.bzl", "oci_image", "oci_tarball")
 
-sh_binary(
-    name = "loader",
-    srcs = ["loader.sh"]
-)
-
 pkg_tar(
     name = "app",
     srcs = ["test.bash"],
@@ -21,6 +16,6 @@ oci_image(
 oci_tarball(
     name = "tarball",
     image = ":image",
-    loader = ":loader",
+    loader = "loader.sh",
     repo_tags = ["test:test"],
 )

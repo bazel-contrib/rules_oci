@@ -46,14 +46,16 @@ attrs = {
 
             By default, we look for `docker` or `podman` on the PATH, and run the `load` command.
             
-            > Note that rules_docker has an "incremental loader" which has better performance, see
-            > Follow https://github.com/bazel-contrib/rules_oci/issues/454 for similar behavior in rules_oci.
+            > Note that rules_docker has an "incremental loader" which is faster than oci_tarball by design.
+            > Something similar can be done for oci_tarball. 
+            > See [loader.sh](/examples/incremental_loader/loader.sh) and explanation about [how](/examples/incremental_loader/README.md) it works.
 
             See the _run_template attribute for the script that calls this loader tool.
             """,
+        allow_single_file = True,
         mandatory = False,
         executable = True,
-        cfg = "exec",
+        cfg = "target",
     ),
     "_run_template": attr.label(
         default = Label("//oci/private:tarball_run.sh.tpl"),
@@ -109,16 +111,17 @@ def _tarball_impl(ctx):
         output = exe,
         substitutions = {
             "{{image_path}}": tarball.short_path,
-            "{{loader}}": ctx.executable.loader.short_path if ctx.executable.loader else "",
+            "{{loader}}": ctx.file.loader.path if ctx.file.loader else "",
         },
         is_executable = True,
     )
-    
-    runfiles = ctx.runfiles(files = [tarball])
-    if ctx.executable.loader:
-        runfiles = runfiles.merge(ctx.attr.loader[DefaultInfo].default_runfiles)
+    runfiles = [tarball]
+    if ctx.file.loader:
+        runfiles.append(ctx.file.loader)
 
-    return DefaultInfo(files = depset([tarball]), runfiles = runfiles, executable = exe)
+    return [
+        DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
+    ]
 
 oci_tarball = rule(
     implementation = _tarball_impl,
