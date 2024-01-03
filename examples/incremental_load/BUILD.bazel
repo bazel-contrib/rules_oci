@@ -1,0 +1,26 @@
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("//oci:defs.bzl", "oci_image", "oci_tarball")
+
+sh_binary(
+    name = "loader",
+    srcs = ["loader.sh"]
+)
+
+pkg_tar(
+    name = "app",
+    srcs = ["test.bash"],
+)
+
+oci_image(
+    name = "image",
+    base = "@ubuntu",
+    cmd = ["test.sh"],
+    tars = ["app.tar"],
+)
+
+oci_tarball(
+    name = "tarball",
+    image = ":image",
+    loader = ":loader",
+    repo_tags = ["test:test"],
+)
