@@ -39,9 +39,15 @@ attrs = {
         allow_single_file = [".txt"],
         mandatory = True,
     ),
-    "command": attr.label(
+    "loader": attr.label(
         doc = """\
-            target for a container cli tool (i.e. docker or podman or other) that will be used to load the image into the local engine when using 'bazel run //my/image'.",
+            Alternative target for a container cli tool that will be
+            used to load the image into the local engine when using `bazel run` on this oci_tarball.
+
+            By default, we look for `docker` or `podman` on the PATH.
+
+            See the _run_template attribute for the script that calls this loader tool.
+            This shows what arguments will be passed to it when it is executed.
             """,
         allow_single_file = True,
         mandatory = False,
@@ -51,7 +57,10 @@ attrs = {
     "_run_template": attr.label(
         default = Label("//oci/private:tarball_run.sh.tpl"),
         doc = """ \
-              The template used to load the container. The default template uses Docker, but this template could be replaced to use podman, runc, or another runtime. Please reference the default template to see available substitutions. 
+              The template used to load the container when using `bazel run` on this oci_tarball.
+              
+              See the `loader` attribute to replace the tool which is called.
+              Please reference the default template to see available substitutions. 
         """,
         allow_single_file = True,
     ),
@@ -99,13 +108,13 @@ def _tarball_impl(ctx):
         output = exe,
         substitutions = {
             "{{image_path}}": tarball.short_path,
-            "{{command}}": ctx.file.command.path if ctx.file.command else "",
+            "{{loader}}": ctx.file.loader.path if ctx.file.loader else "",
         },
         is_executable = True,
     )
     runfiles = [tarball]
-    if ctx.file.command:
-        runfiles.append(ctx.file.command)
+    if ctx.file.loader:
+        runfiles.append(ctx.file.loader)
 
     return [
         DefaultInfo(files = depset([tarball]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
