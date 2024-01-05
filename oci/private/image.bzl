@@ -103,8 +103,10 @@ def _oci_image_impl(ctx):
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
+    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    grep = ctx.toolchains["@aspect_bazel_lib//lib:grep_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-    
+    sed = ctx.toolchains["@aspect_bazel_lib//lib:sed_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
 
@@ -117,7 +119,10 @@ def _oci_image_impl(ctx):
         substitutions = {
             "{{registry_launcher_path}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
+            "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
+            "{{grep_path}}": grep.grep_info.bin.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
+            "{{sed_path}}": sed.sed_info.bin.path,
             "{{storage_dir}}": output.path,
             "{{empty_tar}}": ctx.file._empty_tar.path,
         },
@@ -196,7 +201,15 @@ def _oci_image_impl(ctx):
         outputs = [output],
         env = action_env,
         executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
-        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        tools = [
+            crane.crane_info.binary,
+            registry.registry_info.launcher,
+            registry.registry_info.registry,
+            coreutils.coreutils_info.bin,
+            grep.grep_info.bin,
+            jq.jqinfo.bin,
+            sed.sed_info.bin,
+        ],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
     )
@@ -215,6 +228,9 @@ oci_image = rule(
         "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//oci:crane_toolchain_type",
         "@rules_oci//oci:registry_toolchain_type",
+        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+        "@aspect_bazel_lib//lib:grep_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@aspect_bazel_lib//lib:sed_toolchain_type",
     ],
 )
