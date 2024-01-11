@@ -13,6 +13,7 @@ readonly STORAGE_DIR="{{storage_dir}}"
 readonly STDERR=$(mktemp)
 
 silent_on_success() {
+    stop_registry ${STORAGE_DIR}
     CODE=$?
     if [ "${CODE}" -ne 0 ]; then
         cat "${STDERR}" >&1

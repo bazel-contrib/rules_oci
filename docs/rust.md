@@ -30,11 +30,23 @@ See more details in the [`oci_pull` docs](/docs/pull.md)
 
 ## Note about compatibility
 
-`distroless/cc` is based on [Debian 11 (bullseye)](https://github.com/GoogleContainerTools/distroless#base-operating-system), which contain `glibc 2.31`. So if you run `rust_binary` on a machine that have `glibc > 2.31`, your image may not work and will see error like: `/<binary_name>: /lib/x86_64-linux-gnu/libc.so.6: version GLIBC_2.33 not found `. To avoid this, you can:
+`distroless/cc` is based on [Debian 11 (bullseye)](https://github.com/GoogleContainerTools/distroless#base-operating-system), which contain `glibc 2.31`. So if you run `rust_binary` on a machine that has `glibc > 2.31`, your image may not work and will see error like: `/<binary_name>: /lib/x86_64-linux-gnu/libc.so.6: version GLIBC_2.33 not found `. To avoid this, you can:
 
 - Use a base image that contains newer version of glibc (> 2.31)
 - Run bazel build on an environment that contains `glibc <= 2.31`
 - Switch to `musl`
+
+For example, if you wanted to use a base image with a newer glibc, you could use the Debian 12 `distroless/cc` image like so:
+```
+load("@rules_oci//oci:pull.bzl", "oci_pull")
+
+oci_pull(
+    name = "distroless_cc",
+    digest = "sha256:a9056d2232d16e3772bec3ef36b93a5ea9ef6ad4b4ed407631e534b85832cf40",
+    image = "gcr.io/distroless/cc-debian12",
+    platforms = ["linux/amd64", "linux/arm64/v8"],
+)
+```
 
 ## Example
 

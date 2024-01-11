@@ -1,39 +1,43 @@
 bats_load_library "bats-support"
 bats_load_library "bats-assert"
 
-function setup_file() {
-    cd $BATS_TEST_DIRNAME
+setup_file() {
+  cd "$BATS_TEST_DIRNAME/$WKSP"
 
-    export PATH="$PATH:$BATS_TEST_DIRNAME/helpers/"
-    export TAIL_PID="$(mktemp)"
-    export AUTH_STDIN="$(mktemp -d)/stdin"
+  export PATH="$PATH:$BATS_TEST_DIRNAME/credential-helper/"
+  export TAIL_PID="$(mktemp)"
+  export AUTH_STDIN="$(mktemp -d)/stdin"
 
-    mkfifo $AUTH_STDIN
-    (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | bazel run :auth &
-    export REGISTRY_PID=$!
-    export TAIL_PID=$(cat $TAIL_PID)
+  mkfifo $AUTH_STDIN
 
-    while ! nc -z localhost 1447; do   
-      sleep 0.1
-    done
-    
-    bazel run :push -- --repository localhost:1447/empty_image
+  (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | "$BATS_TEST_DIRNAME/$REGISTRY" 2>&3 &
+  export REGISTRY_PID=$!
+  export TAIL_PID=$(cat $TAIL_PID)
+  
+  while ! nc -z localhost 1447; do
+    sleep 0.1
+    echo "# waiting for registry at 1477" >&3
+  done
+  echo "# registry is ready. pushing the image" >&3
+  run bazel run :push -- --repository localhost:1447/empty_image 2>&3
+  echo "# image pushed" >&3
 }
 
-function teardown_file() {
-    bazel shutdown
-    kill $REGISTRY_PID
-    kill $TAIL_PID
+teardown_file() {
+  echo "# cleaning up" >&3
+  bazel shutdown
+  kill $REGISTRY_PID
+  kill $TAIL_PID
 }
 
-function setup() {
-    export DOCKER_CONFIG=$(mktemp -d)
-    bazel clean
+setup() {
+  export DOCKER_CONFIG=$(mktemp -d)
+  bazel clean
 }
 
 function update_assert() {
-    echo $@ > $AUTH_STDIN
-    sleep 0.5
+  echo $@ > $AUTH_STDIN
+  sleep 0.5
 }
 
 @test "plain text" {
@@ -45,7 +49,7 @@ function update_assert() {
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_success
 }
 
@@ -58,7 +62,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_success
 }
 
@@ -71,7 +75,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdDp0ZXN0"]}'
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_success
 }
 
@@ -83,7 +87,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_success
 }
 
@@ -94,7 +98,7 @@ EOF
   "credsStore": "evil"
 }
 EOF
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_failure
     assert_output -p "can't run at this time" "ERROR: credential helper failed:"
 }
@@ -106,7 +110,7 @@ EOF
   "credsStore": "missing"
 }
 EOF
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_failure
     assert_output -p "exec: docker-credential-missing: not found" "ERROR: credential helper failed:"
 }
@@ -119,7 +123,7 @@ EOF
   }
 }
 EOF
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_failure 
     assert_output -p "Error in fail: credential helper failed:" "can't run at this time"
 }
@@ -133,7 +137,7 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic cGVyLWNyZWQ6dGVzdGluZw=="]}'
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_success
 }
 
@@ -146,6 +150,6 @@ EOF
 }
 EOF
     update_assert '{"Authorization": ["Basic not_match"]}'
-    run bazel build @empty_image//... --repository_cache=
+    run bazel build @empty_image//... $BAZEL_FLAGS
     assert_failure
 }

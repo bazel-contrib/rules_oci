@@ -5,9 +5,12 @@ function start_registry() {
     local storage_dir="$1"
     local output="$2"
     local deadline="${3:-5}"
+    local registry_pid="$1/proc.pid"
 
-    "${CRANE_REGISTRY_BIN}" registry serve --disk="${storage_dir}" >> $output 2>&1 &
-
+    mkdir -p "${storage_dir}"
+    "${CRANE_REGISTRY_BIN}" registry serve --disk="${storage_dir}" --address=localhost:0 >> $output 2>&1 &
+    echo "$!" > "${registry_pid}"
+    
     local timeout=$((SECONDS+${deadline}))
 
     while [ "${SECONDS}" -lt "${timeout}" ]; do
@@ -24,6 +27,12 @@ function start_registry() {
     return 0
 }
 
-function stop_registry() { 
-    :
+function stop_registry() {
+    local storage_dir="$1"
+    local registry_pid="$1/proc.pid"
+    if [[ ! -f "${registry_pid}" ]]; then
+        return 0
+    fi
+    kill -9 "$(cat "${registry_pid}")" || true
+    return 0
 }

@@ -6,6 +6,7 @@ function start_registry() {
     local output="$2"
     local deadline="${3:-5}"
     local config_path="$storage_dir/config.json"
+    local registry_pid="$storage_dir/proc.pid"
 
     cat > "${config_path}" <<EOF
 {
@@ -15,6 +16,7 @@ function start_registry() {
 }
 EOF
     HOME="${TMPDIR}" "${ZOT}" serve "${config_path}" >> $output 2>&1 &
+    echo "$!" > "${registry_pid}"
 
     local timeout=$((SECONDS+${deadline}))
 
@@ -36,4 +38,10 @@ function stop_registry() {
     local storage_dir="$1"
     rm -rf "${storage_dir}/.uploads"
     rm -r "${storage_dir}/config.json"
+    local registry_pid="$1/proc.pid"
+    if [[ ! -f "${registry_pid}" ]]; then
+        return 0
+    fi
+    kill -9 "$(cat "${registry_pid}")" || true
+    return 0
 }

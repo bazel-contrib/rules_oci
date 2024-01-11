@@ -26,6 +26,7 @@ readonly REGISTRY_LAUNCHER=${RUNFILES}/${4#"external/"}
 # Launch a registry instance at a random port
 source "${REGISTRY_LAUNCHER}"
 REGISTRY=$(start_registry $TMP $TMP/output.log)
+trap "stop_registry ${TMP}" EXIT
 
 readonly REPOSITORY="${REGISTRY}/local" 
 
