@@ -164,7 +164,6 @@ if [ -n "$OUTPUT" ]; then
     "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
     rm "${OUTPUT}/temp.json"
     "${CRANE}" layout gc "./${OUTPUT}"
-    stop_registry "${OUTPUT}"
 fi
 
 } 2>> "${STDERR}"
