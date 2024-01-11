@@ -176,13 +176,32 @@ def _get_token(rctx, state, registry, repository):
     return pattern
 
 def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
-    executable = "{}.sh".format(helper_name)
+    creds_helper_name = "docker-credential-{}".format(helper_name)
+
+    # Look for common paths that may include docker credential helpers.
+    # Default to looking under the default PATH ("/bin:/usr/bin:/usr/sbin").
+    creds_helper_path = creds_helper_name
+    creds_helper_locations = [
+        # Common path for package managers
+        "/usr/local/bin",
+        # Homebrew
+        "/opt/brew/bin",
+        "/opt/homebrew/bin",
+    ]
+    for location in creds_helper_locations:
+        helper = rctx.path("{}/{}".format(location, creds_helper_path))
+        if helper.exists:
+            creds_helper_path = str(helper)
+            break
+
+    executable = "{}.sh".format(creds_helper_name)
     rctx.file(
         executable,
         content = """\
 #!/usr/bin/env bash
-exec "docker-credential-{}" get <<< "$1"
-        """.format(helper_name),
+# Get credentials using the docker credential helper.
+exec "{}" get <<< "$1"
+        """.format(creds_helper_path),
     )
     result = rctx.execute([rctx.path(executable), raw_host])
     if result.return_code:
