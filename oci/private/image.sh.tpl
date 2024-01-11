@@ -59,9 +59,7 @@ function base_from_layout() {
     local oci_layout_path=$1
     local registry=$2
 
-    "${CRANE}" push "${oci_layout_path}" "${registry}/oci/layout:latest" --image-refs "${refs}" > "${output}" 2>&1
-
-    echo "${output}" >&2
+    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
 
     if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
@@ -161,7 +159,11 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
 fi
 
 if [ -n "$OUTPUT" ]; then
-    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci
+    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --annotate-ref
+    mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
+    "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
+    rm "${OUTPUT}/temp.json"
+    "${CRANE}" layout gc "./${OUTPUT}"
 fi
 
 } 2>> "${STDERR}"
