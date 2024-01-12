@@ -276,7 +276,7 @@ Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/178
             fallback_to_curl = True
     else:
         util.warning(rctx, """\
-Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types. 
+Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types.
 Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.""")
         fallback_to_curl = True
 
@@ -376,8 +376,8 @@ def _oci_pull_impl(rctx):
         manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "manifest.json")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(manifest["mediaType"]))
-    
-    # symlink manifest.json to blobs with it's digest. 
+
+    # symlink manifest.json to blobs with it's digest.
     # it is okay to use symlink here as copy_to_directory will dereference it when creating the TreeArtifact.
     rctx.symlink("manifest.json", _digest_into_blob_path(digest))
 
