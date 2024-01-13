@@ -119,6 +119,7 @@ def _oci_image_impl(ctx):
             "{{jq_path}}": jq.jqinfo.bin.path,
             "{{storage_dir}}": output.path,
             "{{empty_tar}}": ctx.file._empty_tar.path,
+            "{{output}}": output.path,
         },
     )
 
@@ -127,10 +128,11 @@ def _oci_image_impl(ctx):
 
     if ctx.attr.base:
         base = "oci:layout/%s" % ctx.file.base.path
+        # symlink = ctx.actions.declare_symlink("%s/base" % ctx.label.name)
+        # ctx.actions.symlink(output = symlink, target_path = ctx.file.base.path)
         inputs_depsets.append(depset([ctx.file.base]))
 
     args = ctx.actions.args()
-
     args.add_all([
         "mutate",
         base,
@@ -194,7 +196,7 @@ def _oci_image_impl(ctx):
         outputs = [output],
         env = action_env,
         executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
-        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
     )
@@ -214,5 +216,6 @@ oci_image = rule(
         "@rules_oci//oci:crane_toolchain_type",
         "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
     ],
 )
