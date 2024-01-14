@@ -45,7 +45,7 @@ attrs = {
             used to load the image into the local engine when using `bazel run` on this oci_tarball.
 
             By default, we look for `docker` or `podman` on the PATH, and run the `load` command.
-            
+
             > Note that rules_docker has an "incremental loader" which has better performance, see
             > Follow https://github.com/bazel-contrib/rules_oci/issues/454 for similar behavior in rules_oci.
 
@@ -60,9 +60,9 @@ attrs = {
         default = Label("//oci/private:tarball_run.sh.tpl"),
         doc = """ \
               The template used to load the container when using `bazel run` on this oci_tarball.
-              
+
               See the `loader` attribute to replace the tool which is called.
-              Please reference the default template to see available substitutions. 
+              Please reference the default template to see available substitutions.
         """,
         allow_single_file = True,
     ),
@@ -73,13 +73,17 @@ attrs = {
 def _tarball_impl(ctx):
     image = ctx.file.image
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
-    yq_bin = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo.bin
+    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    tar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
+    yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
     repo_tags = ctx.file.repo_tags
 
     substitutions = {
         "{{format}}": ctx.attr.format,
-        "{{yq}}": yq_bin.path,
+        "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
+        "{{tar_path}}": tar.tarinfo.binary.path,
+        "{{yq_path}}": yq.yqinfo.bin.path,
         "{{image_dir}}": image.path,
         "{{tarball_path}}": tarball.path,
     }
@@ -96,9 +100,14 @@ def _tarball_impl(ctx):
 
     ctx.actions.run(
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
+        use_default_shell_env = True,
         inputs = [image, repo_tags, executable],
         outputs = [tarball],
-        tools = [yq_bin],
+        tools = [
+            coreutils.coreutils_info.bin,
+            tar.tarinfo.binary,
+            yq.yqinfo.bin,
+        ],
         mnemonic = "OCITarball",
         progress_message = "OCI Tarball %{label}",
     )
@@ -128,6 +137,8 @@ oci_tarball = rule(
     doc = doc,
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
+        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+        "@aspect_bazel_lib//lib:tar_toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
     ],
     executable = True,

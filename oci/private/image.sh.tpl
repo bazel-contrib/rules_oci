@@ -7,16 +7,19 @@ set -o pipefail -o errexit -o nounset
 
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
 readonly CRANE="{{crane_path}}"
+readonly COREUTILS="{{coreutils_path}}"
+readonly GREP="{{grep_path}}"
+readonly SED="{{sed_path}}"
 readonly JQ="{{jq_path}}"
 readonly STORAGE_DIR="{{storage_dir}}"
 
-readonly STDERR=$(mktemp)
+readonly STDERR=$("${COREUTILS}" mktemp)
 
 silent_on_success() {
     stop_registry ${STORAGE_DIR}
     CODE=$?
     if [ "${CODE}" -ne 0 ]; then
-        cat "${STDERR}" >&1
+        "${COREUTILS}" cat "${STDERR}" >&1
     fi
 }
 trap "silent_on_success" EXIT
@@ -26,11 +29,10 @@ function get_option() {
     shift
     for ARG in "$@"; do
         case "$ARG" in
-            ($name=*) echo ${ARG#$name=};; 
+            ($name=*) echo ${ARG#$name=};;
         esac
     done
 }
-
 
 function empty_base() {
     local registry=$1
@@ -54,33 +56,33 @@ function empty_base() {
 
 function base_from_layout() {
     # TODO: https://github.com/google/go-containerregistry/issues/1514
-    local refs=$(mktemp)
-    local output=$(mktemp)
+    local refs=$("${COREUTILS}" mktemp)
+    local output=$("${COREUTILS}" mktemp)
     local oci_layout_path=$1
     local registry=$2
 
     "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
 
-    if grep -q "MANIFEST_INVALID" "${output}"; then
-    cat >&2 << EOF
+    if "${GREP}" -q "MANIFEST_INVALID" "${output}"; then
+    "${COREUTILS}" cat >&2 << EOF
 
-zot registry does not support docker manifests. 
+zot registry does not support docker manifests.
 
 crane registry does support both oci and docker images, but is more memory hungry.
 
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
+If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains".
 
 EOF
 
         exit 1
     fi
 
-    cat "${refs}"
+    "${COREUTILS}" cat "${refs}"
 }
 
 # this will redirect stderr(2) to stderr file.
 {
-source "${REGISTRY_LAUNCHER}" 
+source "${REGISTRY_LAUNCHER}"
 REGISTRY=
 REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
 
@@ -129,8 +131,8 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
-	(--exposed-ports-file=*)
-	  while IFS= read -r in || [ -n "$in" ]; do
+        (--exposed-ports-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--exposed-ports=$in")
           done <"${ARG#--exposed-ports-file=}"
           ;;
@@ -140,10 +142,10 @@ done
 
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
 
-if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
+if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
     env_expansion_filter=\
 '[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | reduce .[] as $match (
-    {parts: [], prev: 0}; 
+    {parts: [], prev: 0};
     {parts: (.parts + [$raw[.prev:$match.offset], $envs[$match.captures[0].string]]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
     base_config=$("${CRANE}" config "${REF}")
@@ -160,9 +162,9 @@ fi
 
 if [ -n "$OUTPUT" ]; then
     "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --annotate-ref
-    mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
+    "${COREUTILS}" mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
     "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
-    rm "${OUTPUT}/temp.json"
+    "${COREUTILS}" rm "${OUTPUT}/temp.json"
     "${CRANE}" layout gc "./${OUTPUT}"
 fi
 

@@ -1,5 +1,7 @@
-readonly SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
-readonly CRANE_REGISTRY_BIN="${SCRIPT_DIR}/{{CRANE}}"
+# Ensure binaries are provided by calling script
+: ${COREUTILS?}
+: ${CRANE?}
+: ${SED?}
 
 function start_registry() {
     local storage_dir="$1"
@@ -7,14 +9,14 @@ function start_registry() {
     local deadline="${3:-5}"
     local registry_pid="$1/proc.pid"
 
-    mkdir -p "${storage_dir}"
-    "${CRANE_REGISTRY_BIN}" registry serve --disk="${storage_dir}" --address=localhost:0 >> $output 2>&1 &
+    "${COREUTILS}" mkdir -p "${storage_dir}"
+    "${CRANE}" registry serve --disk="${storage_dir}" --address=localhost:0 >> $output 2>&1 &
     echo "$!" > "${registry_pid}"
-    
+
     local timeout=$((SECONDS+${deadline}))
 
     while [ "${SECONDS}" -lt "${timeout}" ]; do
-        local port=$(cat $output | sed -nr 's/.+serving on port ([0-9]+)/\1/p')
+        local port=$("${COREUTILS}" cat $output | "${SED}" -nr 's/.+serving on port ([0-9]+)/\1/p')
         if [ -n "${port}" ]; then
             break
         fi
@@ -33,6 +35,6 @@ function stop_registry() {
     if [[ ! -f "${registry_pid}" ]]; then
         return 0
     fi
-    kill -9 "$(cat "${registry_pid}")" || true
+    kill -9 "$("${COREUTILS}" cat "${registry_pid}")" || true
     return 0
 }
