@@ -46,8 +46,9 @@ attrs = {
 
             By default, we look for `docker` or `podman` on the PATH, and run the `load` command.
             
-            > Note that rules_docker has an "incremental loader" which has better performance, see
-            > Follow https://github.com/bazel-contrib/rules_oci/issues/454 for similar behavior in rules_oci.
+            > Note that rules_docker has an "incremental loader" which is faster than oci_tarball by design.
+            > Something similar can be done for oci_tarball. 
+            > See [loader.sh](/examples/incremental_loader/loader.sh) and explanation about [how](/examples/incremental_loader/README.md) it works.
 
             See the _run_template attribute for the script that calls this loader tool.
             """,
