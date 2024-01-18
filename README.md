@@ -1,6 +1,6 @@
 # Bazel rules for OCI containers
 
-This is a "barebones" alternative to [rules_docker](https://github.com/bazelbuild/rules_docker) based on the Open Containers Initiative: <https://opencontainers.org/>
+This is a _"barebones"_ **alternative** to [rules_docker](https://github.com/bazelbuild/rules_docker) based on the Open Containers Initiative: <https://opencontainers.org/>
 
 A lot of companies have already done a successful migration from `rules_docker`. Please let us know about yours on our adoption discussion!
 <https://github.com/bazel-contrib/rules_oci/discussions/299>
@@ -8,6 +8,8 @@ A lot of companies have already done a successful migration from `rules_docker`.
 _Need help?_ This ruleset has support provided by https://aspect.dev.
 
 ## Design
+
+**This ruleset is not a 1:1 replacement for rules_docker, and will never be!**
 
 We started from first principles and avoided some pitfalls we learned in maintaining that repo:
 
