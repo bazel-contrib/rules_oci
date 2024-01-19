@@ -1,17 +1,24 @@
-# Bazel rules for OCI containers
+# Bazel rules for OCI container images
 
-This is a _"barebones"_ **alternative** to [rules_docker](https://github.com/bazelbuild/rules_docker) based on the Open Containers Initiative: <https://opencontainers.org/>
+Bazel rules based on the Open Containers Initiative: <https://opencontainers.org/>
 
-A lot of companies have already done a successful migration from `rules_docker`. Please let us know about yours on our adoption discussion!
+Please let us know about your success stories on our adoption discussion!
 <https://github.com/bazel-contrib/rules_oci/discussions/299>
 
 _Need help?_ This ruleset has support provided by https://aspect.dev.
 
-## Design
+## Comparison with rules_docker
 
-**This ruleset is not a 1:1 replacement for rules_docker, and will never be!**
+This ruleset is not intended as a complete replacement for [rules_docker]!
+Many use cases can be accomodated, and we know that many users have completely replaced rules_docker.
+You can find a migration guide at <https://docs.aspect.build/guides/rules_oci_migration>.
+However, some other use cases such as `container_run_and_*` rules have no equivalent.
 
-We started from first principles and avoided some pitfalls we learned in maintaining that repo:
+[rules_docker] was largely unmaintained for 18 months, and as of October 2023 it has been archived.
+See https://github.com/bazelbuild/rules_docker/discussions/2038.
+You might still decide to use rules_docker, and perhaps even sign up as a maintainer so that it may be un-archived.
+
+We started from first principles and avoided some pitfalls we learned from rules_docker:
 
 - Use a toolchain consisting of off-the-shelf, pre-built layer and container manipulation tools.
 - Don't write language-specific rules, as we cannot be experts on all languages, nor can users deal with the versioning issues
@@ -19,6 +26,8 @@ We started from first principles and avoided some pitfalls we learned in maintai
 - Don't be docker-specific, now that it has a commercial license and other container runtimes exist ([podman](https://podman.io/) for example).
 - Use our toolchain hermetically: don't assume there is a docker pre-installed on the machine.
 - Keep a tight complexity budget for the project so we are able to commit to effective maintenance.
+
+[rules_docker]: https://github.com/bazelbuild/rules_docker
 
 ## Installation
 
@@ -39,7 +48,7 @@ With bzlmod, you can use `archive_override` or `git_override`. For `WORKSPACE`, 
 
 ## Usage
 
-rules_oci does not contain language-specific rules, but we do have limited documentation on how to accomplish typical tasks, and how to migrate from the language-specific rules in rules_docker.
+rules_oci does not contain language-specific rules, but we do have limited documentation on how to accomplish typical tasks.
 
 - [C/C++](docs/cpp.md)
 - [Go](docs/go.md)
