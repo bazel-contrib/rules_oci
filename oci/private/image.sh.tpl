@@ -12,14 +12,15 @@ readonly STORAGE_DIR="{{storage_dir}}"
 
 readonly STDERR=$(mktemp)
 
-silent_on_success() {
+on_exit() {
+    local last_cmd_exit_code=$?
+    set +o errexit
     stop_registry ${STORAGE_DIR}
-    CODE=$?
-    if [ "${CODE}" -ne 0 ]; then
+    local stop_registry_exit_code=$?
+    if [[ $last_cmd_exit_code != 0 ]] || [[ $stop_registry_exit_code != 0 ]]; then
         cat "${STDERR}" >&1
     fi
 }
-trap "silent_on_success" EXIT
 
 function get_option() {
     local name=$1
@@ -78,8 +79,12 @@ EOF
     cat "${refs}"
 }
 
-# this will redirect stderr(2) to stderr file.
-{
+# Redirect stderr to the $STDERR temp file for the rest of the script.
+exec 2>>"${STDERR}"
+
+# Upon exiting, stop the registry and print STDERR on non-zero exit code.
+trap "on_exit" EXIT
+
 source "${REGISTRY_LAUNCHER}" 
 REGISTRY=
 REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
@@ -165,5 +170,3 @@ if [ -n "$OUTPUT" ]; then
     rm "${OUTPUT}/temp.json"
     "${CRANE}" layout gc "./${OUTPUT}"
 fi
-
-} 2>> "${STDERR}"
