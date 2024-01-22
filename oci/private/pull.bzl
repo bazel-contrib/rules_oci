@@ -34,6 +34,11 @@ _IMAGE_REFERENCE_ATTRS = {
         default = "@oci_auth_config//:standard_authorization_config_path",
         allow_single_file = True,
     ),
+    "docker.elastic.co": {
+        "realm": "docker-auth.elastic.co/auth",
+        "scope": "repository:{repository}:pull",
+        "service": "token-service",
+    },
 }
 
 # Unfortunately bazel downloader doesn't let us sniff the WWW-Authenticate header, therefore we need to
