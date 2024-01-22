@@ -64,6 +64,7 @@ build_test(
         # "@apollo_router",
         "@from_rules_docker",
         "@ubuntu",
+        "@es_kibana_image",
     ],
 )
 
