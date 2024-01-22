@@ -2,6 +2,20 @@
 
 # WARNING: only v0.15.1 and above is supported due to --workdir feature.
 CRANE_VERSIONS = {
+    "v0.18.0": {
+        "go-containerregistry-0": "sha256-Jc71fORYho8n/Jlk6jI+VQoqrhr9SuQIEUZIrCMl+UA=",
+        "darwin_arm64": "sha256-1vp5e6uDqr+eXAsBqjdQv50ophXaHYrTCD0PUn5vvuY=",
+        "darwin_x86_64": "sha256-mX1dkeqEHemwwj+fuCvIqfs8OJsNiPoAab816pTCmX8=",
+        "linux_arm64": "sha256-PoHe6W+yD4/6oVDBE2q8OcN2xxg4Q6XgphZLliNhPFY=",
+        "linux_armv6": "sha256-1S3yIH0naPxtq1CM+IItIWLbtv4dQSiXrR3h+RU8PWk=",
+        "linux_i386": "sha256-tGlnKAaPEIqLbiq5iZGTMs8YAY0rVm9QaYp+cA/jvG0=",
+        "linux_ppc64le": "sha256-vLHAkrKcCgkKCjYYSbwanG9yMIfk5IRQTiuhm4/kuLU=",
+        "linux_s390x": "sha256-b9IoSBjkeKE7KTDf23rYmdCLg9SwWE3oPmAVtb4Dv0k=",
+        "linux_x86_64": "sha256-zfTUJtll2ai6YT1+vzrd+TEBqi6FOj8I+/2u0oI5GPM=",
+        "windows_arm64": "sha256-hpOhAEjn1gOMR/pt1jjabGX26Cg5IzcDY1YrE+v2RS8=",
+        "windows_armv6": "sha256-+jTBS3mcqaVdt+x9S8FiUpbOPG6slBxPYW2QPaa4BE0=",
+        "windows_x86_64": "sha256-EerTSy1+/uaOcgfanzk5kTHpPkufFou01xtghEj6nco=",
+    },
     "v0.17.0": {
         "go-containerregistry-0": "sha256-d54x77NFqxSOlIQuk2D+BOBFAw8w5hXhOQQcuF0zLsk=",
         "darwin_arm64": "sha256-pYM/Dh0C0pnT71cv0f+qFgZE65la5Nuvi8gEFdEVnoo=",
@@ -14,7 +28,7 @@ CRANE_VERSIONS = {
         "linux_x86_64": "sha256-G00+4eIUd2vXS4h0HM8bBw6O1WYAVvBa9jKho5n+IcY=",
         "windows_arm64": "sha256-OdP9MOp/3HwIOjB0WdPY1bnLkLD2XzR3RS90HK5EyJs=",
         "windows_armv6": "sha256-c8OHU6DKiYE+ZTG32RTY9Nn7t7RaPVS/MXshGiAmkXc=",
-        "windows_x86_64": "sha256-NyebS5afExgDW5rTAEsysws6D3ruBJeqZfJeW0b7rU8="
+        "windows_x86_64": "sha256-NyebS5afExgDW5rTAEsysws6D3ruBJeqZfJeW0b7rU8=",
     },
     "v0.16.1": {
         "go-containerregistry-0": "sha256-KHa1NgQVE4cW1YN6aeHBFhgOSOz2KmP1MBw1HVoS+Zs=",
@@ -28,7 +42,7 @@ CRANE_VERSIONS = {
         "linux_x86_64": "sha256-EV3ITRTFrcicFuP6KX6U8GqexJK7Hccw2mJIULd8m+I=",
         "windows_arm64": "sha256-H4CfiYT15fh9E9VRTeLYlv3/Ys+1Rnr2Gp1xAqFtpWE=",
         "windows_armv6": "sha256-j6Oa4+kBYGOub0jlMSfUGNtpoCR0G/kACh4YB456PGE=",
-        "windows_x86_64": "sha256-iU9Nm6K8+07QE/f72n+WL3yS2+84/dFy1GdgdfTopRk="
+        "windows_x86_64": "sha256-iU9Nm6K8+07QE/f72n+WL3yS2+84/dFy1GdgdfTopRk=",
     },
     "v0.15.2": {
         "darwin_arm64": "sha256-XPquVFIWvxd6ZKhSo/HxI7lYBDjOYIoOnNy02uK6F0c=",
@@ -70,12 +84,12 @@ CRANE_VERSIONS = {
 }
 
 ZOT_VERSIONS = {
-  "v2.0.0-rc7": {
-    "darwin-amd64": "sha256-CgQgQBbT2MDf9H9ttWZXSCP1SJfHvI1U1JX8WcExsqc=",
-    "darwin-arm64": "sha256-z+7Tn1mhAfvx9JlAeMq2WxtpMx6lcLjvycUhSAANX1U=",
-    "freebsd-amd64": "sha256-ex4IzW3299cegSnW2Q4LCk/sBJfaIPIxzujo1ocWnRY=",
-    "freebsd-arm64": "sha256-byEVM7MsYNNfC94bmqxCG+VyP1CoMVPQgfQEyVQro7M=",
-    "linux-amd64": "sha256-pAiaOvyD+Tvi/d6MGAFytJFmYYttCukucxaxbAmnX5w=",
-    "linux-arm64": "sha256-+TLMTCs+eYPmxWAbbvb2PFNwGvHsMI40yxeY3wVGepM="
-  }
+    "v2.0.0-rc7": {
+        "darwin-amd64": "sha256-CgQgQBbT2MDf9H9ttWZXSCP1SJfHvI1U1JX8WcExsqc=",
+        "darwin-arm64": "sha256-z+7Tn1mhAfvx9JlAeMq2WxtpMx6lcLjvycUhSAANX1U=",
+        "freebsd-amd64": "sha256-ex4IzW3299cegSnW2Q4LCk/sBJfaIPIxzujo1ocWnRY=",
+        "freebsd-arm64": "sha256-byEVM7MsYNNfC94bmqxCG+VyP1CoMVPQgfQEyVQro7M=",
+        "linux-amd64": "sha256-pAiaOvyD+Tvi/d6MGAFytJFmYYttCukucxaxbAmnX5w=",
+        "linux-arm64": "sha256-+TLMTCs+eYPmxWAbbvb2PFNwGvHsMI40yxeY3wVGepM=",
+    },
 }
