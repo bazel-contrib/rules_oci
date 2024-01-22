@@ -99,12 +99,11 @@ def _oci_image_impl(ctx):
     if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
-    util.assert_crane_version_at_least(ctx, "0.15.1", "oci_image")
+    util.assert_crane_version_at_least(ctx, "0.18.0", "oci_image")
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-    
 
     launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
 
@@ -175,7 +174,6 @@ def _oci_image_impl(ctx):
     if ctx.attr.annotations:
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
-
 
     args.add(output.path, format = "--output=%s")
 
