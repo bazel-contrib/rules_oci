@@ -1,0 +1,41 @@
+"Bazel dependencies"
+
+bazel_dep(name = "rules_oci", version = "0.0.0", dev_dependency = True)
+bazel_dep(name = "platforms", version = "0.0.7")
+
+local_path_override(
+    module_name = "rules_oci",
+    path = "../../..",
+)
+
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+oci.pull(
+    name = "distroless_base_single_arch_no_platforms_attr",
+    digest = "sha256:71b79745bb79377e88d936fd362bf505ad9f278f6a613233f0be2f10b96b1b21",
+    image = "gcr.io/distroless/base",
+)
+
+oci.pull(
+    name = "distroless_base_single_arch_correct_arm64_platforms_attr",
+    digest = "sha256:71b79745bb79377e88d936fd362bf505ad9f278f6a613233f0be2f10b96b1b21",
+    image = "gcr.io/distroless/base",
+    platforms = [
+        "linux/arm64",
+    ],
+)
+
+oci.pull(
+    name = "distroless_base_single_arch_wrong_amd64_platforms_attr",
+    digest = "sha256:71b79745bb79377e88d936fd362bf505ad9f278f6a613233f0be2f10b96b1b21",
+    image = "gcr.io/distroless/base",
+    platforms = [
+        "linux/amd64",
+    ],
+)
+
+use_repo(oci,
+    "distroless_base_single_arch_no_platforms_attr",
+    "distroless_base_single_arch_correct_arm64_platforms_attr",
+    "distroless_base_single_arch_wrong_amd64_platforms_attr",
+)
