@@ -10,6 +10,7 @@ oci_pull(
     name = "distroless_java",
     digest = "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
     image = "gcr.io/distroless/java17",
+    platforms = ["linux/amd64"],  # Optional
 )
 
 # A multi-arch base image
@@ -54,7 +55,7 @@ See the implementation of `_get_auth_file_path` in `/oci/private/auth_config_loc
 
 By default oci_pull try to mimic `docker pull` authentication mechanism to allow users simply use `docker login` for authentication.
 
-However, this doesn't always work due to some limitations of Bazel where response headers can't be read, which prevents us from 
+However, this doesn't always work due to some limitations of Bazel where response headers can't be read, which prevents us from
 performing `WWW-Authenticate` challenges, as we don't know which endpoint to hit to complete the challenge. To workaround this
 we keep a map of known registries that require us to perform www-auth challenge to acquire a temporary token for authentication.
 
@@ -77,7 +78,7 @@ host="$(echo $uri | awk -F[/:] '{print $4}')"
 curl -fsSL https://$host/token | jq '{headers:{"Authorization": [("Bearer " + .token)]}}'
 ```
 
-This tells bazel to run `%workspace%/tools/auth.sh` for any request sent to `public.ecr.aws` and add additional headers that may have been 
+This tells bazel to run `%workspace%/tools/auth.sh` for any request sent to `public.ecr.aws` and add additional headers that may have been
 printed to `stdout` by the external program.
 
 For more information about the credential helpers checkout the [documentation](https://github.com/bazelbuild/proposals/blob/main/designs/2022-06-07-bazel-credential-helpers.md).
@@ -124,8 +125,10 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             When set, repository must be set as well.
         repository: the image path beneath the registry, such as `distroless/static`.
             When set, registry must be set as well.
-        platforms: for multi-architecture images, a dictionary of the platforms it supports
-            This creates a separate external repository for each platform, avoiding fetching layers.
+        platforms: a list of the platforms the image supports. Mandatory for multi-architecture
+            images. Optional for single-architecture images, which expect a one-element list.
+            This creates a separate external repository for each platform, avoiding fetching layers,
+            and an alias that validates the presence of an image matching the target platform's cpu.
         digest: the digest string, starting with "sha256:", "sha512:", etc.
             If omitted, instructions for pinning are provided.
         tag: a tag to choose an image from the registry.
@@ -133,7 +136,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             Since tags are mutable, this is not reproducible, so a warning is printed.
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
         config: Label to a `.docker/config.json` file.
-        config_path: Deprecated. use `config` attribute or DOCKER_CONFIG environment variable. 
+        config_path: Deprecated. use `config` attribute or DOCKER_CONFIG environment variable.
         is_bzlmod: whether the oci_pull is being called from a module extension
     """
 
@@ -157,7 +160,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     if digest and tag:
         # Users might wish to leave tag=latest as "documentation" however if we just ignore tag
         # then it's never checked which means the documentation can be wrong.
-        # For now just forbit having both, it's a non-breaking change to allow it later.
+        # For now just forbid having both, it's a non-breaking change to allow it later.
         fail("Only one of 'digest' or 'tag' may be set")
     if not digest and not tag:
         fail("One of 'digest' or 'tag' must be set")
@@ -181,8 +184,17 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 # TODO(2.0): remove
                 config_path = config_path,
             )
+
             if plat in _PLATFORM_TO_BAZEL_CPU:
                 platform_to_image[_PLATFORM_TO_BAZEL_CPU[plat]] = "@" + plat_name
+
+        # if the user only specifies platforms that are not present in _PLATFORM_TO_BAZEL_CPU,
+        # fail with an clear error message; it prevents a confusing one in oci_alias.
+        if not platform_to_image:
+            fail("None of the provided platforms ({}) are supported. Supported platforms: {}".format(
+                platforms,
+                _PLATFORM_TO_BAZEL_CPU.keys(),
+            ))
     else:
         single_platform = "{}_single".format(name)
         _oci_pull(
@@ -206,8 +218,8 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         repository = repository,
         identifier = digest or tag,
         # image attributes
-        platforms = platform_to_image,
-        platform = single_platform,
+        platforms = platform_to_image,  # image(s) with known platform(s).
+        platform = single_platform,  # single image with unknown platform.
         bzlmod_repository = name if is_bzlmod else None,
         reproducible = reproducible,
         config = config,

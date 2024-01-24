@@ -1,6 +1,10 @@
 """Utilities"""
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
+_IMAGE_PLATFORM_VARIANT_DEFAULTS = {
+    'linux/arm64': 'v8',
+}
+
 def _parse_image(image):
     """Support syntax sugar in oci_pull where multiple data fields are in a single string, "image"
 
@@ -66,6 +70,55 @@ def _sha256(rctx, path):
         fail(msg)
 
     return result.stdout.split(" ", 1)[0]
+
+def _validate_image_platform(rctx, image_config):
+    """Validate that the platform in the image config matches the requested platform attribute."""
+    image_os = image_config.get("os", None)
+    image_architecture = image_config.get("architecture", None)
+    image_variant = image_config.get("variant", None)
+
+    attr_os, attr_architecture, attr_variant = _platform_triplet(rctx.attr.platform)
+
+    # the OCI spec makes os and architecture fields required but the Docker one doesn't specify.
+    missing_fields = []
+    if not image_os:
+        missing_fields.append("os")
+    elif image_os != attr_os:
+        fail("Expected image {}/{} to have os '{}', got: '{}'".format(
+            rctx.attr.registry,
+            rctx.attr.repository,
+            attr_os,
+            image_os,
+        ))
+    if not image_architecture:
+        missing_fields.append("architecture")
+    elif image_architecture != attr_architecture:
+        fail("Expected image {}/{} to have architecture '{}', got: '{}'".format(
+            rctx.attr.registry,
+            rctx.attr.repository,
+            attr_architecture,
+            image_architecture,
+        ))
+
+    if missing_fields:
+        util.warning(rctx, "Could not confirm pulled image {}/{} is for platform {}: {} missing from image metadata".format(
+            rctx.attr.registry,
+            rctx.attr.repository,
+            rctx.attr.platform,
+            missing_fields,
+        ))
+
+    # contrary to os/arch, if the variant is set in the image metadata, it needs to be set in
+    # the attribute or have a matching default.
+    attr_variant_or_default = attr_variant or _IMAGE_PLATFORM_VARIANT_DEFAULTS.get(rctx.attr.platform, None)
+    image_variant_or_default = image_variant or _IMAGE_PLATFORM_VARIANT_DEFAULTS.get(image_os + "/" + image_architecture, None)
+    if image_variant_or_default != attr_variant_or_default:
+            fail("Image {}/{} has platform variant '{}', but 'platforms' attribute specifies variant '{}'".format(
+                rctx.attr.registry,
+                rctx.attr.repository,
+                image_variant,
+                attr_variant,
+            ))
 
 def _warning(rctx, message):
     rctx.execute([
@@ -136,7 +189,7 @@ def _build_manifest_json(media_type, size, digest, platform):
 
     if platform:
         platform_parts = platform.split("/", 3)
-        
+
         optional_variant = ""
         if len(platform_parts) == 3:
             optional_variant = ''',
@@ -147,9 +200,9 @@ def _build_manifest_json(media_type, size, digest, platform):
             "architecture": "{}",
             "os": "{}"{optional_variant}
          }}""".format(platform_parts[1], platform_parts[0], optional_variant = optional_variant)
-        
+
     return _INDEX_JSON_TMPL.format(
-        media_type, 
+        media_type,
         size,
         digest,
         optional_platform = optional_platform
@@ -160,13 +213,23 @@ def _assert_crane_version_at_least(ctx, at_least, rule):
     if not versions.is_at_least(at_least, toolchain.crane_info.version):
         fail("rule {} requires crane version >={}".format(rule, at_least))
 
+def _platform_triplet(platform_str):
+    """Return the (os, architecture, variant) triplet corresponding to the oci platform string."""
+    os, _, architecture = platform_str.partition("/")
+    variant = None
+    if "/" in architecture:
+        architecture, _, variant = architecture.partition("/")
+    return os, architecture, variant
+
 
 util = struct(
     parse_image = _parse_image,
     sha256 = _sha256,
+    validate_image_platform = _validate_image_platform,
     warning = _warning,
     maybe_wrap_launcher_for_windows = _maybe_wrap_launcher_for_windows,
     file_exists = _file_exists,
     build_manifest_json = _build_manifest_json,
-    assert_crane_version_at_least = _assert_crane_version_at_least
+    assert_crane_version_at_least = _assert_crane_version_at_least,
+    platform_triplet = _platform_triplet
 )
