@@ -151,6 +151,14 @@ def fetch_images():
         digest = "sha256:78fc30603a49cdabba4cd1c3a94f71cb78e606a98b5b17c690c781c5c8955f29",
     )
 
+    oci_pull(
+        name = "es_kibana_image",
+        # tag = "7.16.2",
+        image = "docker.elastic.co/kibana/kibana",
+        digest = "sha256:9a83bce5d337e7e19d789ee7f952d36d0d514c80987c3d76d90fd1afd2411a9a",
+        platforms = ["linux/amd64"],
+    )
+
     _DEB_TO_LAYER = """\
 alias(
     name = "layer",

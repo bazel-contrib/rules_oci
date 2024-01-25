@@ -74,6 +74,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
+    "docker.elastic.co": {
+        "realm": "docker-auth.elastic.co/auth",
+        "scope": "repository:{repository}:pull",
+        "service": "token-service",
+    },
 }
 
 def _strip_host(url):
