@@ -34,6 +34,20 @@ oci_image(
     ...
 )
 ```
+
+## Configuration
+
+Docker specifies a standard location where registry credentials are stored:
+<https://docs.docker.com/engine/reference/commandline/cli/#configuration-files>
+
+We search for this file in several locations, following the logic at
+https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package.
+
+Set `--repo_env=DOCKER_CONFIG=/some/other/directory` to cause `oci_pull` to look for
+`config.json` in this directory instead.
+
+Finally, some less-common use cases are afforded with environment variables `XDG_RUNTIME_DIR` and `REGISTRY_AUTH_FILE`.
+See the implementation of `_get_auth_file_path` in `/oci/private/auth_config_locator.bzl` for the complete reference.
 """
 
 load("//oci/private:pull.bzl", "oci_alias", _oci_pull = "oci_pull")
@@ -127,7 +141,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 identifier = digest or tag,
                 platform = plat,
                 target_name = plat_name,
-                config_path = config_path
+                config_path = config_path,
             )
             if plat in _PLATFORM_TO_BAZEL_CPU:
                 platform_to_image[_PLATFORM_TO_BAZEL_CPU[plat]] = "@" + plat_name
@@ -140,7 +154,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             repository = repository,
             identifier = digest or tag,
             target_name = single_platform,
-            config_path = config_path
+            config_path = config_path,
         )
 
     oci_alias(

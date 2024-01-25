@@ -37,6 +37,20 @@ oci_image(
 )
 ```
 
+## Configuration
+
+Docker specifies a standard location where registry credentials are stored:
+&lt;https://docs.docker.com/engine/reference/commandline/cli/#configuration-files&gt;
+
+We search for this file in several locations, following the logic at
+https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package.
+
+Set `--repo_env=DOCKER_CONFIG=/some/other/directory` to cause `oci_pull` to look for
+`config.json` in this directory instead.
+
+Finally, some less-common use cases are afforded with environment variables `XDG_RUNTIME_DIR` and `REGISTRY_AUTH_FILE`.
+See the implementation of `_get_auth_file_path` in `/oci/private/auth_config_locator.bzl` for the complete reference.
+
 
 <a id="oci_pull"></a>
 
