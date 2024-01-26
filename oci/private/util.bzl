@@ -125,14 +125,15 @@ _INDEX_JSON_TMPL="""\
       {{
          "mediaType": "{}",
          "size": {},
-         "digest": "{}"{optional_platform}
+         "digest": "{}"{optional_annotations}{optional_platform}
       }}
    ]
 }}"""
 
-def _build_manifest_json(media_type, size, digest, platform):
+def _build_manifest_json(media_type, size, digest, platform, reference):
 
     optional_platform = ""
+    optional_annotations = ""
 
     if platform:
         platform_parts = platform.split("/", 3)
@@ -147,19 +148,25 @@ def _build_manifest_json(media_type, size, digest, platform):
             "architecture": "{}",
             "os": "{}"{optional_variant}
          }}""".format(platform_parts[1], platform_parts[0], optional_variant = optional_variant)
-        
+    
+    # if reference:
+    #     optional_annotations = """
+    #              "annotations": {{"org.opencontainers.image.ref.name": "{}"}}
+
+    #     """.format(reference)
+
     return _INDEX_JSON_TMPL.format(
         media_type, 
         size,
         digest,
-        optional_platform = optional_platform
+        optional_platform = optional_platform,
+        optional_annotations = optional_annotations
     )
 
 def _assert_crane_version_at_least(ctx, at_least, rule):
     toolchain = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     if not versions.is_at_least(at_least, toolchain.crane_info.version):
         fail("rule {} requires crane version >={}".format(rule, at_least))
-
 
 util = struct(
     parse_image = _parse_image,

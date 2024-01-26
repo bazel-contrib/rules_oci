@@ -1,46 +1,25 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-# A wrapper for crane. It starts a registry instance by calling start_registry function exported by %registry_launcher_path%.
-# Then invokes crane with arguments provided after substituting `oci:registry` with REGISTRY variable exported by start_registry.
-# NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
-
-readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
-readonly CRANE="{{crane_path}}"
-readonly JQ="{{jq_path}}"
-readonly STORAGE_DIR="{{storage_dir}}"
-
+readonly OUTPUT="{{output_path}}"
 readonly STDERR=$(mktemp)
+readonly REF="oci.local/intermediate"
+readonly jq="{{jq_path}}"
 
-on_exit() {
-    local last_cmd_exit_code=$?
-    set +o errexit
-    stop_registry ${STORAGE_DIR}
-    local stop_registry_exit_code=$?
-    if [[ $last_cmd_exit_code != 0 ]] || [[ $stop_registry_exit_code != 0 ]]; then
-        cat "${STDERR}" >&1
-    fi
+function jq() {
+  "{{jq_path}}" "$@"
+}
+function crane() {
+  "/Users/thesayyn/Documents/go-containerregistry/main" $@ --local $OUTPUT
 }
 
-function get_option() {
-    local name=$1
-    shift
-    for ARG in "$@"; do
-        case "$ARG" in
-            ($name=*) echo ${ARG#$name=};; 
-        esac
-    done
-}
 
 
 function empty_base() {
-    local registry=$1
-    local ref="$registry/oci/empty_base:latest"
-    ref="$("${CRANE}" append --oci-empty-base -t "${ref}" -f {{empty_tar}})"
-    ref=$("${CRANE}" config "${ref}" | "${JQ}"  ".rootfs.diff_ids = [] | .history = []" | "${CRANE}" edit config "${ref}")
-    ref=$("${CRANE}" manifest "${ref}" | "${JQ}"  ".layers = []" | "${CRANE}" edit manifest "${ref}")
+    echo '{"manifests":[]}' > "$OUTPUT/index.json"
+    crane append --oci-empty-base -t $REF
 
-    local raw_platform=$(get_option --platform $@)
+    local raw_platform=$1
     IFS='/' read -r -a platform <<< "$raw_platform"
 
     local filter='.os = $os | .architecture = $arch'
@@ -50,55 +29,25 @@ function empty_base() {
         filter+=' | .variant = $variant'
         args+=("--arg" "variant" "${platform[2]}")
     fi
-    "${CRANE}" config "${ref}" | "${JQ}" ${args[@]} "${filter}" | "${CRANE}" edit config "${ref}"
+    crane config $REF | jq ${args[@]} "${filter}" | crane edit config $REF
 }
 
-function base_from_layout() {
-    # TODO: https://github.com/google/go-containerregistry/issues/1514
-    local refs=$(mktemp)
-    local output=$(mktemp)
-    local oci_layout_path=$1
-    local registry=$2
-
-    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
-
-    if grep -q "MANIFEST_INVALID" "${output}"; then
-    cat >&2 << EOF
-
-zot registry does not support docker manifests. 
-
-crane registry does support both oci and docker images, but is more memory hungry.
-
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
-
-EOF
-
-        exit 1
-    fi
-
-    cat "${refs}"
+function base_from_local() {
+    local path=$1
+    # TODO: https://github.com/bazelbuild/bazel/issues/20891
+    cp -r "$path/blobs" "$OUTPUT/blobs"
+    cp "$path/oci-layout" "$OUTPUT/oci-layout"
+    jq --arg ref $REF '.manifests[0].annotations["org.opencontainers.image.ref.name"] = $ref' "$path/index.json" > "$OUTPUT/index.json"
 }
 
-# Redirect stderr to the $STDERR temp file for the rest of the script.
-exec 2>>"${STDERR}"
 
-# Upon exiting, stop the registry and print STDERR on non-zero exit code.
-trap "on_exit" EXIT
-
-source "${REGISTRY_LAUNCHER}" 
-REGISTRY=
-REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
-
-OUTPUT=""
-FIXED_ARGS=()
+ARGS=()
 ENV_EXPANSIONS=()
 
 for ARG in "$@"; do
     case "$ARG" in
-        (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
-        (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
-        (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
-        (--output=*) OUTPUT="${ARG#--output=}" ;;
+        (--empty-base=*) empty_base "${ARG#--empty-base=}"; ARGS+=($REF);;
+        (--local=*) base_from_local "${ARG#--local=}"; ARGS+=($REF);;
         (--env-file=*)
           # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
           # file doesn't have a trailing newline.
@@ -106,44 +55,38 @@ for ARG in "$@"; do
             if [[ "${in}" = *\$* ]]; then
               ENV_EXPANSIONS+=( "${in}" )
             else
-              FIXED_ARGS+=( "--env=${in}" )
+              ARGS+=( "--env=${in}" )
             fi
           done <"${ARG#--env-file=}"
           ;;
         (--labels-file=*)
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
           while IFS= read -r in || [ -n "$in" ]; do
-            FIXED_ARGS+=("--label=$in")
+            ARGS+=("--label=$in")
           done <"${ARG#--labels-file=}"
           ;;
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
         (--annotations-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
-            FIXED_ARGS+=("--annotation=$in")
+            ARGS+=("--annotation=$in")
           done <"${ARG#--annotations-file=}"
           ;;
         (--cmd-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
-            FIXED_ARGS+=("--cmd=$in")
+            ARGS+=("--cmd=$in")
           done <"${ARG#--cmd-file=}"
           ;;
         (--entrypoint-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
-            FIXED_ARGS+=("--entrypoint=$in")
+            ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
-	(--exposed-ports-file=*)
-	  while IFS= read -r in || [ -n "$in" ]; do
-            FIXED_ARGS+=("--exposed-ports=$in")
+        (--exposed-ports-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+            ARGS+=("--exposed-ports=$in")
           done <"${ARG#--exposed-ports-file=}"
           ;;
-        (*) FIXED_ARGS+=( "${ARG}" )
+          (*) ARGS+=( "${ARG}" )
     esac
 done
-
-REF=$("${CRANE}" "${FIXED_ARGS[@]}")
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
     env_expansion_filter=\
@@ -151,22 +94,21 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
     {parts: [], prev: 0}; 
     {parts: (.parts + [$raw[.prev:$match.offset], $envs[$match.captures[0].string]]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
-    base_config=$("${CRANE}" config "${REF}")
-    base_env=$("${JQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
-    environment_args=()
+    base_config=$(crane config "${REF}")
+    base_env=$(jq -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
     for expansion in "${ENV_EXPANSIONS[@]}"
     do
         IFS="=" read -r key value <<< "${expansion}"
-        value_from_base=$("${JQ}" -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
-        environment_args+=( --env "${key}=${value_from_base}" )
+        value_from_base=$(jq -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
+        ARGS+=( --env "${key}=${value_from_base}" )
     done
-    REF=$("${CRANE}" mutate "${REF}" ${environment_args[@]})
 fi
 
-if [ -n "$OUTPUT" ]; then
-    "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --annotate-ref
-    mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
-    "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
-    rm "${OUTPUT}/temp.json"
-    "${CRANE}" layout gc "./${OUTPUT}"
-fi
+crane "${ARGS[@]}" || ls $OUTPUT/blobs/sha256
+
+mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
+# ".manifests |= [.[-1]] | del(.manifests[].annotations)"
+jq --arg ref "${REF}" ".manifests |= [.[-1]] | del(.manifests[].annotations)" "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
+rm "${OUTPUT}/temp.json"
+cat "${OUTPUT}/index.json"
+crane layout gc "./${OUTPUT}"

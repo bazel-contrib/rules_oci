@@ -102,43 +102,32 @@ def _oci_image_impl(ctx):
     util.assert_crane_version_at_least(ctx, "0.18.0", "oci_image")
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
-    registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-
-    launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
-
+    
     output = ctx.actions.declare_directory(ctx.label.name)
 
+    launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
     ctx.actions.expand_template(
         template = ctx.file._image_sh_tpl,
         output = launcher,
         is_executable = True,
         substitutions = {
-            "{{registry_launcher_path}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
-            "{{storage_dir}}": output.path,
+            "{{output_path}}": output.path,
             "{{empty_tar}}": ctx.file._empty_tar.path,
         },
     )
 
-    inputs_depsets = [depset([launcher, ctx.file._empty_tar])]
-    base = "oci:empty_base"
-
-    if ctx.attr.base:
-        base = "oci:layout/%s" % ctx.file.base.path
-        inputs_depsets.append(depset([ctx.file.base]))
+    inputs_depsets = [depset([launcher, ctx.file._empty_tar] + ctx.files.base)]
 
     args = ctx.actions.args()
+    args.add("mutate")
 
-    args.add_all([
-        "mutate",
-        base,
-    ])
-
-    # add platform
-    if ctx.attr.os and ctx.attr.architecture:
-        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--platform=%s")
+    if ctx.attr.base:
+        args.add(ctx.file.base.path, format = "--local=%s")
+    else:
+        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--empty-base=%s")
 
     # add layers
     for layer in ctx.attr.tars:
@@ -175,8 +164,6 @@ def _oci_image_impl(ctx):
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
 
-    args.add(output.path, format = "--output=%s")
-
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
@@ -194,7 +181,7 @@ def _oci_image_impl(ctx):
         outputs = [output],
         env = action_env,
         executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
-        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        tools = [crane.crane_info.binary, jq.jqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
     )
@@ -212,7 +199,6 @@ oci_image = rule(
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//oci:crane_toolchain_type",
-        "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],
 )
