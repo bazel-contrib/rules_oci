@@ -36,6 +36,13 @@ while (( $# > 0 )); do
     (--repository=*)
       REPOSITORY="${1#--repository=}"
       shift;;
+    (--image-refs)
+      REFS="$2"
+      shift
+      shift;;
+    (--image-refs=*)
+      REFS="${1#--image-refs=}"
+      shift;;
     (*) 
       ARGS+=( "$1" )
       shift;;
@@ -44,7 +51,10 @@ done
 
 DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
-REFS=$(mktemp)
+if [[ -z "${REFS:-}" ]]; then
+  REFS=$(mktemp)
+fi
+
 "${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
 
 for tag in "${TAGS[@]+"${TAGS[@]}"}"
