@@ -312,7 +312,7 @@ def _get_auth_config_path(rctx):
         path = rctx.read(rctx.path(rctx.attr.config_path))
 
     if path:
-        return json.decode(rctx.read(path))
+        return json.decode(rctx.read(path).strip())
 
     return {}
 
