@@ -30,6 +30,19 @@ CRANE_VERSIONS = {
         "windows_armv6": "sha256-c8OHU6DKiYE+ZTG32RTY9Nn7t7RaPVS/MXshGiAmkXc=",
         "windows_x86_64": "sha256-NyebS5afExgDW5rTAEsysws6D3ruBJeqZfJeW0b7rU8=",
     },
+    "v0.0.0": {
+        "darwin_arm64": "sha256-naf1hg3RbsuEexMjWo8/tJfgqfwQM5mqtWrmLphy1rk=",
+        "darwin_x86_64": "sha256-sWeMHCNDAFhNRabxawhf2SZa+yFLMI6yBQMYYB1NJuU=",
+        "linux_arm64": "sha256-wFeeOxymJxhW1LxKNmaqfY/mkU2nGzgcMM3Woh+OEx0=",
+        "linux_armv6": "sha256-NcjuRkb7+Tne4zgUVg8vmUlWeAyZJ2KnXX29ODESyPo=",
+        "linux_i386": "sha256-urbk7u0nBZjNtxIKbQwtPAgipjyrUyrBdUt1f3pwGkA=",
+        "linux_ppc64le": "sha256-Xx1yaKJhctR4gzm1sCX5GOD1rqVJClegiuyHXoVIjQ4=",
+        "linux_s390x": "sha256-EHr1icJMe1uX2Iw2G0scIVBcjh4ktpM8TV1dmCk4hz4=",
+        "linux_x86_64": "sha256-nF37CUf0R87UXL+W83saZVKrvrPpn3luN8CMYWx+D44=",
+        "windows_arm64": "sha256-0gi9N138DVv2qGmFJtedzovzMGTGBBuFM8I+A31eIgA=",
+        "windows_armv6": "sha256-zo4BnKFUXCr/MCTIVFCVcQC7eG5c+0fuly1nxH9i10o=",
+        "windows_x86_64": "sha256-Th60S98ZSvn7k6/CJ2d2C36ExXWuEtHFw+jlRt4n1/k="
+    },
     "v0.16.1": {
         "go-containerregistry-0": "sha256-KHa1NgQVE4cW1YN6aeHBFhgOSOz2KmP1MBw1HVoS+Zs=",
         "darwin_arm64": "sha256-OgSfRI2SluHc01ZsWALiQbzU4Yc/mYoSKCRlXiDg10Q=",
@@ -80,16 +93,5 @@ CRANE_VERSIONS = {
         "windows_arm64": "sha256-qxJw7Bfk45qOiFGLWMuG7zZahLKN2necKcqUyDUEtbw=",
         "windows_armv6": "sha256-YKRi+clqdDlbYukFiupLgas3OdT7P2s2O6NuQ7jb6PM=",
         "windows_x86_64": "sha256-SqbfgWZ+Ee9ve6F/0dkQ3YnRf8s4gFL42ATNezhhXDk=",
-    },
-}
-
-ZOT_VERSIONS = {
-    "v2.0.0-rc7": {
-        "darwin-amd64": "sha256-CgQgQBbT2MDf9H9ttWZXSCP1SJfHvI1U1JX8WcExsqc=",
-        "darwin-arm64": "sha256-z+7Tn1mhAfvx9JlAeMq2WxtpMx6lcLjvycUhSAANX1U=",
-        "freebsd-amd64": "sha256-ex4IzW3299cegSnW2Q4LCk/sBJfaIPIxzujo1ocWnRY=",
-        "freebsd-arm64": "sha256-byEVM7MsYNNfC94bmqxCG+VyP1CoMVPQgfQEyVQro7M=",
-        "linux-amd64": "sha256-pAiaOvyD+Tvi/d6MGAFytJFmYYttCukucxaxbAmnX5w=",
-        "linux-arm64": "sha256-+TLMTCs+eYPmxWAbbvb2PFNwGvHsMI40yxeY3wVGepM=",
     },
 }

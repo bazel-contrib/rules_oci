@@ -2,18 +2,24 @@
 set -o pipefail -o errexit -o nounset
 
 readonly CRANE="${1/external\//../}"
-readonly REGISTRY_LAUNCHER="${2/external\//../}"
-
 # Launch a registry instance at a random port
-source "${REGISTRY_LAUNCHER}"
-REGISTRY=$(start_registry $TEST_TMPDIR $TEST_TMPDIR/output.log)
+output=$(mktemp)
+$CRANE registry serve --address=localhost:0 >> $output 2>&1 &
+timeout=$((SECONDS+10))
+while [ "${SECONDS}" -lt "${timeout}" ]; do
+    port="$(cat $output | sed -nr 's/.+serving on port ([0-9]+)/\1/p')"
+    if [ -n "${port}" ]; then
+        break
+    fi
+done
+REGISTRY="localhost:$port"
 echo "Registry is running at ${REGISTRY}"
 
 
-readonly PUSH_IMAGE="$3"
-readonly PUSH_IMAGE_INDEX="$4"
-readonly PUSH_IMAGE_REPOSITORY_FILE="$5"
-readonly PUSH_IMAGE_WO_TAGS="$6"
+readonly PUSH_IMAGE="$2"
+readonly PUSH_IMAGE_INDEX="$3"
+readonly PUSH_IMAGE_REPOSITORY_FILE="$4"
+readonly PUSH_IMAGE_WO_TAGS="$5"
 
 
 # should push image with default tags

@@ -98,10 +98,7 @@ load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_t
 
 oci_register_toolchains(
     name = "oci",
-    crane_version = LATEST_CRANE_VERSION,
-    # Uncommenting the zot toolchain will cause it to be used instead of crane for some tasks.
-    # Note that it does not support docker-format images.
-    # zot_version = LATEST_ZOT_VERSION,
+    crane_version = LATEST_CRANE_VERSION
 )
 
 # Pull distroless image

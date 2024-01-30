@@ -6,14 +6,9 @@ readonly STDERR=$(mktemp)
 readonly REF="oci.local/intermediate"
 readonly jq="{{jq_path}}"
 
-function jq() {
-  "{{jq_path}}" "$@"
-}
 function crane() {
-  "/Users/thesayyn/Documents/go-containerregistry/main" $@ --local $OUTPUT
+  "{{crane_path}}" $@ --local $OUTPUT
 }
-
-
 
 function empty_base() {
     echo '{"manifests":[]}' > "$OUTPUT/index.json"
@@ -29,7 +24,7 @@ function empty_base() {
         filter+=' | .variant = $variant'
         args+=("--arg" "variant" "${platform[2]}")
     fi
-    crane config $REF | jq ${args[@]} "${filter}" | crane edit config $REF
+    crane config $REF | $jq ${args[@]} "${filter}" | crane edit config $REF
 }
 
 function base_from_local() {
@@ -37,7 +32,7 @@ function base_from_local() {
     # TODO: https://github.com/bazelbuild/bazel/issues/20891
     cp -r "$path/blobs" "$OUTPUT/blobs"
     cp "$path/oci-layout" "$OUTPUT/oci-layout"
-    jq --arg ref $REF '.manifests[0].annotations["org.opencontainers.image.ref.name"] = $ref' "$path/index.json" > "$OUTPUT/index.json"
+    $jq --arg ref $REF '.manifests[0].annotations["org.opencontainers.image.ref.name"] = $ref' "$path/index.json" > "$OUTPUT/index.json"
 }
 
 
@@ -71,7 +66,7 @@ for ARG in "$@"; do
           ;;
         (--cmd-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
-            ARGS+=("--cmd=$in")
+            ARGS+=("--cmd" "$in")
           done <"${ARG#--cmd-file=}"
           ;;
         (--entrypoint-file=*)
@@ -95,20 +90,19 @@ if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then
     {parts: (.parts + [$raw[.prev:$match.offset], $envs[$match.captures[0].string]]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
     base_config=$(crane config "${REF}")
-    base_env=$(jq -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
+    base_env=$($jq -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries' <<< "${base_config}")
     for expansion in "${ENV_EXPANSIONS[@]}"
     do
         IFS="=" read -r key value <<< "${expansion}"
-        value_from_base=$(jq -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
+        value_from_base=$($jq -nr --arg raw "${value}" --argjson envs "${base_env}" "${env_expansion_filter}")
         ARGS+=( --env "${key}=${value_from_base}" )
     done
 fi
 
-crane "${ARGS[@]}" || ls $OUTPUT/blobs/sha256
+"{{crane_path}}" "${ARGS[@]}" --local $OUTPUT
 
 mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
 # ".manifests |= [.[-1]] | del(.manifests[].annotations)"
-jq --arg ref "${REF}" ".manifests |= [.[-1]] | del(.manifests[].annotations)" "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
+$jq --arg ref "${REF}" ".manifests |= [.[-1]] | del(.manifests[].annotations)" "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
 rm "${OUTPUT}/temp.json"
-cat "${OUTPUT}/index.json"
 crane layout gc "./${OUTPUT}"

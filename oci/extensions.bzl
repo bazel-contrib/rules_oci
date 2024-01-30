@@ -23,7 +23,6 @@ Base name for generated repositories, allowing more than one set of toolchains t
 Overriding the default is only permitted in the root module.
 """, default = "oci"),
     "crane_version": attr.string(doc = "Explicit version of crane.", mandatory = True),
-    "zot_version": attr.string(doc = "Explicit version of zot. If not supplied, then only crane is used."),
 })
 
 def _oci_extension(module_ctx):
@@ -47,7 +46,7 @@ def _oci_extension(module_ctx):
                 """)
             if toolchains.name not in registrations.keys():
                 registrations[toolchains.name] = []
-            registrations[toolchains.name].append((toolchains.crane_version, toolchains.zot_version))
+            registrations[toolchains.name].append(toolchains.crane_version)
     for name, versions in registrations.items():
         if len(versions) > 1:
             # TODO: should be semver-aware, using MVS
@@ -57,7 +56,7 @@ def _oci_extension(module_ctx):
             print("NOTE: oci toolchains {} has multiple versions {}, selected {}".format(name, versions, selected))
         else:
             selected = versions[0]
-        oci_register_toolchains(name, crane_version = selected[0], zot_version = selected[1], register = False)
+        oci_register_toolchains(name, crane_version = selected, register = False)
 
 oci = module_extension(
     implementation = _oci_extension,

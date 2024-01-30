@@ -6,15 +6,22 @@ export HOME="$TEST_TMPDIR"
 readonly JQ="${1/external\//../}"
 readonly COSIGN="${2/external\//../}"
 readonly CRANE="${3/external\//../}"
-readonly REGISTRY_LAUNCHER="${4/external\//../}"
-readonly ATTACHER="$5"
-readonly IMAGE_PATH="$6"
-readonly SBOM_PATH="$7"
+readonly ATTACHER="$4"
+readonly IMAGE_PATH="$5"
+readonly SBOM_PATH="$6"
 
 
 # Launch a registry instance at a random port
-source "${REGISTRY_LAUNCHER}"
-REGISTRY=$(start_registry $TEST_TMPDIR $TEST_TMPDIR/output.log)
+output=$(mktemp)
+$CRANE registry serve --address=localhost:0 >> $output 2>&1 &
+timeout=$((SECONDS+10))
+while [ "${SECONDS}" -lt "${timeout}" ]; do
+    port="$(cat $output | sed -nr 's/.+serving on port ([0-9]+)/\1/p')"
+    if [ -n "${port}" ]; then
+        break
+    fi
+done
+REGISTRY="localhost:$port"
 echo "Registry is running at ${REGISTRY}"
 
 readonly REPOSITORY="${REGISTRY}/local" 

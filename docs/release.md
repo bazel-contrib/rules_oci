@@ -11,7 +11,7 @@ rules_oci ought to be tested against runtimes such as podman to diversify the co
 Just copy-paste this command into the terminal to run the tests
 
 ```bash
-for dir in "." "e2e/smoke" "e2e/custom_registry" "e2e/crane_as_registry"; do
+for dir in "." "e2e/smoke"; do
     (cd "$dir" && bazel test //... || (echo "tests failed." && exit 1))
 done
 echo "ALL TESTS PASSED"

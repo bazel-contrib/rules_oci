@@ -4,7 +4,7 @@ set -o errexit -o nounset -o pipefail
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 RAW=$(mktemp)
 
-REPOSITORY=${1:-"google/go-containerregistry"}
+REPOSITORY=${1:-"thesayyn/go-containerregistry"}
 
 # per_page=1 to just miror the most recent release
 (

@@ -389,23 +389,16 @@ def _oci_pull_impl(rctx):
     # download the image config
     downloader.download_blob(manifest["config"]["digest"], _digest_into_blob_path(manifest["config"]["digest"]))
 
-    reference = None
-
-    if rctx.attr.shallow:
-        util.warning(rctx, "Shallow pull is an experimental feature and not subject to SemVer guarantees. Use it at your own risk!")
-        reference = "{}/{}@{}".format(rctx.attr.registry, rctx.attr.repository, digest)
-        util.warning(rctx, manifest["layers"])
-    else:
-        # download all layers
-        for layer in manifest["layers"]:
-            downloader.download_blob(layer["digest"], _digest_into_blob_path(layer["digest"]))
+    # download all layers
+    # TODO: we should avoid eager-download of the layers ("shallow pull")
+    for layer in manifest["layers"]:
+        downloader.download_blob(layer["digest"], _digest_into_blob_path(layer["digest"]))
 
     rctx.file("index.json", util.build_manifest_json(
         media_type = manifest["mediaType"],
         size = size,
         digest = digest,
         platform = rctx.attr.platform,
-        reference = reference
     ))
     rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
 
@@ -418,7 +411,6 @@ oci_pull = repository_rule(
     attrs = dicts.add(
         _IMAGE_REFERENCE_ATTRS,
         {
-            "shallow": attr.bool(),
             "platform": attr.string(
                 doc = "A single platform in `os/arch` format, for multi-arch images",
             ),
@@ -517,7 +509,6 @@ oci_alias = repository_rule(
         {
             "platforms": attr.label_keyed_string_dict(),
             "platform": attr.label(),
-            "shallow": attr.bool(),
             "target_name": attr.string(),
             "reproducible": attr.bool(default = True, doc = "Set to False to silence the warning about reproducibility when using `tag`"),
             "bzlmod_repository": attr.string(

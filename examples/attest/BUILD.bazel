@@ -30,7 +30,6 @@ sh_test(
         "$(JQ_BIN)",
         "$(COSIGN_BIN)",
         "$(CRANE_BIN)",
-        "$(LAUNCHER_WRAPPER)",
         "$(location :attest)",
         "$(location :image)",
         "$(location sbom.spdx)",
@@ -42,10 +41,8 @@ sh_test(
         "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
     ],
     toolchains = [
-        "@oci_zot_toolchains//:current_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
         "@jq_toolchains//:resolved_toolchain",

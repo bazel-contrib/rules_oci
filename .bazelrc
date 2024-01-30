@@ -5,6 +5,7 @@
 build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
 test --test_env=DOCKER_HOST
+startup --host_jvm_args=-DBAZEL_TRACK_SOURCE_DIRECTORIES=1
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

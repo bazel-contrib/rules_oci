@@ -13,12 +13,11 @@ stardoc_repositories()
 load("//oci:dependencies.bzl", "rules_oci_dependencies")
 rules_oci_dependencies()
 
-load("//oci:repositories.bzl", "LATEST_CRANE_VERSION", "LATEST_ZOT_VERSION", "oci_register_toolchains")
+load("//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
 
 oci_register_toolchains(
     name = "oci",
-    crane_version = LATEST_CRANE_VERSION,
-    zot_version = LATEST_ZOT_VERSION
+    crane_version = LATEST_CRANE_VERSION
 )
 
 load("//cosign:repositories.bzl", "cosign_register_toolchains")
