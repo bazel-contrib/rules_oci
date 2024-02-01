@@ -1,3 +1,7 @@
 bazel-*
 .bazelrc.user
 .DS_Store
+
+# TODO: after the lockfile is more stable we can check in and share with others.
+# For now this is just useful to make local registry resolution faster.
+MODULE.bazel.lock
