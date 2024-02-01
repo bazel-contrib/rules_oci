@@ -52,6 +52,39 @@ Finally, some less-common use cases are afforded with environment variables `XDG
 See the implementation of `_get_auth_file_path` in `/oci/private/auth_config_locator.bzl` for the complete reference.
 
 
+# Authentication using credential helpers
+
+By default oci_pull try to mimic `docker pull` authentication mechanism to allow users simply use `docker login` for authentication.
+
+However, this doesn't always work due to some limitations of Bazel where response headers can't be read, which prevents us from 
+performing `WWW-Authenticate` challenges, as we don't know which endpoint to hit to complete the challenge. To workaround this
+we keep a map of known registries that require us to perform www-auth challenge to acquire a temporary token for authentication.
+
+
+Fortunately, Bazel supports running external programs to authenticate http requests using the `--credential_helper` command line flag.
+When the credential helper flag passed, Bazel will call the external program before sending the request to allow additional headers to be set.
+
+An example of this
+
+.bazelrc
+```
+common --credential_helper=public.ecr.aws=%workspace%/tools/auth.sh
+```
+
+tools/auth.sh
+```bash
+input=$(cat)
+uri=$(jq -r ".uri" &lt;&lt;&lt; $input)
+host="$(echo $uri | awk -F[/:] '{print $4}')"
+curl -fsSL https://$host/token | jq '{headers:{"Authorization": [("Bearer " + .token)]}}'
+```
+
+This tells bazel to run `%workspace%/tools/auth.sh` for any request sent to `public.ecr.aws` and add additional headers that may have been 
+returned by the external program.
+
+See [examples/credential_helper](/examples/credential_helper/auth.sh) directory for an example of how this work.
+
+
 <a id="oci_pull"></a>
 
 ## oci_pull

@@ -31,6 +31,17 @@ def fetch_images():
         ],
     )
 
+    # ECR public registry
+    oci_pull(
+        name = "ecr_lambda_python",
+        image = "public.ecr.aws/lambda/python",
+        tag = "3.11.2024.01.25.10",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64/v8"
+        ]
+    )
+
     # Show that the digest is optional.
     # In this case, the dependency is "floating" and our build could break when a new
     # image is pushed to gcr.io with the 'debug' tag, so we document this by setting
