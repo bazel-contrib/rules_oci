@@ -50,7 +50,7 @@ Finally, some less-common use cases are afforded with environment variables `XDG
 See the implementation of `_get_auth_file_path` in `/oci/private/auth_config_locator.bzl` for the complete reference.
 
 
-# Authentication using credential helpers
+## Authentication using credential helpers
 
 By default oci_pull try to mimic `docker pull` authentication mechanism to allow users simply use `docker login` for authentication.
 
@@ -78,9 +78,11 @@ curl -fsSL https://$host/token | jq '{headers:{"Authorization": [("Bearer " + .t
 ```
 
 This tells bazel to run `%workspace%/tools/auth.sh` for any request sent to `public.ecr.aws` and add additional headers that may have been 
-returned by the external program.
+printed to `stdout` by the external program.
 
-See [examples/credential_helper](/examples/credential_helper/auth.sh) directory for an example of how this work.
+For more information about the credential helpers checkout the [documentation](https://github.com/bazelbuild/proposals/blob/main/designs/2022-06-07-bazel-credential-helpers.md).
+
+See the [examples/credential_helper](/examples/credential_helper/auth.sh) directory for an example of how this work.
 """
 
 load("//oci/private:pull.bzl", "oci_alias", _oci_pull = "oci_pull")

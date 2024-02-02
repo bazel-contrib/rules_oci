@@ -3,6 +3,7 @@
 # Requirements 
 #   - curl
 #   - jq
+#   - awk
 #  
 #  ./examples/credential_helper/auth.sh <<< '{"uri":"https://public.ecr.aws/token/?scope\u003drepository:lambda/python:pull\u0026service\u003dpublic.ecr.aws"}'
 #  ./examples/credential_helper/auth.sh <<< '{"uri":"https://public.ecr.aws/v2/lambda/python/manifests/3.11.2024.01.25.10"}'
@@ -28,6 +29,8 @@ if [[ $input == *"/token"* ]]; then
     exit 0
 fi
 
+# This will write the response to stdout in a format that Bazels credential helper protocol understands.
+# Since this is called by Bazel, users won't bee seeing output of this.
 curl -fsSL https://$host/token | jq '{headers:{"Authorization": [("Bearer " + .token)]}}'
 log "Auth: Complete"
 
