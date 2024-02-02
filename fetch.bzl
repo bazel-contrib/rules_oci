@@ -31,6 +31,20 @@ def fetch_images():
         ],
     )
 
+    # Pull an image from public ECR. 
+    # When --credential_helper is provided, see .bazelrc at workspace root, it will take precende over
+    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail 
+    # unless oci_pull's authentication mechanism breaks and --credential_helper is absent.
+    oci_pull(
+        name = "ecr_lambda_python",
+        image = "public.ecr.aws/lambda/python",
+        tag = "3.11.2024.01.25.10",
+        platforms = [
+            "linux/amd64",
+            "linux/arm64/v8"
+        ]
+    )
+
     # Show that the digest is optional.
     # In this case, the dependency is "floating" and our build could break when a new
     # image is pushed to gcr.io with the 'debug' tag, so we document this by setting
@@ -156,7 +170,10 @@ def fetch_images():
         # tag = "7.16.2",
         image = "docker.elastic.co/kibana/kibana",
         digest = "sha256:9a83bce5d337e7e19d789ee7f952d36d0d514c80987c3d76d90fd1afd2411a9a",
-        platforms = ["linux/amd64"],
+        platforms = [
+            "linux/amd64",
+            "linux/arm64"
+        ],
     )
 
     oci_pull(
