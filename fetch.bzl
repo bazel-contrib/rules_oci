@@ -159,6 +159,14 @@ def fetch_images():
         platforms = ["linux/amd64"],
     )
 
+    oci_pull(
+        name = "quay_clair_image",
+        # tag = "4.7.2",
+        image = "quay.io/projectquay/clair",
+        digest = "sha256:8d38ffa8fad72f4bc2647644284c16491cc2d375602519a1f963f96ccc916276",
+        platforms = ["linux/amd64"],
+    )
+
     _DEB_TO_LAYER = """\
 alias(
     name = "layer",

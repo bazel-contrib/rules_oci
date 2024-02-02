@@ -65,6 +65,7 @@ build_test(
         "@from_rules_docker",
         "@ubuntu",
         "@es_kibana_image",
+        "@quay_clair_image",
     ],
 )
 
