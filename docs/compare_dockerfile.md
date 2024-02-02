@@ -1,13 +1,17 @@
 # Comparing rules_oci to a Dockerfile
 
+Docker ships with both a container runtime and a "build system" for creating images, using `Dockerfile`.
 A `Dockerfile` consists of multiple instructions and stages. Most of the time `FROM`, `COPY`, and `RUN` 
 instructions which mutate the `rootfs` by adding or deleting files.
 
-Most of of these can be done with rules_oci but looks different.
+`rules_oci` cannot use Dockerfile to describe the build.
+We think it's possible in theory, but such an effort would require some dedicated funding.
 
-Let's compare them to their rules_oci counterparts. 
+Most of the Dockerfile operators can be replaced with rules_oci, but it looks different.
 
-- `ADD`         -> Package using `tar()` or `pkg_tar()` and use `oci_image#layers`
+Let's compare them to their rules_oci counterparts:
+
+- `ADD`         -> Package the files using `tar()` or `pkg_tar()` and use `oci_image#layers`
 - `ARG`         -> Not supported
 - `CMD`         -> Use `oci_image#cmd`
 - `COPY`        -> Not supported
@@ -22,7 +26,7 @@ Let's compare them to their rules_oci counterparts.
 - `RUN`         -> See: https://github.com/bazel-contrib/rules_oci/issues/132
 - `SHELL`       -> Use `oci_image#entrypoint` instead.
 - `STOPSIGNAL`  -> Not supported
-- `USER`        -> Not supported. Use tar rule's mechanism for setting gid/uid
+- `USER`        -> Not supported. Use the tar rule's mechanism for setting gid/uid
 - `VOLUME`      -> See: https://github.com/bazel-contrib/rules_oci/issues/406
 - `WORKDIR`     -> Use `oci_image#workdir`
 
@@ -33,6 +37,8 @@ References:
 - https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md
 - https://github.com/aspect-build/bazel-lib/blob/main/docs/tar.md
 
+## Example
+
 Given the replacements above, with a Dockerfile that looks like this
 
 ```Dockerfile
@@ -42,7 +48,7 @@ WORKDIR /
 ENTRYPOINT ["/web-assets"]
 ```
 
-1- Use `oci_pull` to pull the base image
+1. Use `oci_pull` to pull the base image.
 
 ```starlark
 oci_pull(
@@ -56,7 +62,7 @@ oci_pull(
 )
 ```
 
-2- Replace `COPY` with `tar`
+2. Replace `COPY` with `tar`.
 
 ```starlark
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
@@ -68,7 +74,7 @@ tar(
 )
 ```
 
-3- in the end BUILD file would look like
+3. The resulting `BUILD` file would look like:
 
 ```starlark
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
@@ -93,8 +99,8 @@ oci_image(
 
 ## What about `RUN`?
 
-Long story short, rules_oci doesn't have a replacement for it and the reason is that `RUN` simply non-hermetic requires us to depend 
-on a running Container Daemon to work.
+Long story short, rules_oci doesn't have a replacement for it and the reason is that `RUN` requires us to depend 
+on a running Container Daemon to work, and is non-hermetic.
 
 See: https://github.com/bazel-contrib/rules_oci/issues/35
 
@@ -102,3 +108,4 @@ That said, instructions like `apk add xyz` and `apt-get install xyz` is supporte
 
 - For `apt-get` see https://github.com/GoogleContainerTools/rules_distroless
 - For `apk` see https://github.com/chainguard-dev/rules_apko
+- For `deb` see https://github.com/bazel-contrib/rules_oci/tree/main/examples/deb
