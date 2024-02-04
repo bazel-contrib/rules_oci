@@ -35,5 +35,6 @@ function stop_registry() {
         return 0
     fi
     kill -9 "$(cat "${registry_pid}")" || true
+    rm -f "${registry_pid}"
     return 0
 }
