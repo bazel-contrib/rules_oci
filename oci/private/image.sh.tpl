@@ -62,7 +62,9 @@ function base_from_layout() {
 
     "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
 
-    if grep -q "MANIFEST_INVALID" "${output}"; then
+
+    if [ $? -neq 0 ]; then 
+      if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
 
 zot registry does not support docker manifests. 
@@ -72,10 +74,11 @@ crane registry does support both oci and docker images, but is more memory hungr
 If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
 
 EOF
-
-        exit 1
+      else
+        cat "${output}"
+      fi
+      exit 1
     fi
-
     cat "${refs}"
 }
 
