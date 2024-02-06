@@ -63,7 +63,7 @@ function base_from_layout() {
     "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
 
 
-    if [ $? -neq 0 ]; then 
+    if [[ $? != 0 ]]; then 
       if grep -q "MANIFEST_INVALID" "${output}"; then
     cat >&2 << EOF
 
