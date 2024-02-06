@@ -1,4 +1,5 @@
 """Utilities"""
+
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
 def _parse_image(image):
@@ -113,9 +114,11 @@ if defined args (
 
     return win_launcher
 
-def _file_exists(rctx, path):
-    result = rctx.execute(["stat", path])
-    return result.return_code == 0
+def _get_absolute_path(rctx, path_str):
+    if path_str.startswith("./"):
+        return rctx.workspace_root.get_child(path_str)
+    else:
+        return rctx.path(path_str)
 
 _INDEX_JSON_TMPL="""\
 {{
@@ -166,7 +169,7 @@ util = struct(
     sha256 = _sha256,
     warning = _warning,
     maybe_wrap_launcher_for_windows = _maybe_wrap_launcher_for_windows,
-    file_exists = _file_exists,
+    get_absolute_path = _get_absolute_path,
     build_manifest_json = _build_manifest_json,
     assert_crane_version_at_least = _assert_crane_version_at_least
 )

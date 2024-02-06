@@ -16,9 +16,8 @@ def _get_auth_file_path(rctx):
     if "DOCKER_CONFIG" in rctx.os.environ:
         DOCKER_CONFIG = rctx.os.environ["DOCKER_CONFIG"]
 
-    config_path = "{}/config.json".format(DOCKER_CONFIG)
-
-    if util.file_exists(rctx, config_path):
+    config_path = util.get_absolute_path(rctx, "{}/config.json".format(DOCKER_CONFIG))
+    if config_path.exists:
         return config_path
 
     # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
@@ -28,14 +27,14 @@ def _get_auth_file_path(rctx):
     if "XDG_RUNTIME_DIR" in rctx.os.environ:
         XDG_RUNTIME_DIR = rctx.os.environ["XDG_RUNTIME_DIR"]
 
-    config_path = "{}/containers/auth.json".format(XDG_RUNTIME_DIR)
+    config_path = util.get_absolute_path(rctx, "{}/containers/auth.json".format(XDG_RUNTIME_DIR))
 
     # podman support overriding the standard path for the auth file via this special environment variable.
     # https://docs.podman.io/en/latest/markdown/podman-login.1.html#authfile-path
     if "REGISTRY_AUTH_FILE" in rctx.os.environ:
-        config_path = rctx.os.environ["REGISTRY_AUTH_FILE"]
+        config_path = util.get_absolute_path(rctx, rctx.os.environ["REGISTRY_AUTH_FILE"])
 
-    if util.file_exists(rctx, config_path):
+    if config_path.exists:
         return config_path
 
     return None
@@ -53,7 +52,7 @@ def _oci_auth_config_locator_impl(rctx):
         ], quiet = False)
         rctx.file("standard_authorization_config_path", "")
     else:
-        rctx.file("standard_authorization_config_path", config_path)
+        rctx.file("standard_authorization_config_path", str(config_path))
 
     rctx.file("BUILD.bazel", """exports_files(["standard_authorization_config_path"])""")
 
