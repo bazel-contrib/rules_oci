@@ -1,4 +1,0 @@
-exports_files([
-    "zot_launcher.sh.tpl",
-    "crane_launcher.sh.tpl",
-])

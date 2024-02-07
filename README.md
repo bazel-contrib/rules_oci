@@ -66,13 +66,6 @@ rules_oci does not contain language-specific rules, but we do have limited docum
 There are some generic examples of usage in the [examples](https://github.com/bazel-contrib/rules_oci/tree/main/examples) folder.
 Note that these examples rely on the setup code in the `/WORKSPACE` file in the root of this repo.
 
-### Choosing between zot or crane as the local registry
-
-rules_oci supports two different registry implementation for the temporary storage within actions spawned by bazel.
-
-1. By default we recommend using `zot` as it stores blobs on disk, however it doesn't support `Docker`-format images.
-2. `crane` is a better alternative as it supports both `OCI` and `Docker` formats which is required to make images with `Docker` media types work. However, it might not support everything that zot does.
-
 ## Public API Docs
 
 ### Build Base images

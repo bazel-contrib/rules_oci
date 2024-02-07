@@ -67,7 +67,6 @@ sh_test(
     srcs = ["test.bash"],
     args = [
         "$(CRANE_BIN)",
-        "$(LAUNCHER_WRAPPER)",
         "$(location :push_image)",
         "$(location :push_image_index)",
         "$(location :push_image_repository_file)",
@@ -79,10 +78,8 @@ sh_test(
         ":push_image_repository_file",
         ":push_image_wo_tags",
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
     ],
     toolchains = [
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
     ],
 )
