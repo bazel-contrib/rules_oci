@@ -140,7 +140,7 @@ def _quote_args(args):
 
 def _impl(ctx):
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
-    yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
+    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
     if ctx.attr.repository and ctx.attr.repository_file:
         fail("must specify exactly one of 'repository_file' or 'repository'")
@@ -156,7 +156,7 @@ def _impl(ctx):
     files = [ctx.file.image]
     substitutions = {
         "{{crane_path}}": crane.crane_info.binary.short_path,
-        "{{yq_path}}": yq.yqinfo.bin.short_path,
+        "{{jq_path}}": jq.jqinfo.bin.short_path,
         "{{image_dir}}": ctx.file.image.short_path,
         "{{fixed_args}}": "",
     }
@@ -180,7 +180,7 @@ def _impl(ctx):
         substitutions = substitutions,
     )
     runfiles = ctx.runfiles(files = files)
-    runfiles = runfiles.merge(yq.default.default_runfiles)
+    runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
@@ -190,7 +190,7 @@ oci_push_lib = struct(
     attrs = _attrs,
     toolchains = [
         "@rules_oci//oci:crane_toolchain_type",
-        "@aspect_bazel_lib//lib:yq_toolchain_type",
+        "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],
 )
 

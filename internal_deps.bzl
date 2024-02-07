@@ -62,9 +62,9 @@ def rules_oci_internal_deps():
 
     http_archive(
         name = "container_structure_test",
-        sha256 = "2da13da4c4fec9d4627d4084b122be0f4d118bd02dfa52857ff118fde88e4faa",
-        strip_prefix = "container-structure-test-1.16.0",
-        urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/v1.16.0.zip"],
+        sha256 = "4fd1e0d4974fb95e06d0e94e6ceaae126382bf958524062db4e582232590b863",
+        strip_prefix = "container-structure-test-1.16.1",
+        urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/v1.16.1.zip"],
     )
 
     http_archive(

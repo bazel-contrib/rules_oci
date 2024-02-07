@@ -95,7 +95,7 @@ assert_json_matches(
     name = "check_multiarch_tags",
     file1 = ":tar_multiarch_index",
     file2 = ":expected_RepoTags",
-    filter1 = ".manifests[].annotations[\"org.opencontainers.image.ref.name\"]",
+    filter1 = """.manifests[].annotations["org.opencontainers.image.ref.name"]""",
     filter2 = ".[]",
 )
 

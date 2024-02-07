@@ -72,15 +72,16 @@ attrs = {
 }
 
 def _tarball_impl(ctx):
+    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"].jqinfo
+
     image = ctx.file.image
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
-    yq_bin = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"].yqinfo.bin
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
     repo_tags = ctx.file.repo_tags
 
     substitutions = {
         "{{format}}": ctx.attr.format,
-        "{{yq}}": yq_bin.path,
+        "{{jq_path}}": jq.bin.path,
         "{{image_dir}}": image.path,
         "{{tarball_path}}": tarball.path,
     }
@@ -99,7 +100,7 @@ def _tarball_impl(ctx):
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
         inputs = [image, repo_tags, executable],
         outputs = [tarball],
-        tools = [yq_bin],
+        tools = [jq.bin],
         mnemonic = "OCITarball",
         progress_message = "OCI Tarball %{label}",
     )
@@ -129,7 +130,7 @@ oci_tarball = rule(
     doc = doc,
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
-        "@aspect_bazel_lib//lib:yq_toolchain_type",
+        "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],
     executable = True,
 )

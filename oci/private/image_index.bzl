@@ -40,7 +40,7 @@ def _expand_image_to_args(image, expander):
     return args
 
 def _oci_image_index_impl(ctx):
-    yq = ctx.toolchains["@aspect_bazel_lib//lib:yq_toolchain_type"]
+    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
@@ -49,7 +49,7 @@ def _oci_image_index_impl(ctx):
         output = launcher,
         is_executable = True,
         substitutions = {
-            "{{yq_path}}": yq.yqinfo.bin.path,
+            "{{jq_path}}": jq.jqinfo.bin.path,
             "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
         },
     )
@@ -65,7 +65,7 @@ def _oci_image_index_impl(ctx):
         arguments = [args],
         outputs = [output],
         executable = launcher,
-        tools = [yq.yqinfo.bin, coreutils.coreutils_info.bin],
+        tools = [jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",
     )
@@ -77,7 +77,7 @@ oci_image_index = rule(
     attrs = _attrs,
     doc = _DOC,
     toolchains = [
-        "@aspect_bazel_lib//lib:yq_toolchain_type",
+        "@aspect_bazel_lib//lib:jq_toolchain_type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
     ],
 )
