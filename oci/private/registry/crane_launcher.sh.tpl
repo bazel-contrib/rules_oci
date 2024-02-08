@@ -7,8 +7,8 @@ function start_registry() {
     local deadline="${3:-5}"
     local registry_pid="$1/proc.pid"
 
-    mkdir -p "${storage_dir}"
-    "${CRANE_REGISTRY_BIN}" registry serve --disk="${storage_dir}" --address=localhost:0 >> $output 2>&1 &
+    mkdir -p "${storage_dir}/blobs"
+    "${CRANE_REGISTRY_BIN}" registry serve --disk="${storage_dir}/blobs" --address=localhost:0 >> $output 2>&1 &
     echo "$!" > "${registry_pid}"
     
     local timeout=$((SECONDS+${deadline}))
