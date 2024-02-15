@@ -1,7 +1,7 @@
 # Comparing rules_oci to a Dockerfile
 
 Docker ships with both a container runtime and a "build system" for creating images, using `Dockerfile`.
-A `Dockerfile` consists of multiple instructions and stages. Most of the time `FROM`, `COPY`, and `RUN` 
+A `Dockerfile` consists of multiple instructions and stages. Most of the time `FROM`, `COPY`, and `RUN`
 instructions which mutate the `rootfs` by adding or deleting files.
 
 `rules_oci` cannot use Dockerfile to describe the build.
@@ -11,27 +11,27 @@ Most of the Dockerfile operators can be replaced with rules_oci, but it looks di
 
 Let's compare them to their rules_oci counterparts:
 
-- `ADD`         -> Package the files using `tar()` or `pkg_tar()` and use `oci_image#layers`
-- `ARG`         -> Not supported
-- `CMD`         -> Use `oci_image#cmd`
-- `COPY`        -> Not supported
-- `ENTRYPOINT`  -> Use `oci_image#entrypoint`
-- `ENV`         -> Use `oci_image#env`
-- `EXPOSE`      -> Use `oci_image#exposed_ports`
-- `FROM`        -> Use `oci_pull`
+- `ADD` -> Package the files using `tar()` or `pkg_tar()` and use `oci_image#layers`
+- `ARG` -> Not supported
+- `CMD` -> Use `oci_image#cmd`
+- `COPY` -> Not supported
+- `ENTRYPOINT` -> Use `oci_image#entrypoint`
+- `ENV` -> Use `oci_image#env`
+- `EXPOSE` -> Use `oci_image#exposed_ports`
+- `FROM` -> Use `oci_pull`
 - `HEALTHCHECK` -> Not supported
-- `LABEL`       -> Use `oci_image#labels`
-- `MAINTAINER`  -> Not supported
-- `ONBUILD`     -> Not supported
-- `RUN`         -> See: https://github.com/bazel-contrib/rules_oci/issues/132
-- `SHELL`       -> Use `oci_image#entrypoint` instead.
-- `STOPSIGNAL`  -> Not supported
-- `USER`        -> Not supported. Use the tar rule's mechanism for setting gid/uid
-- `VOLUME`      -> See: https://github.com/bazel-contrib/rules_oci/issues/406
-- `WORKDIR`     -> Use `oci_image#workdir`
+- `LABEL` -> Use `oci_image#labels`
+- `MAINTAINER` -> Not supported
+- `ONBUILD` -> Not supported
+- `RUN` -> See: https://github.com/bazel-contrib/rules_oci/issues/132
+- `SHELL` -> Use `oci_image#entrypoint` instead.
+- `STOPSIGNAL` -> Not supported
+- `USER` -> Not supported. Use the tar rule's mechanism for setting gid/uid
+- `VOLUME` -> Use `oci_image#volumes`
+- `WORKDIR` -> Use `oci_image#workdir`
 
+References:
 
-References: 
 - https://docs.docker.com/engine/reference/builder/#overview
 - https://github.com/bazel-contrib/rules_oci/blob/main/docs/image.md
 - https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md
@@ -96,10 +96,9 @@ oci_image(
 )
 ```
 
-
 ## What about `RUN`?
 
-Long story short, rules_oci doesn't have a replacement for it and the reason is that `RUN` requires us to depend 
+Long story short, rules_oci doesn't have a replacement for it and the reason is that `RUN` requires us to depend
 on a running Container Daemon to work, and is non-hermetic.
 
 See: https://github.com/bazel-contrib/rules_oci/issues/35

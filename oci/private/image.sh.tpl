@@ -134,10 +134,15 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
-	(--exposed-ports-file=*)
-	  while IFS= read -r in || [ -n "$in" ]; do
+        (--exposed-ports-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--exposed-ports=$in")
           done <"${ARG#--exposed-ports-file=}"
+          ;;
+        (--volumes-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+            FIXED_ARGS+=("--volumes=$in")
+          done <"${ARG#--volumes-file=}"
           ;;
         (*) FIXED_ARGS+=( "${ARG}" )
     esac
