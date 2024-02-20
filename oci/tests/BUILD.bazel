@@ -62,9 +62,11 @@ build_test(
         "@gitlab_assets_ce",
         # TODO: https://github.com/bazel-contrib/rules_oci/issues/193
         # "@apollo_router",
+        "@ecr_lambda_python",
         "@from_rules_docker",
         "@ubuntu",
         "@es_kibana_image",
+        "@quay_clair_image",
     ],
 )
 

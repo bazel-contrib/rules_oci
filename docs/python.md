@@ -4,9 +4,6 @@ Users are typically migrating from [py3_image](https://github.com/bazelbuild/rul
 in rules_docker.
 (There is also an older `py_image` rule that's meant for Python 2, which is end-of-life and not considered here).
 
-TODO: document how to get the third-party pypi dependencies into a separate layer beneath the
-application.
+## Examples
 
-## Example
-
-- https://github.com/aspect-build/bazel-examples/tree/main/oci_python_image
+- https://github.com/aspect-build/bazel-examples/tree/main/oci_python_image: shows how the image can be composed of three layers: interpreter, `site-packages`, and application.

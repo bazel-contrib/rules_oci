@@ -15,7 +15,9 @@ fi
 
 # set $@ to be FIXED_ARGS+$@
 ALL_ARGS=(${FIXED_ARGS[@]+"${FIXED_ARGS[@]}"} $@)
-set -- ${ALL_ARGS[@]}
+if [[ ${#ALL_ARGS[@]} -gt 0 ]]; then
+  set -- ${ALL_ARGS[@]}
+fi
 
 TAGS=()
 ARGS=()

@@ -44,10 +44,9 @@ bzl_library(
         "//oci:__subpackages__",
     ],
     deps = [
-        "//oci/private:auth_config_locator",
+        "//oci/private:authn",
         "//oci/private:download",
         "//oci/private:util",
-        "@aspect_bazel_lib//lib:base64",
         "@bazel_skylib//lib:dicts",
     ],
 )
@@ -87,10 +86,14 @@ bzl_library(
 )
 
 bzl_library(
-    name = "auth_config_locator",
-    srcs = ["auth_config_locator.bzl"],
+    name = "authn",
+    srcs = ["authn.bzl"],
     visibility = ["//oci:__subpackages__"],
-    deps = ["@aspect_bazel_lib//lib:repo_utils"],
+    deps = [
+        "@aspect_bazel_lib//lib:repo_utils",
+        "//oci/private:util",
+        "@aspect_bazel_lib//lib:base64",
+    ],
 )
 
 bzl_library(
