@@ -8,8 +8,10 @@ set -o pipefail -o errexit -o nounset
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
 readonly CRANE="{{crane_path}}"
 readonly JQ="{{jq_path}}"
+readonly COREUTILS="{{coreutils}}"
 readonly STORAGE_DIR="{{storage_dir}}"
 readonly OUTPUT="{{output}}"
+readonly PERMITS_TREEARTIFACT_SYMLINKS="{{treeartifact_symlinks}}"
 readonly STDERR=$(mktemp)
 
 on_exit() {
@@ -28,7 +30,7 @@ trap "on_exit" EXIT
 
 # Trap for exit is setup, it will take care of printing to stdout if anything fails. 
 # Redirect stderr to the $STDERR file for the rest of the script.
-exec 2>>"${STDERR}"
+# exec 2>>"${STDERR}"
 
 
 function get_option() {
@@ -64,37 +66,33 @@ function empty_base() {
 function base_from_layout() {
     local oci_layout_path=$1
     local registry=$2
-    local output=$3
     local blobs="$oci_layout_path/blobs/"
-    local pwd=$(pwd)
-  
-    for p in $(ls -1 -d "$blobs"*/*); do
+    local output="$(mktemp)"
 
-      local relative_path_to_layout=${p#"$oci_layout_path/"}
+    for blob in $(ls -1 -d "$blobs"*/*); do
+      local relative_path_to_layout=${blob#"$oci_layout_path/"}
       local relative_path_to_layout_dir="$(dirname $relative_path_to_layout)"
       local hash="$(basename $relative_path_to_layout)"
 
-      mkdir -p "$output/$relative_path_to_layout_dir"
+      mkdir -p "$OUTPUT/$relative_path_to_layout_dir"
+      if [[ "$PERMITS_TREEARTIFACT_SYMLINKS" == "1" ]]; then
+        local relative_to_symlink_target_dir=$($COREUTILS realpath --relative-to="$OUTPUT/$relative_path_to_layout_dir" "$(dirname $blob)")
+        $COREUTILS ln -s "$relative_to_symlink_target_dir/$hash" "$OUTPUT/$relative_path_to_layout" 1>&2
+      else
+        cp "$blob" "$OUTPUT/$relative_path_to_layout"
+      fi
 
-      local relative_to_symlink_target_dir=$($COREUTILS realpath --relative-to="$output/$relative_path_to_layout_dir" "$(dirname $p)")
-      $COREUTILS ln -s "$relative_to_symlink_target_dir/$hash" "$output/$relative_path_to_layout"  >&2
-      # $COREUTILS ln -s "$p" "$pwd/$output/$relp"  >&2
     done
 
-    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest"
+    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" 2>$output
 
-    if [[ $? != 0 ]]; then 
-      if grep -q "MANIFEST_INVALID" "${output}"; then
-    cat >&2 << EOF
-crane registry does support both oci and docker images, but is more memory hungry.
-
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
+    if ([ $? != 0 ] && [grep -q "MANIFEST_INVALID" "${output}"]); then
+      cat >&2 <<EOF
+Zot registry does not support docker manifests.
+Use crane registry instead by removing "zot_version" from "oci_register_toolchains".
 EOF
-
-        exit 1
+      return 1
     fi
-
-    cat "${refs}"
 }
 
 source "${REGISTRY_LAUNCHER}" 
@@ -109,7 +107,7 @@ for ARG in "$@"; do
     case "$ARG" in
         (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
         (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
-        (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY $OUTPUT)") ;;
+        (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
         # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
         # file doesn't have a trailing newline.
         (--env-file=*)
@@ -172,11 +170,10 @@ fi
 
 if [ -n "$OUTPUT" ]; then
     "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --annotate-ref
-    # normalize_symlinks "${OUTPUT}"
-    ls -l "${OUTPUT}/blobs/sha256"
+    # ls -l "${OUTPUT}/blobs/sha256"
     mv "./${OUTPUT}/index.json" "./${OUTPUT}/temp.json"
     "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
     rm "${OUTPUT}/temp.json"
     "${CRANE}" layout gc "./${OUTPUT}"
-    ls -l "${OUTPUT}/blobs/sha256"
+    # ls -l "${OUTPUT}/blobs/sha256"
 fi

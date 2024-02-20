@@ -1,5 +1,6 @@
 "Implementation details for image rule"
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("//oci/private:util.bzl", "util")
 
 _DOC = """Build an OCI compatible container image.
@@ -104,11 +105,11 @@ def _oci_image_impl(ctx):
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-
-    launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
+    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
     output = ctx.actions.declare_directory(ctx.label.name)
 
+    launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
     ctx.actions.expand_template(
         template = ctx.file._image_sh_tpl,
         output = launcher,
@@ -117,8 +118,12 @@ def _oci_image_impl(ctx):
             "{{registry_launcher_path}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
+            "{{coreutils}}": coreutils.coreutils_info.bin.path,
             "{{storage_dir}}": output.path,
             "{{empty_tar}}": ctx.file._empty_tar.path,
+            # TreeArtifact symlinks are only available after bazel => 7.1. 
+            # We'll use this gate until https://github.com/bazel-contrib/bazel_features/pull/40 lands.
+            "{{treeartifact_symlinks}}": str(int(bazel_features.external_deps.download_has_headers_param)),
             "{{output}}": output.path,
         },
     )
@@ -128,8 +133,6 @@ def _oci_image_impl(ctx):
 
     if ctx.attr.base:
         base = "oci:layout/%s" % ctx.file.base.path
-        # symlink = ctx.actions.declare_symlink("%s/base" % ctx.label.name)
-        # ctx.actions.symlink(output = symlink, target_path = ctx.file.base.path)
         inputs_depsets.append(depset([ctx.file.base]))
 
     args = ctx.actions.args()
@@ -177,8 +180,6 @@ def _oci_image_impl(ctx):
         args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
         inputs_depsets.append(depset([ctx.file.annotations]))
 
-    args.add(output.path, format = "--output=%s")
-
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
@@ -201,9 +202,13 @@ def _oci_image_impl(ctx):
         progress_message = "OCI Image %{label}",
     )
 
+    transitive = None
+    if ctx.attr.base and bazel_features.external_deps.download_has_headers_param:   
+        transitive = [ctx.attr.base[DefaultInfo].files]
+
     return [
         DefaultInfo(
-            files = depset([output]),
+            files = depset([output], transitive = transitive),
         ),
     ]
 
