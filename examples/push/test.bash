@@ -21,6 +21,20 @@ REPOSITORY="${REGISTRY}/local"
 "${PUSH_IMAGE}" --repository "${REPOSITORY}"
 "${CRANE}" digest "$REPOSITORY:latest"
 
+# should write out the image digest in provided image_refs.
+IMAGE_REFS="$(mktemp)"
+"${PUSH_IMAGE}" --repository "${REPOSITORY}" --image-refs "${IMAGE_REFS}"
+check_refs() {
+  printf "Checking image refs... "
+  local got="$(cat "${IMAGE_REFS}")"
+  local pattern="^${REPOSITORY}@sha256:[0-9a-f]{64}$"
+  [[ ${got} =~ ${pattern} ]] || \
+    (printf "failed; want pattern '%s', got '%s'\n" "${pattern}" "${got}" && rm "${IMAGE_REFS}" && false)
+  echo "passed"
+}
+check_refs
+rm "${IMAGE_REFS}"
+
 # should push image_index with default tags
 REPOSITORY="${REGISTRY}/local-index" 
 "${PUSH_IMAGE_INDEX}" --repository "${REPOSITORY}"
