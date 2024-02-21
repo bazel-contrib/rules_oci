@@ -44,7 +44,6 @@ OCI_MEDIA_TYPE_OR_AUTHN_ERROR="""\
 Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types.
 """
 
-
 # Supported media types
 # * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
 # * Docker spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
@@ -133,7 +132,7 @@ def _download_manifest(rctx, authn, identifier, output):
         if explanation:
             util.warning(rctx, explanation)
 
-    if fallback_to_curl:    
+    if fallback_to_curl:
         util.warning(rctx, "Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.")
         _download(
             rctx,
@@ -178,8 +177,9 @@ copy_to_directory(
 )
 """
 
-def _find_platform_manifest(image_mf, platform_wanted):
-    for mf in image_mf["manifests"]:
+def _find_platform_manifest(index_mf, platform_wanted):
+    """From an index manifest, get the image manifest that corresponds to the given platform"""
+    for mf in index_mf["manifests"]:
         parts = [
             mf["platform"]["os"],
             mf["platform"]["architecture"],
@@ -199,28 +199,39 @@ def _oci_pull_impl(rctx):
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
 
     if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
-        if rctx.attr.platform:
-            fail("{}/{} is a single-architecture image, so attribute 'platforms' should not be set.".format(rctx.attr.registry, rctx.attr.repository))
-
+        # plain image manifest: use the contents.
+        pass
     elif manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+        # image index manifest: download the image manifest for the target platform.
         if not rctx.attr.platform:
-            fail("{}/{} is a multi-architecture image, so attribute 'platforms' is required.".format(rctx.attr.registry, rctx.attr.repository))
+            fail("{}/{} is a multi-architecture image, so attribute 'platforms' is required.".format(
+                rctx.attr.registry,
+                rctx.attr.repository,
+            ))
 
         matching_manifest = _find_platform_manifest(manifest, rctx.attr.platform)
         if not matching_manifest:
-            fail("No matching manifest found in image {}/{} for platform {}".format(rctx.attr.registry, rctx.attr.repository, rctx.attr.platform))
-
-        # extra download to get the manifest for the target platform
+            fail("No matching manifest found in image {}/{} for platform {}".format(
+                rctx.attr.registry,
+                rctx.attr.repository,
+                rctx.attr.platform,
+            ))
         manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "manifest.json")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(manifest["mediaType"]))
-    
-    # symlink manifest.json to blobs with it's digest. 
+
+    # symlink manifest.json to blobs with its digest.
     # it is okay to use symlink here as copy_to_directory will dereference it when creating the TreeArtifact.
     rctx.symlink("manifest.json", _digest_into_blob_path(digest))
 
-    # download the image config
-    downloader.download_blob(manifest["config"]["digest"], _digest_into_blob_path(manifest["config"]["digest"]))
+    config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
+    downloader.download_blob(manifest["config"]["digest"], config_output_path)
+
+    # if the user provided a platform for the image, validate it matches the config as best effort.
+    if rctx.attr.platform:
+        config_bytes = rctx.read(config_output_path)
+        config = json.decode(config_bytes)
+        util.validate_image_platform(rctx, config)
 
     # download all layers
     # TODO: we should avoid eager-download of the layers ("shallow pull")
@@ -261,7 +272,7 @@ alias(
     name = "{target_name}",
     actual = select(
         {platform_map},
-        no_match_error = \"\"\"could not find an image matching the target platform. \\navailable platforms are {available_platforms} \"\"\",
+        no_match_error = \"\"\"could not find an image matching the target platform. \\nAvailable platforms are {available_platforms} \"\"\",
     ),
     visibility = ["//visibility:public"],
 )
@@ -288,12 +299,27 @@ def _oci_alias_impl(rctx):
 
     manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
 
-    if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
-        for submanifest in manifest["manifests"]:
-            parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
-            if "variant" in submanifest["platform"]:
-                parts.append(submanifest["platform"]["variant"])
-            available_platforms.append('"{}"'.format("/".join(parts)))
+    if rctx.attr.platforms:
+        if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+            # multi arch image.
+            for submanifest in manifest["manifests"]:
+                parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
+                if "variant" in submanifest["platform"]:
+                    parts.append(submanifest["platform"]["variant"])
+                available_platforms.append('"{}"'.format("/".join(parts)))
+        elif manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
+            # single arch image where the user specified the platform.
+            config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
+            downloader.download_blob(manifest["config"]["digest"], config_output_path)
+            config_bytes = rctx.read(config_output_path)
+            config = json.decode(config_bytes)
+            if "os" in config and "architecture" in config:
+                parts = [config["os"], config["architecture"]]
+                if "variant" in config:
+                    parts.append(config["variant"])
+                available_platforms.append('"{}"'.format("/".join(parts)))
+            else:
+                available_platforms.append("unknown (os/architecture unspecified in image metadata)")
 
     if _is_tag(rctx.attr.identifier) and rctx.attr.reproducible:
         is_bzlmod = hasattr(rctx.attr, "bzlmod_repository") and rctx.attr.bzlmod_repository
@@ -342,10 +368,17 @@ oci_alias = repository_rule(
     attrs = dicts.add(
         _IMAGE_REFERENCE_ATTRS,
         {
-            "platforms": attr.label_keyed_string_dict(),
-            "platform": attr.label(),
+            "platforms": attr.label_keyed_string_dict(
+                doc = "If set, the alias will map the target platform's cpu to the corresponding image, or fail if no image matches.",
+            ),
+            "platform": attr.label(
+                doc = "If set, the alias will simply map to that (single) image, regardless of the target platform's cpu.",
+            ),
             "target_name": attr.string(),
-            "reproducible": attr.bool(default = True, doc = "Set to False to silence the warning about reproducibility when using `tag`"),
+            "reproducible": attr.bool(
+                default = True,
+                doc = "Set to False to silence the warning about reproducibility when using `tag`",
+            ),
             "bzlmod_repository": attr.string(
                 doc = "For error reporting. When called from a module extension, provides the original name of the repository prior to mapping",
             ),

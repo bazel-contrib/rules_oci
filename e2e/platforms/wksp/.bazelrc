@@ -1,0 +1,2 @@
+common --symlink_prefix=/
+common --repository_cache=

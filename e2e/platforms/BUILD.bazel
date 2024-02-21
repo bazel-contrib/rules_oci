@@ -1,0 +1,31 @@
+load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
+
+[
+    bats_test(
+        name = "test_%s" % name,
+        size = "large",
+        srcs = [
+            "test.bats",
+        ],
+        env = {
+            "WKSP": "$(location :wksp)",
+            "BAZEL_FLAGS": flags
+        },
+        args = [
+            "--verbose-run",
+            "--timing",
+            "--trace"
+        ],
+        data = [":wksp"],
+        tags = [
+            "local",
+            "exclusive",
+            "no-remote",
+            "no-remote-exec"
+        ]
+    )
+    for (name, flags) in [
+        ("bzlmod", "--noenable_bzlmod"),
+        ("nobzlmod", "--enable_bzlmod")
+    ]
+]

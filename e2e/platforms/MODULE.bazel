@@ -1,0 +1,10 @@
+"Bazel dependencies"
+
+bazel_dep(name = "aspect_bazel_lib", version = "2.1.0")
+
+archive_override(
+    module_name = "aspect_bazel_lib",
+    urls = ["https://github.com/aspect-build/bazel-lib/archive/081ab5a87971d9651302e48e721e5e4b711a5eec.tar.gz"],
+    strip_prefix = "bazel-lib-081ab5a87971d9651302e48e721e5e4b711a5eec",
+    integrity = "sha256-wQ1WPMqKZwwLtW4dFnS+Vz/U0RQAnWw+Fv7gKRh+ACI="
+)
