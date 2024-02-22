@@ -22,7 +22,16 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
-def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, **kwargs):
+def oci_image(
+        name,
+        labels = None,
+        annotations = None,
+        env = None,
+        cmd = None,
+        entrypoint = None,
+        exposed_ports = None,
+        volumes = None,
+        **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
@@ -44,6 +53,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         cmd: Command & argument configured by default in the running container. See documentation above.
         entrypoint: Entrypoint configured by default in the running container. See documentation above.
         exposed_ports: Exposed ports in the running container. See documentation above.
+        volumes: Volumes for the container. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
@@ -55,7 +65,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = annotations_label,
             out = "_{}.annotations.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         annotations = annotations_label
 
@@ -65,7 +75,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = labels_label,
             out = "_{}.labels.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in labels.items()],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         labels = labels_label
 
@@ -75,17 +85,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = env_label,
             out = "_{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            **forwarded_kwargs,
-        )
-        env = env_label
-
-    if types.is_dict(env):
-        env_label = "_{}_write_env".format(name)
-        write_file(
-            name = env_label,
-            out = "_{}.env.txt".format(name),
-            content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         env = env_label
 
@@ -95,7 +95,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = cmd_label,
             out = "_{}.cmd.txt".format(name),
             content = [",".join(cmd)],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         cmd = cmd_label
 
@@ -105,7 +105,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = entrypoint_label,
             out = "_{}.entrypoint.txt".format(name),
             content = [",".join(entrypoint)],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         entrypoint = entrypoint_label
 
@@ -115,9 +115,19 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = exposed_ports_label,
             out = "_{}.exposed_ports.txt".format(name),
             content = [",".join(exposed_ports)],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         exposed_ports = exposed_ports_label
+
+    if types.is_list(volumes):
+        volumes_label = "_{}_write_volumes".format(name)
+        write_file(
+            name = volumes_label,
+            out = "_{}.volumes.txt".format(name),
+            content = [",".join(volumes)],
+            **forwarded_kwargs
+        )
+        volumes = volumes_label
 
     oci_image_rule(
         name = name,
@@ -127,6 +137,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         cmd = cmd,
         entrypoint = entrypoint,
         exposed_ports = exposed_ports,
+        volumes = volumes,
         **kwargs
     )
 
@@ -136,14 +147,14 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         name = "_{}_index_json".format(name),
         directory = name,
         path = "index.json",
-        **forwarded_kwargs,
+        **forwarded_kwargs
     )
 
     copy_file(
         name = "_{}_index_json_cp".format(name),
         src = "_{}_index_json".format(name),
         out = "_{}_index.json".format(name),
-        **forwarded_kwargs,
+        **forwarded_kwargs
     )
 
     # Matches the [name].digest target produced by rules_docker container_image
@@ -153,7 +164,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         srcs = ["_{}_index.json".format(name)],
         filter = """.manifests[0].digest""",
         out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
-        **forwarded_kwargs,
+        **forwarded_kwargs
     )
 
 def oci_push(name, remote_tags = None, **kwargs):
@@ -178,7 +189,7 @@ def oci_push(name, remote_tags = None, **kwargs):
             name = tags_label,
             out = "_{}.tags.txt".format(name),
             content = remote_tags,
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         remote_tags = tags_label
 
@@ -210,7 +221,7 @@ def oci_tarball(name, repo_tags = None, **kwargs):
             name = tags_label,
             out = "_{}.tags.txt".format(name),
             content = repo_tags,
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         repo_tags = tags_label
 

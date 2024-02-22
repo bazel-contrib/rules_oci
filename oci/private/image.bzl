@@ -73,6 +73,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
 """),
     "workdir": attr.string(doc = "Sets the current working directory of the `entrypoint` process in the container. This value acts as a default and may be replaced by a working directory specified when creating a container."),
     "exposed_ports": attr.label(doc = "A file containing a comma separated list of exposed ports. (e.g. 2000/tcp, 3000/udp or 4000. No protocol defaults to tcp).", allow_single_file = True),
+    "volumes": attr.label(doc = "A file containing a comma separated list of volumes.", allow_single_file = True),
     "os": attr.string(doc = "The name of the operating system which the image is built to run on. eg: `linux`, `windows`. See $GOOS documentation for possible values: https://go.dev/doc/install/source#environment"),
     "architecture": attr.string(doc = "The CPU architecture which the binaries in this image are built to run on. eg: `arm64`, `arm`, `amd64`, `s390x`. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment"),
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
@@ -152,6 +153,10 @@ def _oci_image_impl(ctx):
     if ctx.attr.exposed_ports:
         args.add(ctx.file.exposed_ports.path, format = "--exposed-ports-file=%s")
         inputs_depsets.append(depset([ctx.file.exposed_ports]))
+
+    if ctx.attr.volumes:
+        args.add(ctx.file.volumes.path, format = "--volumes-file=%s")
+        inputs_depsets.append(depset([ctx.file.volumes]))
 
     if ctx.attr.cmd:
         args.add(ctx.file.cmd.path, format = "--cmd-file=%s")
