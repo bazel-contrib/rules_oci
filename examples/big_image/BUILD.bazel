@@ -12,7 +12,7 @@ N_BASE_LAYERS=10
 
 genrule(
     name = "3gib_file",
-    cmd = "mkfile 3G $@",
+    cmd = "head -c 1073741824 < /dev/urandom > $@",
     outs = ["3gib_file.out"],
     tags = ["manual"],
 )
@@ -21,6 +21,7 @@ genrule(
     pkg_tar(
         name = "blayer_%s" % i,
         srcs = ["3gib_file"],
+        extension = "tar.gz",
         package_dir = "blayer_%s" % i,
         tags = ["manual"],
     )

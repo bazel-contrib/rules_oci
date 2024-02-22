@@ -1508,7 +1508,7 @@
   "moduleExtensions": {
     "//oci:extensions.bzl%oci": {
       "general": {
-        "bzlTransitiveDigest": "l8amRRd9BgdiTEm4wIXEM5kEXaLwQnEID94aUh6KNMk=",
+        "bzlTransitiveDigest": "L3/4P3MHMAF4KJ3XEb6Pqp5Sluub3u/6JwUwjO40Vys=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -1895,7 +1895,7 @@
     },
     "@@aspect_bazel_lib~//lib:extensions.bzl%ext": {
       "general": {
-        "bzlTransitiveDigest": "7AFNnFA2Qq5/se2yNMH3VislLjwgJ+GZGIRDmKLrUVo=",
+        "bzlTransitiveDigest": "8cZ96VG3p7cwBsj9bHXUH/yXzBKxXVCv8c6NPlXaOJY=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -2255,7 +2255,7 @@
     },
     "@@bazel_tools//tools/cpp:cc_configure.bzl%cc_configure_extension": {
       "general": {
-        "bzlTransitiveDigest": "XWy8pzw7/6RclAFWd6/VfUdoXn2SdSpmHOrbfEFJ1ao=",
+        "bzlTransitiveDigest": "PHpT2yqMGms2U4L3E/aZ+WcQalmZWm+ILdP3yiLsDhA=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -2317,7 +2317,7 @@
     },
     "@@rules_go~//go:extensions.bzl%go_sdk": {
       "general": {
-        "bzlTransitiveDigest": "nhIKIa/dgJVpKUiAgjpFF0azFzuFUEnBrlSgzzzxE1o=",
+        "bzlTransitiveDigest": "vcJRrUhJmCxriaF7fWhP0kKJSgJpdiHz2zwffF4BF7c=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
@@ -2358,7 +2358,7 @@
     },
     "@@rules_java~//java:extensions.bzl%toolchains": {
       "general": {
-        "bzlTransitiveDigest": "Vo8tBC4aLZTSWFbox69vCUJ2B0S7GYQDr5txjiyYfgQ=",
+        "bzlTransitiveDigest": "tJHbmWnq7m+9eUBnUdv7jZziQ26FmcGL9C5/hU3Q9UQ=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},
         "envVariables": {},
