@@ -12,7 +12,7 @@ N_BASE_LAYERS=10
 
 genrule(
     name = "3gib_file",
-    cmd = "head -c 1073741824 < /dev/urandom > $@",
+    cmd = "head -c 3125000000 < /dev/urandom > $@",
     outs = ["3gib_file.out"],
     tags = ["manual"],
 )
