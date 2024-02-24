@@ -67,6 +67,7 @@ Push an oci_image to docker registry with 'latest' tag
 oci_image(name = "image")
 
 oci_push(
+    name = "push",
     image = ":image",
     repository = "index.docker.io/&lt;ORG&gt;/image",
     remote_tags = ["latest"]
@@ -110,6 +111,7 @@ expand_template(
 )
 
 oci_push(
+    name = "push",
     image = ":app_image",
     repository = "ghcr.io/&lt;OWNER&gt;/image",
     remote_tags = ":stamped",
