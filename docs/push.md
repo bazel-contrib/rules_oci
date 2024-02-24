@@ -36,12 +36,12 @@ Behavior
 
 Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur;
 
-- Remote registry rejects a tag due to various reasons. eg: forbidden characters, existing tags 
+- Remote registry rejects a tag due to various reasons. eg: forbidden characters, existing tags
 - Remote registry closes the connection during the tagging
 - Local network outages
 
 In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `remote_tags` sequentially at
-the remote registry. 
+the remote registry.
 
 Any failure during pushing or tagging will be reported with non-zero exit code and cause remaining steps to be skipped.
 
