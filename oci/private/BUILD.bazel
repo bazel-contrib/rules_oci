@@ -5,7 +5,10 @@ exports_files(
     visibility = ["//docs:__pkg__"],
 )
 
-exports_files(glob(["*.tpl"]) + ["empty.tar"])
+exports_files(glob([
+    "*.tpl",
+    "*.sh",
+]) + ["empty.tar"])
 
 bzl_library(
     name = "tarball",
@@ -90,15 +93,15 @@ bzl_library(
     srcs = ["authn.bzl"],
     visibility = ["//oci:__subpackages__"],
     deps = [
-        "@aspect_bazel_lib//lib:repo_utils",
         "//oci/private:util",
         "@aspect_bazel_lib//lib:base64",
+        "@aspect_bazel_lib//lib:repo_utils",
     ],
 )
 
 bzl_library(
     name = "util",
     srcs = ["util.bzl"],
-    deps = ["@bazel_skylib//lib:versions"],
     visibility = ["//oci:__subpackages__"],
+    deps = ["@bazel_skylib//lib:versions"],
 )

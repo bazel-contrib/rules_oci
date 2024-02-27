@@ -4,13 +4,16 @@ workspace(name = "rules_oci")
 
 # Fetch deps needed only locally for development
 load(":internal_deps.bzl", "rules_oci_internal_deps")
+
 rules_oci_internal_deps()
 
 load("@io_bazel_stardoc//:setup.bzl", "stardoc_repositories")
+
 stardoc_repositories()
 
 # Fetch our "runtime" dependencies which users need as well
 load("//oci:dependencies.bzl", "rules_oci_dependencies")
+
 rules_oci_dependencies()
 
 load("//oci:repositories.bzl", "LATEST_CRANE_VERSION", "LATEST_ZOT_VERSION", "oci_register_toolchains")
