@@ -35,8 +35,8 @@ EOF
         echo ""
         cat "${REGISTRY_STDERR}"
     fi
-    rm $STDERR
-    rm $REGISTRY_STDERR
+    rm -f $STDERR
+    rm -f $REGISTRY_STDERR
 }
 
 # Upon exiting, stop the registry and print STDERR on non-zero exit code.
@@ -80,6 +80,12 @@ for ARG in "$@"; do
           FIXED_ARGS+=("${REF}") 
         ;;
         (--from=*)
+          digest=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${ARG#--from=}/index.json")
+          echo "digest = $digest"
+          ${JQ} < "${ARG#--from=}/blobs/$digest"
+          ls "${ARG#--from=}"
+          ls "${ARG#--from=}/blobs"
+          ls "${ARG#--from=}/blobs/sha256"
           # https://www.shellcheck.net/wiki/SC2155
           REF=
           REF=$("${CRANE}" push "${ARG#--from=}" "${REGISTRY}/layout:latest")
