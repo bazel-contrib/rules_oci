@@ -12,7 +12,7 @@ N_BASE_LAYERS=10
 
 genrule(
     name = "3gib_file",
-    cmd = "head -c 3125000000 < /dev/urandom > $@",
+    cmd = "head -c 3221225472 < /dev/urandom > $@",
     outs = ["3gib_file.out"],
     tags = ["manual"],
 )
@@ -22,7 +22,7 @@ genrule(
         name = "blayer_%s" % i,
         srcs = ["3gib_file"],
         extension = "tar.gz",
-        package_dir = "blayer_%s" % i,
+        package_dir = "blayer_%s" % ("ayo" if i == 0 else i ),
         tags = ["manual"],
     )
     for i in range(N_BASE_LAYERS)

@@ -81,6 +81,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    "_layer_compute_sh": attr.label(default = "image_layer_compute.sh", allow_single_file = True, executable = True, cfg = "exec"),
     # Workaround for https://github.com/google/go-containerregistry/issues/1513
     # We would prefer to not provide any tar file at all.
     "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
@@ -91,6 +92,24 @@ def _platform_str(os, arch, variant = None):
     if variant:
         parts.append(variant)
     return "/".join(parts)
+
+
+def _calculate_diffid_and_digest(ctx, crane, layer, idx):
+    calculated = ctx.actions.declare_file("%s_calc/%s" % (ctx.label.name, idx))
+    args = ctx.actions.args()
+    args.add(crane.crane_info.binary.path)
+    args.add(layer)
+    args.add(calculated)
+    ctx.actions.run(
+        executable = ctx.executable._layer_compute_sh,
+        inputs = [layer],
+        outputs = [calculated],
+        arguments = [args],
+        tools = [crane.crane_info.binary],
+        mnemonic = "OCIDigest",
+        progress_message = "OCI Digest %{input}",
+    )
+    return calculated
 
 def _oci_image_impl(ctx):
     if not ctx.attr.base:
@@ -128,12 +147,12 @@ def _oci_image_impl(ctx):
         },
     )
 
-    inputs_depsets = [depset([launcher, ctx.file._empty_tar])]
+    inputs = [launcher, ctx.file._empty_tar]
     base = "oci:empty_base"
 
     if ctx.attr.base:
         base = "oci:layout/%s" % ctx.file.base.path
-        inputs_depsets.append(depset([ctx.file.base]))
+        inputs.append(ctx.file.base)
 
     args = ctx.actions.args()
     args.add_all([
@@ -146,21 +165,23 @@ def _oci_image_impl(ctx):
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--platform=%s")
 
     # add layers
-    for layer in ctx.attr.tars:
-        inputs_depsets.append(layer[DefaultInfo].files)
-        args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
+    for (i, layer) in enumerate(ctx.files.tars):
+        calculated = _calculate_diffid_and_digest(ctx, crane, layer, i)
+        inputs.append(calculated)
+        inputs.append(layer)
+        args.add_joined([layer, calculated], join_with="%", format_joined = "--append-with=%s")
 
     if ctx.attr.entrypoint:
         args.add(ctx.file.entrypoint.path, format = "--entrypoint-file=%s")
-        inputs_depsets.append(depset([ctx.file.entrypoint]))
+        inputs.append(ctx.file.entrypoint)
 
     if ctx.attr.exposed_ports:
         args.add(ctx.file.exposed_ports.path, format = "--exposed-ports-file=%s")
-        inputs_depsets.append(depset([ctx.file.exposed_ports]))
+        inputs.append(ctx.file.exposed_ports)
 
     if ctx.attr.cmd:
         args.add(ctx.file.cmd.path, format = "--cmd-file=%s")
-        inputs_depsets.append(depset([ctx.file.cmd]))
+        inputs.append(ctx.file.cmd)
 
     if ctx.attr.user:
         args.add(ctx.attr.user, format = "--user=%s")
@@ -169,16 +190,16 @@ def _oci_image_impl(ctx):
         args.add(ctx.attr.workdir, format = "--workdir=%s")
 
     if ctx.attr.env:
-        args.add(ctx.file.env.path, format = "--env-file=%s")
-        inputs_depsets.append(depset([ctx.file.env]))
+        args.add(ctx.file.env, format = "--env-file=%s")
+        inputs.append(ctx.file.env)
 
     if ctx.attr.labels:
-        args.add(ctx.file.labels.path, format = "--labels-file=%s")
-        inputs_depsets.append(depset([ctx.file.labels]))
+        args.add(ctx.file.labels, format = "--labels-file=%s")
+        inputs.append(ctx.file.labels)
 
     if ctx.attr.annotations:
-        args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
-        inputs_depsets.append(depset([ctx.file.annotations]))
+        args.add(ctx.file.annotations, format = "--annotations-file=%s")
+        inputs.append(ctx.file.annotations)
 
     action_env = {}
 
@@ -192,7 +213,7 @@ def _oci_image_impl(ctx):
         action_env["MSYS_NO_PATHCONV"] = "1"
 
     ctx.actions.run(
-        inputs = depset(transitive = inputs_depsets),
+        inputs = inputs,
         arguments = [args],
         outputs = [output],
         env = action_env,

@@ -6,7 +6,7 @@ set -o pipefail -o errexit -o nounset
 # NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
 
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
-readonly CRANE="{{crane_path}}"
+readonly CRANE="/Users/thesayyn/Documents/go-containerregistry/main"
 readonly JQ="{{jq_path}}"
 readonly COREUTILS="{{coreutils}}"
 readonly STORAGE_DIR="{{storage_dir}}"
@@ -95,6 +95,20 @@ EOF
     fi
 }
 
+# Symlink layers to output folder to reduce IO overhead for copying blobs.
+# This is mainly a performance feature and doesn't affect determinism.
+function symlink_layer() {
+    local layerp="$1"
+    local digest="$2"
+    # Fist two bytes of a gzipped file is `0x1f 0x8b` according to https://www.ietf.org/rfc/rfc1952.txt section `2.3.1`. 
+    # This probe will look for leading 2 bytes to determine if file is gzipped. 
+    local gzip_probe="$($COREUTILS od -An -t x1 --read-bytes 2 $layerp | tr -d ' ')"
+    if [[ $gzip_probe == "1f8b" ]]; then
+      local relative=$($COREUTILS realpath --relative-to="$OUTPUT/blobs/sha256" "$layerp" --no-symlinks)
+      ln -s $relative "$OUTPUT/blobs/${digest//://}"
+    fi
+}
+
 source "${REGISTRY_LAUNCHER}" 
 REGISTRY=
 REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
@@ -108,6 +122,13 @@ for ARG in "$@"; do
         (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
         (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
         (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
+        (--append-with=*)
+            IFS='%' read -r layer digestfile <<< "${ARG#--append-with=}"
+            IFS=' ' read -r diffid digest <<< "$(cat $digestfile)" 
+            symlink_layer "$layer" "$digest"
+            FIXED_ARGS+=("--append-with" "$layer=$diffid=$digest")
+            # FIXED_ARGS+=("--append" "$layer")
+        ;;
         # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
         # file doesn't have a trailing newline.
         (--env-file=*)
@@ -148,7 +169,7 @@ for ARG in "$@"; do
     esac
 done
 
-REF=$("${CRANE}" "${FIXED_ARGS[@]}")
+REF=$(PROF=/tmp/go.pprof "${CRANE}" "${FIXED_ARGS[@]}")
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
     env_expansion_filter=\
@@ -174,6 +195,6 @@ if [ -n "$OUTPUT" ]; then
     mv "./${OUTPUT}/index.json" "./${OUTPUT}/temp.json"
     "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
     rm "${OUTPUT}/temp.json"
-    "${CRANE}" layout gc "./${OUTPUT}"
+    "${CRANE}" layout gc "./${OUTPUT}" > /dev/null
     # ls -l "${OUTPUT}/blobs/sha256"
 fi
