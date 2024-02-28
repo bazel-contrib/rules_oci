@@ -78,7 +78,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
-    "_image_sh_tpl": attr.label(default = "image.sh.tpl", allow_single_file = True),
+    "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     # Workaround for https://github.com/google/go-containerregistry/issues/1513
     # We would prefer to not provide any tar file at all.
@@ -105,77 +105,69 @@ def _oci_image_impl(ctx):
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
-    launcher = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
-
     output = ctx.actions.declare_directory(ctx.label.name)
 
+    # create the image builder
+    builder = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
     ctx.actions.expand_template(
-        template = ctx.file._image_sh_tpl,
-        output = launcher,
+        template = ctx.file._image_sh,
+        output = builder,
         is_executable = True,
         substitutions = {
-            "{{registry_launcher_path}}": registry.registry_info.launcher.path,
+            "{{registry_impl}}": registry.registry_info.launcher.path,
             "{{crane_path}}": crane.crane_info.binary.path,
             "{{jq_path}}": jq.jqinfo.bin.path,
-            "{{storage_dir}}": output.path,
             "{{empty_tar}}": ctx.file._empty_tar.path,
+            "{{output}}": output.path,
         },
     )
 
-    inputs_depsets = [depset([launcher, ctx.file._empty_tar])]
-    base = "oci:empty_base"
+    inputs = [builder, ctx.file._empty_tar] + ctx.files.tars
+    args = ctx.actions.args()
+    args.add("mutate")
 
     if ctx.attr.base:
-        base = "oci:layout/%s" % ctx.file.base.path
-        inputs_depsets.append(depset([ctx.file.base]))
-
-    args = ctx.actions.args()
-
-    args.add_all([
-        "mutate",
-        base,
-    ])
-
-    # add platform
-    if ctx.attr.os and ctx.attr.architecture:
-        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--platform=%s")
+        # reuse given base image
+        args.add(ctx.file.base.path, format = "--from=%s")
+        inputs.append(ctx.file.base)
+    else:
+        # create a scratch base image with given os/arch[/variant]
+        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
 
     # add layers
     for layer in ctx.attr.tars:
-        inputs_depsets.append(layer[DefaultInfo].files)
+        # tars are already added as input above.
         args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
 
     if ctx.attr.entrypoint:
         args.add(ctx.file.entrypoint.path, format = "--entrypoint-file=%s")
-        inputs_depsets.append(depset([ctx.file.entrypoint]))
+        inputs.append(ctx.file.entrypoint)
 
     if ctx.attr.exposed_ports:
         args.add(ctx.file.exposed_ports.path, format = "--exposed-ports-file=%s")
-        inputs_depsets.append(depset([ctx.file.exposed_ports]))
+        inputs.append(ctx.file.exposed_ports)
 
     if ctx.attr.cmd:
         args.add(ctx.file.cmd.path, format = "--cmd-file=%s")
-        inputs_depsets.append(depset([ctx.file.cmd]))
+        inputs.append(ctx.file.cmd)
+
+    if ctx.attr.env:
+        args.add(ctx.file.env.path, format = "--env-file=%s")
+        inputs.append(ctx.file.env)
+
+    if ctx.attr.labels:
+        args.add(ctx.file.labels.path, format = "--labels-file=%s")
+        inputs.append(ctx.file.labels)
+
+    if ctx.attr.annotations:
+        args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
+        inputs.append(ctx.file.annotations)
 
     if ctx.attr.user:
         args.add(ctx.attr.user, format = "--user=%s")
 
     if ctx.attr.workdir:
         args.add(ctx.attr.workdir, format = "--workdir=%s")
-
-    if ctx.attr.env:
-        args.add(ctx.file.env.path, format = "--env-file=%s")
-        inputs_depsets.append(depset([ctx.file.env]))
-
-    if ctx.attr.labels:
-        args.add(ctx.file.labels.path, format = "--labels-file=%s")
-        inputs_depsets.append(depset([ctx.file.labels]))
-
-    if ctx.attr.annotations:
-        args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
-        inputs_depsets.append(depset([ctx.file.annotations]))
-
-    args.add(output.path, format = "--output=%s")
 
     action_env = {}
 
@@ -189,11 +181,11 @@ def _oci_image_impl(ctx):
         action_env["MSYS_NO_PATHCONV"] = "1"
 
     ctx.actions.run(
-        inputs = depset(transitive = inputs_depsets),
+        inputs = inputs,
         arguments = [args],
         outputs = [output],
         env = action_env,
-        executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
+        executable = util.maybe_wrap_launcher_for_windows(ctx, builder),
         tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
