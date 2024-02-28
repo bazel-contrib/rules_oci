@@ -2,6 +2,7 @@
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@bazel_skylib//lib:versions.bzl", "versions")
+load(":util.bzl", "util")
 
 def _auth_to_header(url, auth):
     for auth_url in auth:
@@ -31,45 +32,24 @@ def _debug(message):
         # buildifier: disable=print
         print(message)
 
-# Bazel-like downloader using curl
-#  A workaround for https://github.com/bazelbuild/bazel/issues/17829
-#  Features
-#   - Can set custom headers
-#   - Support for http2/3 out-of-the-box
-#  Supports
-#   - bazel repository cache. doesn't do re-fetches if repository rule gets invalidated
-#   - authorization
-#  Caveats
-#   - Doesn't support --experimental_downloader_config. (can not read the flag therefore can't support it out of the box. though can be supported by introducing an attribute.)
-#   - Doesn't support other http related bazel flags.
-#   - Support for netrc. TODO: https://curl.se/docs/manpage.html#--netrc-file
-#   - curl is not fetched hermetically. Though this can be done easily.
+# TODO(2.0): remove curl downloader
 def _download(
         rctx,
         url,
         output,
         sha256 = "",
-        executable = False,
         allow_fail = False,
-        canonical_id = "",
         auth = {},
+        # ignored
+        # buildifier: disable=unused-variable
+        canonical_id = "",
+        # unsupported
+        executable = False,
         integrity = "",
         # custom features
-        method = "GET",
         headers = {}):
-    if sha256 or integrity:
-        cache_result = rctx.download(
-            url = [],
-            output = output,
-            executable = executable,
-            allow_fail = True,
-            canonical_id = canonical_id,
-            integrity = integrity,
-            sha256 = sha256,
-        )
-        if cache_result.success:
-            _debug("{} is in cache".format(url))
-            return cache_result
+    if executable or integrity:
+        fail("executable and integrity attributes are unsupported.")
 
     version_result = rctx.execute(["curl", "--version"])
     if version_result.return_code != 0:
@@ -81,7 +61,6 @@ def _download(
     # ...
     curl_version = version_result.stdout.split(" ")[1]
 
-    output_path = str(rctx.path(".output/{}".format(output)))
     command = [
         "curl",
         url,
@@ -89,10 +68,10 @@ def _download(
         "%{http_code}",
         "--location",
         "--request",
-        method,
+        "GET",
         "--create-dirs",
         "--output",
-        output_path,
+        output,
     ]
 
     # Detect more flags which may be supported based on changelog:
@@ -121,18 +100,13 @@ def _download(
             return struct(success = False)
         else:
             fail("curl {} returned non-success status code {}".format(url, status_code))
-
-    cache_it = rctx.download(
-        url = "file://{}".format(output_path),
-        output = output,
-        executable = executable,
-        allow_fail = allow_fail,
-        canonical_id = canonical_id,
-        integrity = integrity,
-        sha256 = sha256,
+    checksum = util.sha256(rctx, output)
+    if sha256 and checksum != sha256:
+        fail("Checksum for url {} was {} but expected {}".format(url, checksum, sha256))
+    return struct(
+        success = True,
+        sha256 = checksum,
     )
-
-    return cache_it
 
 # A dummy function that uses bazel downloader.
 #  Caveats
@@ -140,7 +114,7 @@ def _download(
 def _bazel_download(
         rctx,
         # custom features
-        method = "GET",
+        # buildifier: disable=unused-variable
         headers = {},
         # passthrough
         **kwargs):

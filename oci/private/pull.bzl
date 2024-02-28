@@ -35,13 +35,18 @@ _IMAGE_REFERENCE_ATTRS = {
     ),
 }
 
-SCHEMA1_ERROR="""\
-Registry responded with a manifest that has `schemaVersion=1`
-Usually happens when fetching from a registry that requires `Docker-Distribution-API-Version` header to be set
+SCHEMA1_ERROR = """\
+The registry sent a manifest with schemaVersion=1. 
+This commonly occurs when fetching from a registry that needs the Docker-Distribution-API-Version header to be set.
 """
 
-OCI_MEDIA_TYPE_OR_AUTHN_ERROR="""\
-Could not fetch the manifest. Either there was an authentication issue or trying to pull an image with OCI image media types.
+OCI_MEDIA_TYPE_OR_AUTHN_ERROR = """\
+Unable to retrieve the manifest. This could be due to authentication problems or an attempt to fetch an image with OCI image media types.
+"""
+
+CURL_FALLBACK_WARNING = """\
+The use of Curl fallback is deprecated and is set to be removed in version 2.0. 
+For more details, refer to: https://github.com/bazel-contrib/rules_oci/issues/456
 """
 
 # Supported media types
@@ -98,7 +103,7 @@ def _download(rctx, authn, identifier, output, resource, download_fn = download.
     if identifier.startswith("sha256:"):
         sha256 = identifier[len("sha256:"):]
     else:
-        util.warning(rctx, "Fetching from {} without an integrity hash. The result will not be cached.".format(registry_url))
+        util.warning(rctx, "Fetching from {}@{} without an integrity hash. The result will not be cached.".format(rctx.attr.repository, identifier))
 
     return download_fn(
         rctx,
@@ -133,7 +138,7 @@ def _download_manifest(rctx, authn, identifier, output):
             util.warning(rctx, explanation)
 
     if fallback_to_curl:
-        util.warning(rctx, "Falling back to using `curl`. See https://github.com/bazelbuild/bazel/issues/17829 for the context.")
+        util.warning(rctx, CURL_FALLBACK_WARNING)
         _download(
             rctx,
             authn,
@@ -144,7 +149,7 @@ def _download_manifest(rctx, authn, identifier, output):
             headers = {
                 "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
                 "Docker-Distribution-API-Version": "registry/2.0",
-            }
+            },
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
@@ -247,7 +252,7 @@ def _oci_pull_impl(rctx):
     rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
 
     rctx.file("BUILD.bazel", content = _BUILD_FILE_TMPL.format(
-        target_name = rctx.attr.target_name
+        target_name = rctx.attr.target_name,
     ))
 
 oci_pull = repository_rule(
@@ -264,7 +269,7 @@ oci_pull = repository_rule(
             ),
         },
     ),
-    environ = authn.ENVIRON
+    environ = authn.ENVIRON,
 )
 
 _MULTI_PLATFORM_IMAGE_ALIAS_TMPL = """\
@@ -384,5 +389,5 @@ oci_alias = repository_rule(
             ),
         },
     ),
-    environ = authn.ENVIRON
+    environ = authn.ENVIRON,
 )
