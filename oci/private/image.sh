@@ -75,19 +75,11 @@ for ARG in "$@"; do
     case "$ARG" in
         (--scratch=*)
           # https://www.shellcheck.net/wiki/SC2155
-          REF=
           REF=$(base_from_scratch "${ARG#--scratch=}")
           FIXED_ARGS+=("${REF}") 
         ;;
         (--from=*)
-          digest=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${ARG#--from=}/index.json")
-          echo "digest = $digest"
-          ${JQ} < "${ARG#--from=}/blobs/$digest"
-          ls "${ARG#--from=}"
-          ls "${ARG#--from=}/blobs"
-          ls "${ARG#--from=}/blobs/sha256"
           # https://www.shellcheck.net/wiki/SC2155
-          REF=
           REF=$("${CRANE}" push "${ARG#--from=}" "${REGISTRY}/layout:latest")
           FIXED_ARGS+=("${REF}") 
         ;;
