@@ -47,7 +47,6 @@ exec 2>>"${STDERR}"
 
 # shellcheck disable=SC1090
 source "${REGISTRY_IMPL}" 
-REGISTRY=
 REGISTRY=$(start_registry "${OUTPUT}" "${REGISTRY_STDERR}")
 
 
@@ -74,18 +73,16 @@ ENV_EXPANSIONS=()
 for ARG in "$@"; do
     case "$ARG" in
         (--scratch=*)
-          # https://www.shellcheck.net/wiki/SC2155
           REF=$(base_from_scratch "${ARG#--scratch=}")
           FIXED_ARGS+=("${REF}") 
         ;;
         (--from=*)
-          # https://www.shellcheck.net/wiki/SC2155
           REF=$("${CRANE}" push "${ARG#--from=}" "${REGISTRY}/layout:latest")
           FIXED_ARGS+=("${REF}") 
         ;;
+        # NB: the '|| [-n $in]' in all flags below  expression is needed to process 
+        # the final line, in case the input file doesn't have a trailing newline.
         (--env-file=*)
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
           while IFS= read -r in || [ -n "$in" ]; do
             if [[ "${in}" = *\$* ]]; then
               ENV_EXPANSIONS+=( "${in}" )
@@ -95,14 +92,10 @@ for ARG in "$@"; do
           done <"${ARG#--env-file=}"
           ;;
         (--labels-file=*)
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--label=$in")
           done <"${ARG#--labels-file=}"
           ;;
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
         (--annotations-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--annotation=$in")
@@ -118,13 +111,13 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
-	(--exposed-ports-file=*)
-	  while IFS= read -r in || [ -n "$in" ]; do
-            FIXED_ARGS+=("--exposed-ports=$in")
-          done <"${ARG#--exposed-ports-file=}"
-          ;;
-        (*) FIXED_ARGS+=( "${ARG}" )
-    esac
+        (--exposed-ports-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
+                  FIXED_ARGS+=("--exposed-ports=$in")
+                done <"${ARG#--exposed-ports-file=}"
+                ;;
+              (*) FIXED_ARGS+=( "${ARG}" )
+          esac
 done
 
 REF=$("${CRANE}" "${FIXED_ARGS[@]}")
