@@ -26,3 +26,10 @@ def rules_oci_dependencies():
         strip_prefix = "bazel-lib-1.39.0",
         url = "https://github.com/aspect-build/bazel-lib/releases/download/v1.39.0/bazel-lib-v1.39.0.tar.gz",
     )
+
+    http_archive(
+        name = "bazel_features",
+        sha256 = "0f23d75c7623d6dba1fd30513a94860447de87c8824570521fcc966eda3151c2",
+        strip_prefix = "bazel_features-1.4.1",
+        url = "https://github.com/bazel-contrib/bazel_features/releases/download/v1.4.1/bazel_features-v1.4.1.tar.gz",
+    )

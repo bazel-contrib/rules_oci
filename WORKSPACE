@@ -18,7 +18,7 @@ load("//oci:repositories.bzl", "LATEST_CRANE_VERSION", "LATEST_ZOT_VERSION", "oc
 oci_register_toolchains(
     name = "oci",
     crane_version = LATEST_CRANE_VERSION,
-    zot_version = LATEST_ZOT_VERSION,
+    # zot_version = LATEST_ZOT_VERSION,
 )
 
 load("//cosign:repositories.bzl", "cosign_register_toolchains")

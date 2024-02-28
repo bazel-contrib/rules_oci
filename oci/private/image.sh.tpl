@@ -6,10 +6,12 @@ set -o pipefail -o errexit -o nounset
 # NB: --output argument is an option only understood by this wrapper and will pull artifact image into a oci layout.
 
 readonly REGISTRY_LAUNCHER="{{registry_launcher_path}}"
-readonly CRANE="{{crane_path}}"
+readonly CRANE="/Users/thesayyn/Documents/go-containerregistry/main"
 readonly JQ="{{jq_path}}"
+readonly COREUTILS="{{coreutils}}"
 readonly STORAGE_DIR="{{storage_dir}}"
-
+readonly OUTPUT="{{output}}"
+readonly PERMITS_TREEARTIFACT_SYMLINKS="{{treeartifact_symlinks}}"
 readonly STDERR=$(mktemp)
 
 on_exit() {
@@ -20,7 +22,16 @@ on_exit() {
     if [[ $last_cmd_exit_code != 0 ]] || [[ $stop_registry_exit_code != 0 ]]; then
         cat "${STDERR}" >&1
     fi
+    rm $STDERR
 }
+
+# Upon exiting, stop the registry and print STDERR on non-zero exit code.
+trap "on_exit" EXIT
+
+# Trap for exit is setup, it will take care of printing to stdout if anything fails. 
+# Redirect stderr to the $STDERR file for the rest of the script.
+# exec 2>>"${STDERR}"
+
 
 function get_option() {
     local name=$1
@@ -31,7 +42,6 @@ function get_option() {
         esac
     done
 }
-
 
 function empty_base() {
     local registry=$1
@@ -54,42 +64,56 @@ function empty_base() {
 }
 
 function base_from_layout() {
-    # TODO: https://github.com/google/go-containerregistry/issues/1514
-    local refs=$(mktemp)
-    local output=$(mktemp)
     local oci_layout_path=$1
     local registry=$2
+    local blobs="$oci_layout_path/blobs/"
+    local output="$(mktemp)"
 
-    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" --image-refs "${refs}" > "${output}" 2>&1
+    for blob in $(ls -1 -d "$blobs"*/*); do
+      local relative_path_to_layout=${blob#"$oci_layout_path/"}
+      local relative_path_to_layout_dir="$(dirname $relative_path_to_layout)"
+      local hash="$(basename $relative_path_to_layout)"
 
-    if grep -q "MANIFEST_INVALID" "${output}"; then
-    cat >&2 << EOF
+      mkdir -p "$OUTPUT/$relative_path_to_layout_dir"
+      if [[ "$PERMITS_TREEARTIFACT_SYMLINKS" == "1" ]]; then
+        local relative_to_symlink_target_dir=$($COREUTILS realpath --relative-to="$OUTPUT/$relative_path_to_layout_dir" "$(dirname $blob)")
+        $COREUTILS ln -s "$relative_to_symlink_target_dir/$hash" "$OUTPUT/$relative_path_to_layout" 1>&2
+      else
+        cp "$blob" "$OUTPUT/$relative_path_to_layout"
+      fi
 
-zot registry does not support docker manifests. 
+    done
 
-crane registry does support both oci and docker images, but is more memory hungry.
+    "${CRANE}" push "${oci_layout_path}" "${registry}/image:latest" 2>$output
 
-If you want to use the crane registry, remove "zot_version" from "oci_register_toolchains". 
-
+    if ([ $? != 0 ] && [grep -q "MANIFEST_INVALID" "${output}"]); then
+      cat >&2 <<EOF
+Zot registry does not support docker manifests.
+Use crane registry instead by removing "zot_version" from "oci_register_toolchains".
 EOF
-
-        exit 1
+      return 1
     fi
-
-    cat "${refs}"
 }
 
-# Redirect stderr to the $STDERR temp file for the rest of the script.
-exec 2>>"${STDERR}"
-
-# Upon exiting, stop the registry and print STDERR on non-zero exit code.
-trap "on_exit" EXIT
+# Symlink layers to output folder to reduce IO overhead for copying blobs.
+# This is mainly a performance feature and doesn't affect determinism.
+function symlink_layer() {
+    local layerp="$1"
+    local digest="$2"
+    # Fist two bytes of a gzipped file is `0x1f 0x8b` according to https://www.ietf.org/rfc/rfc1952.txt section `2.3.1`. 
+    # This probe will look for leading 2 bytes to determine if file is gzipped. 
+    local gzip_probe="$($COREUTILS od -An -t x1 --read-bytes 2 $layerp | tr -d ' ')"
+    if [[ $gzip_probe == "1f8b" ]]; then
+      local relative=$($COREUTILS realpath --relative-to="$OUTPUT/blobs/sha256" "$layerp" --no-symlinks)
+      ln -s $relative "$OUTPUT/blobs/${digest//://}"
+    fi
+}
 
 source "${REGISTRY_LAUNCHER}" 
 REGISTRY=
 REGISTRY=$(start_registry "${STORAGE_DIR}" "${STDERR}")
 
-OUTPUT=""
+
 FIXED_ARGS=()
 ENV_EXPANSIONS=()
 
@@ -98,10 +122,16 @@ for ARG in "$@"; do
         (oci:registry*) FIXED_ARGS+=("${ARG/oci:registry/$REGISTRY}") ;;
         (oci:empty_base) FIXED_ARGS+=("$(empty_base $REGISTRY $@)") ;;
         (oci:layout*) FIXED_ARGS+=("$(base_from_layout ${ARG/oci:layout\/} $REGISTRY)") ;;
-        (--output=*) OUTPUT="${ARG#--output=}" ;;
+        (--append-with=*)
+            IFS='%' read -r layer digestfile <<< "${ARG#--append-with=}"
+            IFS=' ' read -r diffid digest <<< "$(cat $digestfile)" 
+            symlink_layer "$layer" "$digest"
+            FIXED_ARGS+=("--append-with" "$layer=$diffid=$digest")
+            # FIXED_ARGS+=("--append" "$layer")
+        ;;
+        # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
+        # file doesn't have a trailing newline.
         (--env-file=*)
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
           while IFS= read -r in || [ -n "$in" ]; do
             if [[ "${in}" = *\$* ]]; then
               ENV_EXPANSIONS+=( "${in}" )
@@ -111,14 +141,10 @@ for ARG in "$@"; do
           done <"${ARG#--env-file=}"
           ;;
         (--labels-file=*)
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--label=$in")
           done <"${ARG#--labels-file=}"
           ;;
-          # NB: the '|| [-n $in]' expression is needed to process the final line, in case the input
-          # file doesn't have a trailing newline.
         (--annotations-file=*)
           while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--annotation=$in")
@@ -134,8 +160,8 @@ for ARG in "$@"; do
             FIXED_ARGS+=("--entrypoint=$in")
           done <"${ARG#--entrypoint-file=}"
           ;;
-	(--exposed-ports-file=*)
-	  while IFS= read -r in || [ -n "$in" ]; do
+        (--exposed-ports-file=*)
+          while IFS= read -r in || [ -n "$in" ]; do
             FIXED_ARGS+=("--exposed-ports=$in")
           done <"${ARG#--exposed-ports-file=}"
           ;;
@@ -143,7 +169,7 @@ for ARG in "$@"; do
     esac
 done
 
-REF=$("${CRANE}" "${FIXED_ARGS[@]}")
+REF=$(PROF=/tmp/go.pprof "${CRANE}" "${FIXED_ARGS[@]}")
 
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
     env_expansion_filter=\
@@ -165,8 +191,10 @@ fi
 
 if [ -n "$OUTPUT" ]; then
     "${CRANE}" pull "${REF}" "./${OUTPUT}" --format=oci --annotate-ref
-    mv "${OUTPUT}/index.json" "${OUTPUT}/temp.json"
+    # ls -l "${OUTPUT}/blobs/sha256"
+    mv "./${OUTPUT}/index.json" "./${OUTPUT}/temp.json"
     "${JQ}" --arg ref "${REF}" '.manifests |= map(select(.annotations["org.opencontainers.image.ref.name"] == $ref)) | del(.manifests[0].annotations)' "${OUTPUT}/temp.json" >  "${OUTPUT}/index.json"
     rm "${OUTPUT}/temp.json"
-    "${CRANE}" layout gc "./${OUTPUT}"
+    "${CRANE}" layout gc "./${OUTPUT}" > /dev/null
+    # ls -l "${OUTPUT}/blobs/sha256"
 fi

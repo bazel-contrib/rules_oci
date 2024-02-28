@@ -10,6 +10,7 @@ module(
 bazel_dep(name = "aspect_bazel_lib", version = "1.36.0")
 bazel_dep(name = "bazel_skylib", version = "1.4.1")
 bazel_dep(name = "platforms", version = "0.0.5")
+bazel_dep(name = "bazel_features", version = "1.4.1")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
 oci.toolchains(crane_version = "v0.18.0")
