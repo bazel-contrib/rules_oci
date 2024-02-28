@@ -61,9 +61,9 @@ def _sha256(rctx, path):
     # on MacOS, but is not necessarily always available on Linux. OpenSSL is used as a final
     # fallback if neither are available
     result = rctx.execute(["shasum", "-a", "256", path])
-    if result.return_code == 127:  # 127 return code indicates command not found
+    if result.return_code:
         result = rctx.execute(["sha256sum", path])
-    if result.return_code == 127:
+    if result.return_code:
         result = rctx.execute(["openssl", "sha256", "-r", path])
     if result.return_code:
         msg = "sha256 failed: \nSTDOUT:\n%s\nSTDERR:\n%s" % (result.stdout, result.stderr)
