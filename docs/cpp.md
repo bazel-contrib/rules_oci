@@ -14,7 +14,7 @@ int main(){
 }
 ```
 
-To make image and container for this program, the `BUILD.bazel` file would look like this:
+To make a container image for this program, the `BUILD.bazel` would have something like this:
 ```python
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
@@ -38,11 +38,11 @@ pkg_tar(
 
 # Making image
 # C++ programs usually need some fundamental libraries such as glibc, libstdc++, etc.
-# `distroless_base` image does not provide them and C++ programs will complain about
-# missing these libraries. So consider using distro base images, here we use Debian.
+# Correspondigly, use language-specific distroless images.
+# Here we use gcr.io/distroless/cc-debian12 image for this C++ program.
 oci_image(
     name = "image",
-    base = "@debian",
+    base = "@distroless_cc_debian12",
     tars = [":tar"],
     entrypoint = ["/example_binary"],
 )
@@ -60,8 +60,8 @@ In `MODULE.bazel` file, be sure to add the following sections:
 ```python
 # Pull needed base image
 oci.pull(
-    name = "debian",
-    image = "docker.io/library/debian",
+    name = "distroless_cc_debian12",
+    image = "gcr.io/distroless/cc-debian12",
     platforms = [
         "linux/amd64",
         "linux/arm/v7",
@@ -70,7 +70,7 @@ oci.pull(
     tag = "latest",
 )
 # Expose the base image
-use_repo(oci, "debian")
+use_repo(oci, "distroless_cc_debian12")
 ```
 ```python
 # Import rules_pkg
