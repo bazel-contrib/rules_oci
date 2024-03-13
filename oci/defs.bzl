@@ -79,16 +79,6 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         )
         env = env_label
 
-    if types.is_dict(env):
-        env_label = "_{}_write_env".format(name)
-        write_file(
-            name = env_label,
-            out = "_{}.env.txt".format(name),
-            content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            **forwarded_kwargs,
-        )
-        env = env_label
-
     if types.is_list(cmd):
         cmd_label = "_{}_write_cmd".format(name)
         write_file(
