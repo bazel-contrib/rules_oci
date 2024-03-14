@@ -124,7 +124,7 @@ REF=$("${CRANE}" "${FIXED_ARGS[@]}")
 
 # Expand environment variables
 if [ ${#ENV_EXPANSIONS[@]} -ne 0 ]; then 
-    base_env=$( "${CRANE}" config "${REF}" | "${JQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1]}) | from_entries')
+    base_env=$( "${CRANE}" config "${REF}" | "${JQ}" -r '.config.Env | map(. | split("=") | {"key": .[0], "value": .[1:] | join("=")}) | from_entries')
     environment_args=()
     for expansion in "${ENV_EXPANSIONS[@]}"
     do
