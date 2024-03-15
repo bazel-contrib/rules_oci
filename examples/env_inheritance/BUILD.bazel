@@ -9,14 +9,23 @@ pkg_tar(
 )
 
 oci_image(
-    name = "image",
+    name = "middle_image",
     base = "@ubuntu",
     cmd = ["test.sh"],
     env = {
         "ENV1": "$PATH:/test",
         "ENV2": "/prepend:${PATH}:/test2",
+        "ENV3": "key1=value1 key2=value2",
     },
     tars = ["app.tar"],
+)
+
+oci_image(
+    name = "image",
+    base = ":middle_image",
+    env = {
+        "ENV4": "${ENV3} key3=value3",
+    },
 )
 
 container_structure_test(

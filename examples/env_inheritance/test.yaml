@@ -14,3 +14,7 @@ metadataTest:
       value: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/test"
     - key: "ENV2"
       value: "/prepend:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/test2"
+    - key: "ENV3"
+      value: "key1=value1 key2=value2"
+    - key: "ENV4"
+      value: "key1=value1 key2=value2 key3=value3"
