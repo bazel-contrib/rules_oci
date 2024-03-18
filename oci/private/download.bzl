@@ -118,7 +118,11 @@ def _bazel_download(
         headers = {},
         # passthrough
         **kwargs):
-    return rctx.download(**kwargs)
+    # Passing headers to the downloader is only available as of 7.1
+    if versions.is_at_least("7.1.0", versions.get() or "7.1.0"):
+        return rctx.download(headers = headers, **kwargs)
+    else:
+        return rctx.download(**kwargs)
 
 download = struct(
     curl = _download,
