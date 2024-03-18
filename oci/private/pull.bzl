@@ -63,6 +63,11 @@ _SUPPORTED_MEDIA_TYPES = {
     ],
 }
 
+_DOWNLOAD_HEADERS = {
+    "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
+    "Docker-Distribution-API-Version": "registry/2.0",
+}
+
 def _config_path(rctx):
     if rctx.attr.config:
         return rctx.path(rctx.attr.config)
@@ -120,7 +125,15 @@ def _download_manifest(rctx, authn, identifier, output):
     manifest = None
     digest = None
 
-    result = _download(rctx, authn, identifier, output, "manifests", allow_fail = True)
+    result = _download(
+        rctx,
+        authn,
+        identifier,
+        output,
+        "manifests",
+        allow_fail = True,
+        headers = _DOWNLOAD_HEADERS,
+    )
 
     fallback_to_curl = False
     if result.success:
@@ -146,10 +159,7 @@ def _download_manifest(rctx, authn, identifier, output):
             output,
             "manifests",
             download.curl,
-            headers = {
-                "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
-                "Docker-Distribution-API-Version": "registry/2.0",
-            },
+            headers = _DOWNLOAD_HEADERS,
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
