@@ -91,7 +91,7 @@ _oci_platform_transition = transition(
 )
 
 _attrs = {
-    "images": attr.label_list(mandatory = False, doc = "List of labels to oci_image targets."),
+    "images": attr.label_list(mandatory = False, doc = "(Deprecated) List of labels to oci_image targets."),
     "image": attr.label(mandatory = False, doc = "An oci_image target.", cfg = _oci_platform_transition),
     "platforms": attr.label_list(mandatory = False, default = [], doc = """
         The platforms to build the index for. Defaults to `[]` which means that only the current target platform is used.

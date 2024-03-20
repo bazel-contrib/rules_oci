@@ -76,19 +76,16 @@ oci_push(
 Push a multi-architecture image to github container registry with a semver tag
 
 ```starlark
-oci_image(name = "app_linux_arm64")
-
-oci_image(name = "app_linux_amd64")
-
-oci_image(name = "app_windows_amd64")
+oci_image(name = "app_image")
 
 oci_image_index(
-    name = "app_image",
-    images = [
-        ":app_linux_arm64",
-        ":app_linux_amd64",
-        ":app_windows_amd64",
-    ]
+    name = "app_index",
+    image = ":app_image",
+    platforms = [
+        "@my_platforms//:linux_arm64",
+        "@my_platforms//:linux_amd64",
+        "@my_platforms//:windows_amd64",
+    ],
 )
 
 write_file(
@@ -110,7 +107,7 @@ expand_template(
 )
 
 oci_push(
-    image = ":app_image",
+    image = ":app_index",
     repository = "ghcr.io/&lt;OWNER&gt;/image",
     remote_tags = ":stamped",
 )
