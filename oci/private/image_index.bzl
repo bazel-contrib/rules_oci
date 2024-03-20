@@ -97,6 +97,7 @@ _attrs = {
         The platforms to build the index for. Defaults to `[]` which means that only the current target platform is used.
     """),
     "_image_index_sh_tpl": attr.label(default = "image_index.sh.tpl", allow_single_file = True),
+    "_allowlist_function_transition": attr.label(default = "@bazel_tools//tools/allowlists/function_transition_allowlist"),
 }
 
 def _expand_image_to_args(image, expander):
