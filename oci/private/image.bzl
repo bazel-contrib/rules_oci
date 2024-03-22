@@ -51,7 +51,7 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
-    "tars": attr.label_list(allow_files = [".tar", ".tar.gz", ".tar.zst"], doc = """\
+    "tars": attr.label_list(allow_files = [".tar", ".tar.gz"], doc = """\
         List of tar files to add to the image as layers.
         Do not sort this list; the order is preserved in the resulting image.
         Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.
