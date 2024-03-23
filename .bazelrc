@@ -6,8 +6,7 @@ build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
 test --test_env=DOCKER_HOST
 
-# TODO(2.0): enable once we drop support for Bazel 5.
-# common --credential_helper=public.ecr.aws=%workspace%/examples/credential_helper/auth.sh
+common --credential_helper=public.ecr.aws=%workspace%/examples/credential_helper/auth.sh
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

@@ -22,12 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: bazel_6
+      - id: bazel_7
         run: echo "bazelversion=$(head -n 1 .bazelversion)" >> $GITHUB_OUTPUT
-      - id: bazel_5
-        run: echo "bazelversion=5.3.2" >> $GITHUB_OUTPUT
+      - id: bazel_6
+        run: echo "bazelversion=6.4.0" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["<version from .bazelversion>", "5.3.2"]
+      # Will look like ["<version from .bazelversion>", "6.4.0"]
       bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
 
   matrix-prep-os:
@@ -69,22 +69,19 @@ jobs:
         bzlmodEnabled: [true, false]
         exclude:
           # macos is expensive (billed at 10X) so don't test these
-          - os: macos-latest 
+          - os: macos-latest
             folder: e2e/custom_registry
-          - os: macos-latest 
+          - os: macos-latest
             folder: e2e/wasm
-          - os: macos-latest 
+          - os: macos-latest
             folder: e2e/crane_as_registry
-          - os: macos-latest 
+          - os: macos-latest
             folder: e2e/pull
           - os: macos-latest
-            bazelversion: 5.3.2
+            bazelversion: 6.4.0
           # e2e/pull is bzlmod only but it has test for both cases.
           - folder: e2e/pull
             bzlmodEnabled: false
-          # Don't test bzlmod with Bazel 5 (not supported)
-          - bazelversion: 5.3.2
-            bzlmodEnabled: true
           # TODO: fix
           - folder: e2e/custom_registry
             bzlmodEnabled: true
@@ -122,9 +119,9 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         uses: atomicjar/testcontainers-cloud-setup-action@main
         with:
-            wait: true
-            token: ${{ secrets.TC_CLOUD_TOKEN }}
-      
+          wait: true
+          token: ${{ secrets.TC_CLOUD_TOKEN }}
+
       - name: Configure Remote Docker Host
         if: ${{ matrix.os == 'macos-latest' }}
         run: echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
@@ -135,4 +132,3 @@ jobs:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
-  
