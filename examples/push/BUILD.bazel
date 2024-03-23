@@ -70,11 +70,11 @@ sh_test(
         ":push_image_index",
         ":push_image_repository_file",
         ":push_image_wo_tags",
+        "@oci_crane_registry_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
     ],
     toolchains = [
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
+        "@oci_crane_registry_toolchains//:current_toolchain",
     ],
 )

@@ -1,4 +1,5 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load(":pull_tests.bzl", "parse_image_test")
 
@@ -10,29 +11,39 @@ IMAGES_TO_TEST = {
         "chainguard_static_linux_amd64": "cgr.dev/chainguard/static:latest",
     },
     "linux/arm64/v8": {
-        "ubuntu_linux_arm64_v8": "ubuntu@sha256:67211c14fa74f070d27cc59d69a7fa9aeff8e28ea118ef3babc295a0428a6d21"
-    }
+        "ubuntu_linux_arm64_v8": "ubuntu@sha256:67211c14fa74f070d27cc59d69a7fa9aeff8e28ea118ef3babc295a0428a6d21",
+    },
 }
+
+genrule(
+    name = "crane_gen",
+    outs = ["crane.sh"],
+    cmd = "echo '$(CRANE_BIN) $$@' >> $@",
+    toolchains = ["@oci_crane_toolchains//:current_toolchain"],
+)
 
 # Use crane to pull images as a comparison for our oci_pull repository rule
 [
-    genrule(
+    run_binary(
         name = "pull_{}".format(repo_name),
-        outs = [repo_name],
-        cmd = "$(CRANE_BIN) pull {reference} $@ --format=oci --platform={platform}".format(
-            platform = platform,
-            reference = reference,
-        ),
-        local = True,  # needs to run locally to able to use credential helpers
-        message = "Pulling {reference} for {platform}".format(
-            platform = platform,
-            reference = reference,
-        ),
-        output_to_bindir = True,
-        tags = ["requires-network"],
-        toolchains = [
-            "@oci_crane_toolchains//:current_toolchain",
+        args = [
+            "pull",
+            reference,
+            "$@",
+            "--platform",
+            platform,
+            "--format=oci",
         ],
+        execution_requirements = {
+            "local": "1",  # needs to run locally to able to use credential helpers
+        },
+        out_dirs = [repo_name],
+        progress_message = "Pulling {reference} for {platform}".format(
+            platform = platform,
+            reference = reference,
+        ),
+        tags = ["requires-network"],
+        tool = "crane.sh",
         visibility = ["//visibility:public"],
     )
     for platform in IMAGES_TO_TEST.keys()
@@ -42,7 +53,7 @@ IMAGES_TO_TEST = {
 [
     diff_test(
         name = "test_{}".format(repo_name),
-        file1 = repo_name,
+        file1 = "pull_" + repo_name,
         file2 = "@{}".format(
             repo_name,
         ),
