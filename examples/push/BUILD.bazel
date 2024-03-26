@@ -1,5 +1,4 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
 
 oci_image(
@@ -36,23 +35,16 @@ oci_image_index(
     ],
 )
 
-write_file(
-    name = "tags_tmpl",
-    out = "tags.txt.tmpl",
-    content = [
-        "BUILD_VERSION",
-        "nightly",
-    ],
-)
-
 # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
 # value to ensure cache hits for actions that depend on this.
 expand_template(
     name = "stamped",
     out = "_stamped.tags.txt",
-    stamp_substitutions = {"BUILD_VERSION": "{{BUILD_EMBED_LABEL}}"},
-    substitutions = {"BUILD_VERSION": "0.0.0"},
-    template = "tags_tmpl",
+    stamp_substitutions = {"0.0.0": "{{BUILD_EMBED_LABEL}}"},
+    template = [
+        "0.0.0",
+        "nightly",
+    ],
 )
 
 oci_push(

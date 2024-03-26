@@ -1,5 +1,4 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("//oci:defs.bzl", "oci_image")
@@ -9,20 +8,13 @@ pkg_tar(
     srcs = ["test.bash"],
 )
 
-write_file(
-    name = "env_tmpl",
-    out = "env.txt.tmpl",
-    content = ["BUILD_VERSION=EMBED_LABEL"],
-)
-
 # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
 # value to ensure cache hits for actions that depend on this.
 expand_template(
     name = "env",
     out = "env.txt",
-    stamp_substitutions = {"EMBED_LABEL": "{{BUILD_EMBED_LABEL}}"},
-    substitutions = {"EMBED_LABEL": "1.2.3"},
-    template = "env_tmpl",
+    stamp_substitutions = {"1.2.3": "{{BUILD_EMBED_LABEL}}"},
+    template = ["BUILD_VERSION=1.2.3"],
 )
 
 oci_image(
