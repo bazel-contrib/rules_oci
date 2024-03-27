@@ -9,7 +9,7 @@ COSIGN_VERSIONS = {
         "linux-arm64": "sha256-sIjWdvDAEjuMNI4Y1CHPlmAg7cSXekhhFaEmQ96pmj8=",
         "linux-ppc64le": "sha256-IaAWkdvfyzUbTpTM9QGk6HNyLPX+b2epc172bstBlB0=",
         "linux-s390x": "sha256-1yzyiRkNKMacuVxeMhOaoZgf/KCoQyfImgErsfOoBR0=",
-    }
+    },
     "v2.0.2": {
         "darwin-amd64": "sha256-D1HL4ZoxW5GehwQvBIUzGCFyLst/ziLMG4gO1IM/yLA=",
         "darwin-arm64": "sha256-VSQqUuvKQ9+xM9D+JuEVRr+kVxrd1oUteCwRnXTereE=",
