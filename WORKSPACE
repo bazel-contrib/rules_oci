@@ -54,6 +54,11 @@ load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
 
 rules_pkg_dependencies()
 
+# For determining available Bazel features
+load("@bazel_features//:deps.bzl", "bazel_features_deps")
+
+bazel_features_deps()
+
 # Belongs to examples
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 

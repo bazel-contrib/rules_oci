@@ -1,6 +1,7 @@
 "Downloader functions "
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
+load("@bazel_features//:features.bzl", "bazel_features")
 load("@bazel_skylib//lib:versions.bzl", "versions")
 load(":util.bzl", "util")
 
@@ -118,7 +119,10 @@ def _bazel_download(
         headers = {},
         # passthrough
         **kwargs):
-    return rctx.download(**kwargs)
+    if bazel_features.external_deps.download_has_headers_param:
+        return rctx.download(headers = headers, **kwargs)
+    else:
+        return rctx.download(**kwargs)
 
 download = struct(
     curl = _download,

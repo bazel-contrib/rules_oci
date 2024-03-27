@@ -8,6 +8,7 @@ module(
 
 # Minimum 1.36.0 to include https://github.com/aspect-build/bazel-lib/pull/594
 bazel_dep(name = "aspect_bazel_lib", version = "1.36.0")
+bazel_dep(name = "bazel_features", version = "1.9.0")
 bazel_dep(name = "bazel_skylib", version = "1.4.1")
 bazel_dep(name = "platforms", version = "0.0.5")
 
