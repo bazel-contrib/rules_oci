@@ -103,7 +103,13 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, config_path = None):
+def _get_default_toolchain():
+    for r in native.existing_rules().values():
+        if r["kind"] == "crane_repositories":
+            return r["name"][:-len(r["platform"]) - len("_crane_")]
+    fail("No oci toolchain found, please register first", native.existing_rules().values())
+
+def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, config_path = None, www_authenticate = False):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -167,6 +173,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
 
     platform_to_image = None
     single_platform = None
+    toolchain = "" if is_bzlmod else _get_default_toolchain()
 
     if platforms:
         platform_to_image = {}
@@ -183,6 +190,8 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 config = config,
                 # TODO(2.0): remove
                 config_path = config_path,
+                toolchain = toolchain,
+                www_authenticate = www_authenticate,
             )
 
             if plat in _PLATFORM_TO_BAZEL_CPU:
@@ -207,6 +216,8 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             config = config,
             # TODO(2.0): remove
             config_path = config_path,
+            toolchain = toolchain,
+            www_authenticate = www_authenticate,
         )
 
     oci_alias(
@@ -225,4 +236,6 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         config = config,
         # TODO(2.0): remove
         config_path = config_path,
+        toolchain = toolchain,
+        www_authenticate = www_authenticate,
     )

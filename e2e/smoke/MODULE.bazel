@@ -21,5 +21,6 @@ oci.pull(
         "linux/amd64",
         "linux/arm64",
     ],
+    www_authenticate = True,
 )
 use_repo(oci, "distroless_base")

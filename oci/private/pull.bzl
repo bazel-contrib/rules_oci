@@ -33,6 +33,14 @@ _IMAGE_REFERENCE_ATTRS = {
         doc = "Deprecated. Use DOCKER_CONFIG environment variable or config attribute instead. TODO(2.0): remove",
         allow_single_file = True,
     ),
+    "www_authenticate": attr.bool(
+        doc = "set True to implement WWW-Authenticate",
+        default = False,
+    ),
+    "toolchain": attr.string(
+        doc = "oci toolchain name to use for registry authentication, is empty in bzlmod",
+        default = "",
+    ),
 }
 
 SCHEMA1_ERROR = """\
@@ -198,7 +206,7 @@ def _find_platform_manifest(index_mf, platform_wanted):
     return None
 
 def _oci_pull_impl(rctx):
-    au = authn.new(rctx, _config_path(rctx))
+    au = authn.new(rctx, rctx.attr.www_authenticate, rctx.attr.toolchain, _config_path(rctx))
     downloader = _create_downloader(rctx, au)
 
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
@@ -296,7 +304,7 @@ def _oci_alias_impl(rctx):
     if not rctx.attr.platforms and not rctx.attr.platform:
         fail("One of 'platforms' or 'platform' must be set")
 
-    au = authn.new(rctx, _config_path(rctx))
+    au = authn.new(rctx, rctx.attr.www_authenticate, rctx.attr.toolchain, _config_path(rctx))
     downloader = _create_downloader(rctx, au)
 
     available_platforms = []

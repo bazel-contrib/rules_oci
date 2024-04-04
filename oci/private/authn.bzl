@@ -4,61 +4,41 @@ load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
 load(":util.bzl", "util")
 
+_default_www_auth = [
+    "index.docker.io",
+    "public.ecr.aws",
+    "ghcr.io",
+    "cgr.dev",
+    ".azurecr.io",
+    "registry.gitlab.com",
+    ".app.snowflake.com",
+    "docker.elastic.co",
+    "quay.io",
+    "nvcr.io",
+]
 
-# Unfortunately bazel downloader doesn't let us sniff the WWW-Authenticate header, therefore we need to
-# keep a map of known registries that require us to acquire a temporary token for authentication.
-_WWW_AUTH = {
-    "index.docker.io": {
-        "realm": "auth.docker.io/token",
-        "scope": "repository:{repository}:pull",
-        "service": "registry.docker.io",
-    },
-    "public.ecr.aws": {
-        "realm": "{registry}/token",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}",
-    },
-    "ghcr.io": {
-        "realm": "{registry}/token",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}/token",
-    },
-    "cgr.dev": {
-        "realm": "{registry}/token",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}",
-    },
-    ".azurecr.io": {
-        "realm": "{registry}/oauth2/token",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}",
-    },
-    "registry.gitlab.com": {
-        "realm": "gitlab.com/jwt/auth",
-        "scope": "repository:{repository}:pull",
-        "service": "container_registry",
-    },
-    ".app.snowflake.com": {
-        "realm": "{registry}/v2/token",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}",
-    },
-    "docker.elastic.co": {
-        "realm": "docker-auth.elastic.co/auth",
-        "scope": "repository:{repository}:pull",
-        "service": "token-service",
-    },
-    "quay.io": {
-        "realm": "{registry}/v2/auth",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}",
-    },
-    "nvcr.io": {
-        "realm": "{registry}/proxy_auth",
-        "scope": "repository:{repository}:pull",
-        "service": "{registry}",
-    },
-}
+def _crane_binary(rctx, toolchain):
+    arch = rctx.os.arch
+    os = rctx.os.name
+    if os.startswith("mac os"):
+        os = "darwin"
+    elif os.find("windows") != -1:
+        os = "windows"
+    else:
+        os = "linux"
+
+    if arch in ["arm", "armv7l"]:
+        arch = "armv6"
+    elif arch in ["aarch64", "arm64"]:
+        arch = "arm64"
+    elif arch in ["x86_64"]:
+        arch = "i386"
+    elif arch in ["x64", "amd64"]:
+        arch = "amd64"
+
+    suffix = "" if os != "windows" else ".exe"
+
+    return "{}_crane_{}_{}//:crane{}".format(toolchain, os, arch, suffix)
 
 def _strip_host(url):
     # TODO: a principled way of doing this
@@ -178,49 +158,50 @@ def _get_auth(rctx, state, registry):
 
     return pattern
 
-def _get_token(rctx, state, registry, repository):
+def _get_token(rctx, state, registry, repository, www_authenticate, toolchain):
     pattern = _get_auth(rctx, state, registry)
+    basic_pattern = {}
+    if pattern.get("type") == "basic":
+        basic_pattern = pattern
+    elif pattern:
+        return pattern
 
-    for registry_pattern in _WWW_AUTH.keys():
-        if (registry == registry_pattern) or registry.endswith(registry_pattern):
-            www_authenticate = _WWW_AUTH[registry_pattern]
-            url = "https://{realm}?scope={scope}&service={service}".format(
-                realm = www_authenticate["realm"].format(registry = registry),
-                service = www_authenticate["service"].format(registry = registry),
-                scope = www_authenticate["scope"].format(repository = repository),
-            )
+    if not www_authenticate:
+        for registry_pattern in _default_www_auth:
+            if (registry == registry_pattern) or registry.endswith(registry_pattern):
+                www_authenticate = True
+                break
+    if not www_authenticate:
+        return pattern
 
-            # if a token for this repository and registry is acquired, use that instead.
-            if url in state["token"]:
-                return state["token"][url]
+    crane = "@{}".format(_crane_binary(rctx, toolchain)) if toolchain else "@@{}~oci~{}".format(Label(":authn.bzl").workspace_name, _crane_binary(rctx, "oci"))
+    image = "{}/{}".format(registry, repository)
+    result = rctx.execute([Label(crane), "auth", "token", image])
+    if result.return_code != 0:
+        if result.stderr.startswith('Error: challenge scheme ""'):
+            if basic_pattern:
+                # not bearer but found auth, determine to use basic auth
+                return basic_pattern
 
-            rctx.download(
-                url = [url],
-                output = "www-authenticate.json",
-                # optionally, sending the credentials to authenticate using the credentials.
-                # this is for fetching from private repositories that require WWW-Authenticate
-                auth = {url: pattern},
-            )
-            auth_raw = rctx.read("www-authenticate.json")
-            auth = json.decode(auth_raw)
-            token = ""
-            if "token" in auth:
-                token = auth["token"]
-            if "access_token" in auth:
-                token = auth["access_token"]
-            if token == "":
-                fail("could not find token in neither field 'token' nor 'access_token' in the response from the registry")
-            pattern = {
-                "type": "pattern",
-                "pattern": "Bearer <password>",
-                "password": token,
-            }
+            # no authorization required, conflict with whitelist config
+            util.warning("registry does not require authentication: {}".format(registry))
+            return {}
+        fail("failed to fetch token from registry: {}".format(result.stderr))
+    auth = json.decode(result.stdout)
+    token = auth.get("access_token", "") or auth.get("token", "")
+    if token == "":
+        fail("could not find token in neither field 'token' nor 'access_token' in the response from the registry")
+    pattern = {
+        "type": "pattern",
+        "pattern": "Bearer <password>",
+        "password": token,
+    }
 
-            # put the token into cache so that we don't do the token exchange again.
-            state["token"][url] = pattern
+    # put the token into cache so that we don't do the token exchange again.
+    state["token"][image] = pattern
     return pattern
 
-NO_CONFIG_FOUND_ERROR="""\
+NO_CONFIG_FOUND_ERROR = """\
 Could not find the `$HOME/.docker/config.json` and `$XDG_RUNTIME_DIR/containers/auth.json` file
 
 Running one of `podman login`, `docker login`, `crane login` may help.
@@ -230,9 +211,8 @@ def _explain(state):
     if not state["config"]:
         return NO_CONFIG_FOUND_ERROR
     return None
-       
 
-def _new_auth(rctx, config_path = None):
+def _new_auth(rctx, www_authenticate, toolchain, config_path = None):
     if not config_path:
         config_path = _get_auth_file_path(rctx)
     config = {}
@@ -244,16 +224,16 @@ def _new_auth(rctx, config_path = None):
         "token": {},
     }
     return struct(
-        get_token = lambda reg, repo: _get_token(rctx, state, reg, repo),
-        explain = lambda: _explain(state)
+        get_token = lambda reg, repo: _get_token(rctx, state, reg, repo, www_authenticate, toolchain),
+        explain = lambda: _explain(state),
     )
 
 authn = struct(
-    new  = _new_auth,
+    new = _new_auth,
     ENVIRON = [
         "DOCKER_CONFIG",
         "REGISTRY_AUTH_FILE",
         "XDG_RUNTIME_DIR",
         "HOME",
-    ]
+    ],
 )

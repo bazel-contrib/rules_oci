@@ -47,7 +47,7 @@ def _crane_repo_impl(repository_ctx):
         "BUILD.bazel",
         CRANE_BUILD_TMPL.format(
             binary = binary,
-            version = repository_ctx.attr.crane_version
+            version = repository_ctx.attr.crane_version,
         ),
     )
 
