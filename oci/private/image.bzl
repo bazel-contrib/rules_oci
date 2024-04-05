@@ -76,8 +76,8 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "os": attr.string(doc = "The name of the operating system which the image is built to run on. eg: `linux`, `windows`. See $GOOS documentation for possible values: https://go.dev/doc/install/source#environment"),
     "architecture": attr.string(doc = "The CPU architecture which the binaries in this image are built to run on. eg: `arm64`, `arm`, `amd64`, `s390x`. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment"),
     "variant": attr.string(doc = "The variant of the specified CPU architecture. eg: `v6`, `v7`, `v8`. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more."),
-    "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
-    "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
+    "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`."),
+    "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`."),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     # Workaround for https://github.com/google/go-containerregistry/issues/1513
@@ -156,12 +156,12 @@ def _oci_image_impl(ctx):
         inputs.append(ctx.file.env)
 
     if ctx.attr.labels:
-        args.add(ctx.file.labels.path, format = "--labels-file=%s")
-        inputs.append(ctx.file.labels)
+        args.add_all(ctx.files.labels, format_each = "--labels-file=%s")
+        inputs += ctx.files.labels
 
     if ctx.attr.annotations:
-        args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
-        inputs.append(ctx.file.annotations)
+        args.add_all(ctx.files.annotations, format_each = "--annotations-file=%s")
+        inputs += ctx.files.annotations
 
     if ctx.attr.user:
         args.add(ctx.attr.user, format = "--user=%s")
