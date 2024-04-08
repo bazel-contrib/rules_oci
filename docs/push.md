@@ -76,6 +76,8 @@ oci_push(
 Push a multi-architecture image to github container registry with a semver tag
 
 ```starlark
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template_rule")
+
 oci_image(name = "app_linux_arm64")
 
 oci_image(name = "app_linux_amd64")
@@ -91,22 +93,13 @@ oci_image_index(
     ]
 )
 
-write_file(
-    name = "tags_tmpl",
-    out = "tags.txt.tmpl",
-    content = [
-        "BUILD_VERSION",
-    ],
-)
-
 # Use the value of --embed_label under --stamp, otherwise use a deterministic constant
 # value to ensure cache hits for actions that depend on this.
 expand_template(
     name = "stamped",
     out = "_stamped.tags.txt",
-    template = "tags_tmpl",
-    substitutions = {"BUILD_VERSION": "0.0.0"},
-    stamp_substitutions = {"BUILD_VERSION": "{{BUILD_EMBED_LABEL}}"},
+    template = ["0.0.0"],
+    stamp_substitutions = {"0.0.0": "{{BUILD_EMBED_LABEL}}"},
 )
 
 oci_push(
