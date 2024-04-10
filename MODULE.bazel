@@ -18,5 +18,5 @@ use_repo(oci, "oci_crane_registry_toolchains", "oci_crane_toolchains")
 register_toolchains("@oci_crane_toolchains//:all", "@oci_crane_registry_toolchains//:all")
 
 bazel_dep(name = "rules_pkg", version = "0.7.0", dev_dependency = True)
-bazel_dep(name = "gazelle", version = "0.29.0", dev_dependency = True, repo_name = "bazel_gazelle")
+bazel_dep(name = "gazelle", version = "0.35.0", dev_dependency = True, repo_name = "bazel_gazelle")
 bazel_dep(name = "bazel_skylib_gazelle_plugin", version = "1.4.1", dev_dependency = True)
