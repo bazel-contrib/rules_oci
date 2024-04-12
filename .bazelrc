@@ -6,6 +6,9 @@ build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
 test --test_env=DOCKER_HOST
 
+# Disable bzlmod lockfile
+common --lockfile_mode=off
+
 # TODO(2.0): enable once we drop support for Bazel 5.
 # common --credential_helper=public.ecr.aws=%workspace%/examples/credential_helper/auth.sh
 

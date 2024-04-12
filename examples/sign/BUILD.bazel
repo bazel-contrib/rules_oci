@@ -36,11 +36,11 @@ sh_test(
         ":sign",
         "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_registry_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
-        "@oci_zot_toolchains//:current_toolchain",
     ],
     toolchains = [
-        "@oci_zot_toolchains//:current_toolchain",
+        "@oci_crane_registry_toolchains//:current_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
         "@jq_toolchains//:resolved_toolchain",

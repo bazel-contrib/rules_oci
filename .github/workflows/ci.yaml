@@ -22,12 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: bazel_6
+      - id: bazel_7
         run: echo "bazelversion=$(head -n 1 .bazelversion)" >> $GITHUB_OUTPUT
-      - id: bazel_5
-        run: echo "bazelversion=5.4.0" >> $GITHUB_OUTPUT
+      - id: bazel_6
+        run: echo "bazelversion=6.4.0" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["<version from .bazelversion>", "5.4.0"]
+      # Will look like ["<version from .bazelversion>", "6.4.0"]
       bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
 
   matrix-prep-os:
@@ -78,13 +78,10 @@ jobs:
           - os: macos-latest
             folder: e2e/pull
           - os: macos-latest
-            bazelversion: 5.4.0
+            bazelversion: 6.4.0
           # e2e/pull is bzlmod only but it has test for both cases.
           - folder: e2e/pull
             bzlmodEnabled: false
-          # Don't test bzlmod with Bazel 5 (not supported)
-          - bazelversion: 5.4.0
-            bzlmodEnabled: true
           # TODO: fix
           - folder: e2e/custom_registry
             bzlmodEnabled: true
