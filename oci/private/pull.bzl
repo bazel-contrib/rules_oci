@@ -303,6 +303,11 @@ oci_pull = repository_rule(
 )
 
 _MULTI_PLATFORM_IMAGE_ALIAS_TMPL = """\
+exports_files(
+    ["image.digest"],
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "{target_name}",
     actual = select(
@@ -314,6 +319,11 @@ alias(
 """
 
 _SINGLE_PLATFORM_IMAGE_ALIAS_TMPL = """\
+exports_files(
+    ["image.digest"],
+    visibility = ["//visibility:public"],
+)
+
 alias(
     name = "{target_name}",
     actual = "@{original}//:{original}",
@@ -333,6 +343,7 @@ def _oci_alias_impl(rctx):
     available_platforms = []
 
     manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
+    rctx.file("image.digest", digest)
 
     if rctx.attr.platforms:
         if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
