@@ -48,6 +48,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "token-service",
     },
+    "quay.io": {
+        "realm": "{registry}/v2/auth",
+        "scope": "repository:{repository}:pull",
+        "service": "{registry}",
+    },
 }
 
 def _strip_host(url):
