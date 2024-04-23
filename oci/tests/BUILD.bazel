@@ -78,6 +78,7 @@ build_test(
         "@ubuntu",
         "@es_kibana_image",
         "@quay_clair_image",
+        "@nvidia_k8s_device_plugin_image",
     ],
 )
 

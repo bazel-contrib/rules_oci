@@ -48,6 +48,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "token-service",
     },
+    "nvcr.io": {
+        "realm": "{registry}/proxy_auth",
+        "scope": "repository:{repository}:pull",
+        "service": "{registry}",
+    },
 }
 
 def _strip_host(url):
