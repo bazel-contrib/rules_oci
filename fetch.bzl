@@ -187,6 +187,13 @@ def fetch_images():
         ],
     )
 
+    oci_pull(
+        name = "nvidia_k8s_device_plugin_image",
+        # tag = "v0.14.4",
+        digest = "sha256:19c696958fe8a63676ba26fa57114c33149168bbedfea246fc55e0e665c03098",
+        image = "nvcr.io/nvidia/k8s-device-plugin",
+    )
+
     _DEB_TO_LAYER = """\
 alias(
     name = "layer",

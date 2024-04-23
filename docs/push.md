@@ -36,12 +36,12 @@ Behavior
 
 Pushing and tagging are performed sequentially which MAY lead to non-atomic pushes if one the following events occur;
 
-- Remote registry rejects a tag due to various reasons. eg: forbidden characters, existing tags 
+- Remote registry rejects a tag due to various reasons. eg: forbidden characters, existing tags
 - Remote registry closes the connection during the tagging
 - Local network outages
 
 In order to avoid incomplete pushes oci_push will push the image by its digest and then apply the `remote_tags` sequentially at
-the remote registry. 
+the remote registry.
 
 Any failure during pushing or tagging will be reported with non-zero exit code and cause remaining steps to be skipped.
 
@@ -67,6 +67,7 @@ Push an oci_image to docker registry with 'latest' tag
 oci_image(name = "image")
 
 oci_push(
+    name = "push",
     image = ":image",
     repository = "index.docker.io/&lt;ORG&gt;/image",
     remote_tags = ["latest"]
@@ -103,6 +104,7 @@ expand_template(
 )
 
 oci_push(
+    name = "push",
     image = ":app_image",
     repository = "ghcr.io/&lt;OWNER&gt;/image",
     remote_tags = ":stamped",
