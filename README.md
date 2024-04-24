@@ -75,15 +75,10 @@ rules_oci supports two different registry implementation for the temporary stora
 
 ## Public API Docs
 
-### Build Base images
+### Install system packages
 
-- Alpine: we recommend <https://github.com/chainguard-dev/rules_apko> to
-  install [apk](https://wiki.alpinelinux.org/wiki/Package_management) packages
-  using Chainguard's [apko](https://apko.dev).
-- Debian: The `apt-get` utility installs `.deb` files, which are already archives
-  that may be used directly as image layers. See `/examples/deb` in this repository.
-  This solution is incomplete since `apt` does some other tasks which you may need.
-  See https://github.com/bazel-contrib/rules_oci/issues/375 for details.
+- Alpine: we recommend <https://github.com/chainguard-dev/rules_apko> to install [apk](https://wiki.alpinelinux.org/wiki/Package_management) packages.
+- Debian: we recommend <https://github.com/GoogleContainerTools/rules_distroless> to install [deb](https://www.debian.org/distrib/packages) packages.
 - RHEL/CentOS/Amazon Linux: we don't have any support for this yet. Please consider donating to the project!
 
 ### Construct image layers
