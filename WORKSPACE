@@ -25,9 +25,11 @@ oci_register_toolchains(
 )
 
 ## Setup bazel-lib
-load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies")
+load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
 
-aspect_bazel_lib_dependencies(override_local_config_platform = True)
+aspect_bazel_lib_dependencies()
+
+aspect_bazel_lib_register_toolchains()
 
 ## Setup cosign
 load("//cosign:repositories.bzl", "cosign_register_toolchains")
