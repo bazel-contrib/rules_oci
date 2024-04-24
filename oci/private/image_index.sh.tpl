@@ -66,5 +66,5 @@ size=$("${COREUTILS}" wc -c < "${OUTPUT}/manifest_list.json")
 
 "${JQ}" -n --arg checksum "${checksum}" --argjson size "${size}" \
         '.manifests = [{"mediaType": "application/vnd.oci.image.index.v1+json", "size": $size, "digest": ("sha256:" + $checksum) }]' > "$OUTPUT/index.json"
-cat "$OUTPUT/index.json"
+
 "${COREUTILS}" mv "${OUTPUT}/manifest_list.json" "$OUTPUT/blobs/sha256/${checksum}"
