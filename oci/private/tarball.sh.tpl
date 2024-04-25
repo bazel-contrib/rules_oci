@@ -9,11 +9,14 @@ readonly TARBALL_PATH="{{tarball_path}}"
 readonly REPOTAGS=($(cat "{{tags}}"))
 readonly INDEX_FILE="${IMAGE_DIR}/index.json"
 
-cp_f_with_mkdir() {
-  SRC="$1"
-  DST="$2"
-  mkdir -p "$(dirname "${DST}")"
-  cp -f "${SRC}" "${DST}"
+# Write tar manifest in mtree format
+# https://man.freebsd.org/cgi/man.cgi?mtree(8)
+# so that tar produces a deterministic output.
+mtree=$(mktemp)
+function add_to_tar() {
+    content=$1
+    tar_path=$2
+    echo >>"${mtree}" "${tar_path} uid=0 gid=0 mode=0755 time=1672560000 type=file content=${content}"
 }
 
 MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
@@ -45,36 +48,41 @@ if [[ "${FORMAT}" == "oci" ]]; then
   # Handle multi-architecture image indexes.
   # Ideally the toolchains we rely on would output these for us, but they don't seem to.
 
-  echo -n '{"imageLayoutVersion": "1.0.0"}' > "${STAGING_DIR}/oci-layout"
+  layout_file=$(mktemp)
+  echo -n '{"imageLayoutVersion": "1.0.0"}' > "$layout_file"
+  add_to_tar "$layout_file" oci-layout
 
   INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
   INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"
 
-  cp_f_with_mkdir "${INDEX_FILE_MANIFEST_BLOB_PATH}" "${BLOBS_DIR}/${INDEX_FILE_MANIFEST_DIGEST}"
+  add_to_tar "${INDEX_FILE_MANIFEST_BLOB_PATH}" "blobs/${INDEX_FILE_MANIFEST_DIGEST}"
 
   IMAGE_MANIFESTS_DIGESTS=($("${JQ}" -r '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
 
   for IMAGE_MANIFEST_DIGEST in "${IMAGE_MANIFESTS_DIGESTS[@]}"; do
     IMAGE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${IMAGE_MANIFEST_DIGEST}"
-    cp_f_with_mkdir "${IMAGE_MANIFEST_BLOB_PATH}" "${BLOBS_DIR}/${IMAGE_MANIFEST_DIGEST}"
+    add_to_tar "${IMAGE_MANIFEST_BLOB_PATH}" "blobs/${IMAGE_MANIFEST_DIGEST}"
 
     CONFIG_DIGEST=$("${JQ}" -r '.config.digest  | sub(":"; "/")' ${IMAGE_MANIFEST_BLOB_PATH})
     CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
-    cp_f_with_mkdir "${CONFIG_BLOB_PATH}" "${BLOBS_DIR}/${CONFIG_DIGEST}"
+    add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
     LAYER_DIGESTS=$("${JQ}" -r '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
     for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYER_DIGESTS); do
-      cp_f_with_mkdir "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" ${BLOBS_DIR}/${LAYER_DIGEST}
+      add_to_tar "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" blobs/${LAYER_DIGEST}
     done
   done
 
 
   # Repeat the first manifest entry once per repo tag.
   repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
-  "${JQ}" -r --arg repo_tags "$repotags" \
-   '.manifests[0] as $manifest | .manifests = ($repo_tags | split(" ") | map($manifest * {annotations:{"org.opencontainers.image.ref.name":.}}))' "${INDEX_FILE}" > "${STAGING_DIR}/index.json"
+  index_json=$(mktemp)
+  "${JQ}" >"$index_json" \
+    -r --arg repo_tags "$repotags" \
+    '.manifests[0] as $manifest | .manifests = ($repo_tags | split(" ") | map($manifest * {annotations:{"org.opencontainers.image.ref.name":.}}))' "${INDEX_FILE}"
+  add_to_tar "$index_json" index.json
 
-  tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" index.json blobs oci-layout
+  ${TAR} --create --no-xattr --no-mac-metadata --file "${TARBALL_PATH}" "@${mtree}"
   exit 0
 fi
 
@@ -87,18 +95,19 @@ add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
 LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH})
 
-cp_f_with_mkdir "${CONFIG_BLOB_PATH}" "${BLOBS_DIR}/${CONFIG_DIGEST}"
+add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
 for LAYER in $(${JQ} -r ".[]" <<< $LAYERS); do 
-  cp_f_with_mkdir "${IMAGE_DIR}/blobs/${LAYER}" "${BLOBS_DIR}/${LAYER}.tar.gz"
+  add_to_tar "${IMAGE_DIR}/blobs/${LAYER}" "blobs/${LAYER}.tar.gz"
 done
 
-
+manifest_json=$(mktemp)
 repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
-"${JQ}" -n '.[0] = {"Config": $config, "RepoTags": ($repo_tags | split(" ") | map(select(. != ""))), "Layers": $layers | map( "blobs/" + . + ".tar.gz") }' \
-        --arg repo_tags "$repotags" \
-        --arg config "blobs/${CONFIG_DIGEST}" \
-        --argjson layers "${LAYERS}" > "${STAGING_DIR}/manifest.json"
+"${JQ}" > "${manifest_json}" \
+  -n '.[0] = {"Config": $config, "RepoTags": ($repo_tags | split(" ") | map(select(. != ""))), "Layers": $layers | map( "blobs/" + . + ".tar.gz") }' \
+  --arg repo_tags "$repotags" \
+  --arg config "blobs/${CONFIG_DIGEST}" \
+  --argjson layers "${LAYERS}"
 
 add_to_tar "${manifest_json}" "manifest.json"
 
