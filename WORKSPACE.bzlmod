@@ -13,7 +13,7 @@ new_local_repository(
 # Fetching various images
 load(":fetch.bzl", "fetch_images")
 
-fetch_images()
+fetch_images(is_bzlmod = True)
 
 ### Setup rules_oci cosign
 load("//cosign:repositories.bzl", "cosign_register_toolchains")

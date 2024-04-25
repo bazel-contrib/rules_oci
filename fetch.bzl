@@ -7,11 +7,12 @@ by writing them to a generated macro in a .bzl file.
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 
-def fetch_images():
+def fetch_images(is_bzlmod = False):
     "Fetch external images"
 
     # A single-arch base image
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "distroless_java",
         digest = "sha256:161a1d97d592b3f1919801578c3a47c8e932071168a96267698f4b669c24c76d",
         image = "gcr.io/distroless/java17",
@@ -19,6 +20,7 @@ def fetch_images():
 
     # A multi-arch base image
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "distroless_static",
         digest = "sha256:c3c3d0230d487c0ad3a0d87ad03ee02ea2ff0b3dcce91ca06a1019e07de05f12",
         image = "gcr.io/distroless/static",
@@ -31,18 +33,19 @@ def fetch_images():
         ],
     )
 
-    # Pull an image from public ECR. 
+    # Pull an image from public ECR.
     # When --credential_helper is provided, see .bazelrc at workspace root, it will take precende over
-    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail 
+    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail
     # unless oci_pull's authentication mechanism breaks and --credential_helper is absent.
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "ecr_lambda_python",
         image = "public.ecr.aws/lambda/python",
         tag = "3.11.2024.01.25.10",
         platforms = [
             "linux/amd64",
-            "linux/arm64/v8"
-        ]
+            "linux/arm64/v8",
+        ],
     )
 
     # Show that the digest is optional.
@@ -51,6 +54,7 @@ def fetch_images():
     # reproducible = False.
     # This is more convenient, so you might decide the trade-off is worth it.
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "distroless_python",
         image = "gcr.io/distroless/python3",
         platforms = ["linux/amd64"],
@@ -61,6 +65,7 @@ def fetch_images():
 
     # You can copy-paste a typical image string from dockerhub search results.
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "debian_latest",
         image = "debian:latest",
         reproducible = False,
@@ -70,6 +75,7 @@ def fetch_images():
     # You can use a digest on the image name
     # https://hub.docker.com/layers/library/debian/stable/images/sha256-e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028?context=explore
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "debian_stable",
         image = "debian@sha256:e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028",
     )
@@ -83,6 +89,7 @@ def fetch_images():
     #     digest = "sha256:deadbeef",
     # )
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "from_rules_docker",
         registry = "gcr.io",
         repository = "distroless/nodejs18",
@@ -91,6 +98,7 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "aws_lambda_python",
         # tag = "3.8"
         digest = "sha256:46b3b8614b31761b24f56be1bb8c7ba191d9b9b4624bbf7f53ed7ddc696c928b",
@@ -98,6 +106,7 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "debian",
         # Omits the "image." CNAME for dockerhub
         image = "docker.io/library/debian",
@@ -118,6 +127,7 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "ubuntu",
         image = "ubuntu",
         platforms = [
@@ -128,6 +138,7 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "apollo_router",
         # tag = "v1.14.0",
         digest = "sha256:237c4d6a477b5013bae88549bfc50aaafd68974cab7d2dde2ba5431345e9c95d",
@@ -139,11 +150,13 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "fluxcd_flux",
         image = "docker.io/fluxcd/flux:1.25.4",
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "chainguard_static",
         image = "cgr.dev/chainguard/static",
         platforms = [
@@ -159,6 +172,7 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "gitlab_assets_ce",
         # tag = "v15-11-0-ee",
         image = "registry.gitlab.com/gitlab-org/gitlab/gitlab-assets-ce",
@@ -166,28 +180,31 @@ def fetch_images():
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "es_kibana_image",
         # tag = "7.16.2",
         image = "docker.elastic.co/kibana/kibana",
         digest = "sha256:9a83bce5d337e7e19d789ee7f952d36d0d514c80987c3d76d90fd1afd2411a9a",
         platforms = [
             "linux/amd64",
-            "linux/arm64"
+            "linux/arm64",
         ],
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "quay_clair_image",
         # tag = "4.7.2",
         image = "quay.io/projectquay/clair",
         digest = "sha256:8d38ffa8fad72f4bc2647644284c16491cc2d375602519a1f963f96ccc916276",
         platforms = [
             "linux/amd64",
-            "linux/arm64"
+            "linux/arm64",
         ],
     )
 
     oci_pull(
+        is_bzlmod = is_bzlmod,
         name = "nvidia_k8s_device_plugin_image",
         # tag = "v0.14.4",
         digest = "sha256:19c696958fe8a63676ba26fa57114c33149168bbedfea246fc55e0e665c03098",
