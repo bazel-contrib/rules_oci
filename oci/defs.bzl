@@ -16,11 +16,13 @@ load("//oci/private:image.bzl", _oci_image = "oci_image")
 load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
 load("//oci/private:push.bzl", _oci_push = "oci_push")
 load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
+load("//oci/private:container_run_and_save.bzl", _container_run_and_save = "container_run_and_save")
 
 oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
+container_run_and_save_rule = _container_run_and_save
 
 def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
@@ -208,4 +210,29 @@ def oci_tarball(name, repo_tags = None, **kwargs):
         name = name,
         repo_tags = repo_tags,
         **kwargs
+    )
+
+def container_run_and_save(name, base_tarball = None, cmd = None, repo_tags = None, **kwargs):
+    """Macro wrapper around [container_run_and_save](#container_run_and_save)
+
+    Allows for execution of commands in a given image, exporting the resulting layers
+    in a tarfile. This produces a format in which [oci_tarball_rule](#oci_tarball_rule) expects.
+
+    Args:
+        name: name of resulting container_run_and_save rule
+        base_tarball: label to a DefaultFile containing a tarball from which the executing container
+            will be based on.
+        cmd: Command to execute in the executing environment.
+        **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule) and
+            [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
+    """
+
+    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+
+    container_run_and_save_rule(
+        name = name,
+        base_tarball = base_tarball,
+        cmd = cmd,
+        repo_tags = repo_tags,
+        **forwarded_kwargs
     )

@@ -31,15 +31,6 @@ bzl_library(
 )
 
 bzl_library(
-    name = "image_index",
-    srcs = ["image_index.bzl"],
-    visibility = [
-        "//docs:__pkg__",
-        "//oci:__subpackages__",
-    ],
-)
-
-bzl_library(
     name = "pull",
     srcs = ["pull.bzl"],
     visibility = [
@@ -67,21 +58,6 @@ bzl_library(
 )
 
 bzl_library(
-    name = "toolchains_repo",
-    srcs = ["toolchains_repo.bzl"],
-    visibility = [
-        "//cosign:__subpackages__",
-        "//oci:__subpackages__",
-    ],
-)
-
-bzl_library(
-    name = "versions",
-    srcs = ["versions.bzl"],
-    visibility = ["//oci:__subpackages__"],
-)
-
-bzl_library(
     name = "download",
     srcs = ["download.bzl"],
     visibility = ["//oci:__subpackages__"],
@@ -104,4 +80,29 @@ bzl_library(
     srcs = ["util.bzl"],
     visibility = ["//oci:__subpackages__"],
     deps = ["@bazel_skylib//lib:versions"],
+)
+
+bzl_library(
+    name = "container_run_and_save",
+    srcs = ["container_run_and_save.bzl"],
+    visibility = ["//oci:__subpackages__"],
+    deps = ["@bazel_skylib//lib:versions"],
+)
+
+bzl_library(
+    name = "image_index",
+    srcs = ["image_index.bzl"],
+    visibility = ["//oci:__subpackages__"],
+)
+
+bzl_library(
+    name = "toolchains_repo",
+    srcs = ["toolchains_repo.bzl"],
+    visibility = ["//oci:__subpackages__"],
+)
+
+bzl_library(
+    name = "versions",
+    srcs = ["versions.bzl"],
+    visibility = ["//oci:__subpackages__"],
 )

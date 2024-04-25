@@ -11,21 +11,15 @@ exports_files([
 ])
 
 bzl_library(
-    name = "sign",
-    srcs = ["sign.bzl"],
-    visibility = [
-        "//cosign:__subpackages__",
-        "//docs:__pkg__",
-    ],
+    name = "attest",
+    srcs = ["attest.bzl"],
+    visibility = ["//cosign:__subpackages__"],
 )
 
 bzl_library(
-    name = "attest",
-    srcs = ["attest.bzl"],
-    visibility = [
-        "//cosign:__subpackages__",
-        "//docs:__pkg__",
-    ],
+    name = "sign",
+    srcs = ["sign.bzl"],
+    visibility = ["//cosign:__subpackages__"],
 )
 
 bzl_library(
