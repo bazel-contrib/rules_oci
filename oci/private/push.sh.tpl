@@ -2,7 +2,7 @@
 set -o pipefail -o errexit -o nounset
 
 readonly CRANE="{{crane_path}}"
-readonly YQ="{{yq_path}}"
+readonly JQ="{{jq_path}}"
 readonly IMAGE_DIR="{{image_dir}}"
 readonly TAGS_FILE="{{tags}}"
 readonly FIXED_ARGS=({{fixed_args}})
@@ -44,7 +44,7 @@ while (( $# > 0 )); do
   esac
 done
 
-DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
+DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 REFS=$(mktemp)
 "${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
