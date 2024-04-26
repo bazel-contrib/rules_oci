@@ -49,7 +49,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
   # Handle multi-architecture image indexes.
   # Ideally the toolchains we rely on would output these for us, but they don't seem to.
 
-  add_to_tar "{{oci_layout}}" oci-layout
+  add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
 
   INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
   INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"

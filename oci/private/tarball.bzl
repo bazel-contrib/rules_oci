@@ -82,11 +82,6 @@ attrs = {
         executable = True,
         cfg = "target",
     ),
-    "_oci_layout": attr.label(
-        doc = "JSON file used as oci-layout content in tarball root",
-        default = Label("//oci/private:oci-layout"),
-        allow_single_file = True,
-    ),
     "_run_template": attr.label(
         default = Label("//oci/private:tarball_run.sh.tpl"),
         doc = """ \
@@ -119,7 +114,6 @@ def _tarball_impl(ctx):
         "{{tar}}": bsdtar.tarinfo.binary.path,
         "{{image_dir}}": image.path,
         "{{output}}": mtree_spec.path,
-        "{{oci_layout}}": ctx.file._oci_layout.path,
         "{{json_out}}": image_json.path,
     }
 
@@ -135,7 +129,7 @@ def _tarball_impl(ctx):
 
     # inputs both for creating the mtree spec and also invoking `tar --create`
     tar_inputs = depset(
-        direct = [image, repo_tags, executable, ctx.file._oci_layout],
+        direct = [image, repo_tags, executable],
         transitive = [bsdtar.default.files],
     )
     mtree_outputs = [mtree_spec, image_json]
