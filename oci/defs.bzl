@@ -178,7 +178,7 @@ def oci_push(name, remote_tags = None, **kwargs):
         **kwargs
     )
 
-def oci_tarball(name, repo_tags = None, **kwargs):
+def oci_tarball(name, repo_tags = None, manual = True, **kwargs):
     """Macro wrapper around [oci_tarball_rule](#oci_tarball_rule).
 
     Allows the repo_tags attribute to be a list of strings in addition to a text file.
@@ -189,6 +189,8 @@ def oci_tarball(name, repo_tags = None, **kwargs):
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
+        manual: whether to add `manual` to the `tags`.
+            This target is meant for local development and produces large outputs, so the manual tag avoids unneeded load on the cache.
         **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
@@ -204,8 +206,12 @@ def oci_tarball(name, repo_tags = None, **kwargs):
         )
         repo_tags = tags_label
 
+    tags = kwargs.pop("tags", [])
+    if manual and not "manual" not in tags:
+        tags.append("manual")
     oci_tarball_rule(
         name = name,
         repo_tags = repo_tags,
+        tags = tags,
         **kwargs
     )
