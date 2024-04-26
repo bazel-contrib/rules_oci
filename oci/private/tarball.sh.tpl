@@ -112,4 +112,4 @@ repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
 add_to_tar "${manifest_json}" "manifest.json"
 
 # We've created the manifest, now hand it off to tar to create our final output
-"${TAR}" --create --file "${TARBALL_PATH}" "@${mtree}"
+"${TAR}" --create --no-xattr --no-mac-metadata --file "${TARBALL_PATH}" "@${mtree}"
