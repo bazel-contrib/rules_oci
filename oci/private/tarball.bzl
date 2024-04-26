@@ -76,12 +76,14 @@ def _tarball_impl(ctx):
 
     image = ctx.file.image
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
+    bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
     repo_tags = ctx.file.repo_tags
 
     substitutions = {
         "{{format}}": ctx.attr.format,
         "{{jq_path}}": jq.bin.path,
+        "{{tar}}": bsdtar.tarinfo.binary.path,
         "{{image_dir}}": image.path,
         "{{tarball_path}}": tarball.path,
     }
@@ -96,9 +98,15 @@ def _tarball_impl(ctx):
         substitutions = substitutions,
     )
 
+    # TODO(2.0): this oci_tarball rule should just produce an mtree manifest instead,
+    # and then the tar rule can be composed in the oci_tarball macro in defs.bzl.
+    # To make it a non-breaking change, call the tar program from within this action instead.
     ctx.actions.run(
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
-        inputs = [image, repo_tags, executable],
+        inputs = depset(
+            direct = [image, repo_tags, executable],
+            transitive = [bsdtar.default.files],
+        ),
         outputs = [tarball],
         tools = [jq.bin],
         mnemonic = "OCITarball",
@@ -131,6 +139,7 @@ oci_tarball = rule(
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@aspect_bazel_lib//lib:tar_toolchain_type",
     ],
     executable = True,
 )
