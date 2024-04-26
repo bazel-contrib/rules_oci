@@ -111,6 +111,7 @@ def _tarball_impl(ctx):
         tools = [jq.bin],
         mnemonic = "OCITarball",
         progress_message = "OCI Tarball %{label}",
+        toolchain = None,
     )
 
     exe = ctx.actions.declare_file(ctx.label.name + ".sh")

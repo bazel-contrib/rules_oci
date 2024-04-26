@@ -189,6 +189,7 @@ def _oci_image_impl(ctx):
         tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
+        toolchain = None,
     )
 
     return [

@@ -68,6 +68,7 @@ def _oci_image_index_impl(ctx):
         tools = [jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",
+        toolchain = None,
     )
 
     return DefaultInfo(files = depset([output]))
