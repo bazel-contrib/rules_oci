@@ -23,11 +23,17 @@ oci_tarball(
     repo_tags = ":tags_file.txt",  # In particular we check whether empty (last line) of the file gets ignored.
 )
 
+filegroup(
+    name = "tarball.tar",
+    srcs = [":tarball"],
+    output_group = "tarball",
+)
+
 genrule(
     name = "tar_manifest",
-    srcs = [":tarball"],
+    srcs = [":tarball.tar"],
     outs = ["manifest.json"],
-    cmd = "tar -xOf ./$(location :tarball) manifest.json > $@",
+    cmd = "tar -xOf ./$(location :tarball.tar) manifest.json > $@",
 )
 
 write_file(

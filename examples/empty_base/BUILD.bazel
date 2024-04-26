@@ -50,9 +50,9 @@ filegroup(
 
 genrule(
     name = "tar_manifest",
-    srcs = [":tarball"],
+    srcs = [":tarball.tar"],
     outs = ["manifest.json"],
-    cmd = "tar -xOf ./$(location :tarball) manifest.json > $@",
+    cmd = "tar -xOf ./$(location :tarball.tar) manifest.json > $@",
 )
 
 write_file(
