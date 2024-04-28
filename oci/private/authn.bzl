@@ -174,7 +174,7 @@ def _get_token(rctx, state, registry, repository, www_authenticate, toolchain):
     if not www_authenticate:
         return pattern
 
-    crane = "@{}".format(_crane_binary(rctx, toolchain)) if toolchain else "@@{}~oci~{}".format(Label(":authn.bzl").workspace_name, _crane_binary(rctx, "oci"))
+    crane = "@{}".format(_crane_binary(rctx, toolchain)) if toolchain else "@@{}~oci~{}".format(Label(":authn.bzl").workspace_name or "_main", _crane_binary(rctx, "oci"))
     image = "{}/{}".format(registry, repository)
     result = rctx.execute([Label(crane), "auth", "token", image])
     if result.return_code != 0:
