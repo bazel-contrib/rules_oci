@@ -118,6 +118,10 @@ def _bazel_download(
         headers = {},
         # passthrough
         **kwargs):
+    if (versions.is_at_least("7.1.0", versions.get())):
+        return rctx.download(headers = headers, **kwargs)
+
+    util.warning(rctx, "Upgrade to Bazel 7.1.0 or later for setting the correct headers for fetching the manifest.")
     return rctx.download(**kwargs)
 
 download = struct(

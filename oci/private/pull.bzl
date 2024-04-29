@@ -36,7 +36,7 @@ _IMAGE_REFERENCE_ATTRS = {
 }
 
 SCHEMA1_ERROR = """\
-The registry sent a manifest with schemaVersion=1. 
+The registry sent a manifest with schemaVersion=1.
 This commonly occurs when fetching from a registry that needs the Docker-Distribution-API-Version header to be set.
 """
 
@@ -45,7 +45,7 @@ Unable to retrieve the manifest. This could be due to authentication problems or
 """
 
 CURL_FALLBACK_WARNING = """\
-The use of Curl fallback is deprecated and is set to be removed in version 2.0. 
+The use of Curl fallback is deprecated and is set to be removed in version 2.0.
 For more details, refer to: https://github.com/bazel-contrib/rules_oci/issues/456
 """
 
@@ -115,12 +115,17 @@ def _download(rctx, authn, identifier, output, resource, download_fn = download.
         allow_fail = allow_fail,
     )
 
+_MANIFEST_HEADERS = {
+    "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
+    "Docker-Distribution-API-Version": "registry/2.0",
+}
+
 def _download_manifest(rctx, authn, identifier, output):
     bytes = None
     manifest = None
     digest = None
 
-    result = _download(rctx, authn, identifier, output, "manifests", allow_fail = True)
+    result = _download(rctx, authn, identifier, output, "manifests", headers = _MANIFEST_HEADERS, allow_fail = True)
 
     fallback_to_curl = False
     if result.success:
@@ -146,10 +151,7 @@ def _download_manifest(rctx, authn, identifier, output):
             output,
             "manifests",
             download.curl,
-            headers = {
-                "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
-                "Docker-Distribution-API-Version": "registry/2.0",
-            },
+            headers = _MANIFEST_HEADERS,
         )
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
