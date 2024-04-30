@@ -15,7 +15,7 @@ and then run it in a container like so:
 
 ```
 bazel run :tarball
-docker run my-repository:latest
+docker run --rm my-repository:latest
 ```
 """
 

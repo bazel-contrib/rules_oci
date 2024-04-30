@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
+# TODO: some loader implementations don't need a tar input, so this might be wasted time
 readonly IMAGE="$(mktemp -u).tar"
 {{TAR}} --create --no-xattr --no-mac-metadata --file "$IMAGE" @"{{mtree_path}}"
 

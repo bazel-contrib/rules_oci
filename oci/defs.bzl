@@ -55,7 +55,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = annotations_label,
             out = "_{}.annotations.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         annotations = annotations_label
 
@@ -65,7 +65,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = labels_label,
             out = "_{}.labels.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in labels.items()],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         labels = labels_label
 
@@ -75,7 +75,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = env_label,
             out = "_{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         env = env_label
 
@@ -85,7 +85,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = cmd_label,
             out = "_{}.cmd.txt".format(name),
             content = [",".join(cmd)],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         cmd = cmd_label
 
@@ -95,7 +95,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = entrypoint_label,
             out = "_{}.entrypoint.txt".format(name),
             content = [",".join(entrypoint)],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         entrypoint = entrypoint_label
 
@@ -105,7 +105,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             name = exposed_ports_label,
             out = "_{}.exposed_ports.txt".format(name),
             content = [",".join(exposed_ports)],
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         exposed_ports = exposed_ports_label
 
@@ -126,14 +126,14 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         name = "_{}_index_json".format(name),
         directory = name,
         path = "index.json",
-        **forwarded_kwargs,
+        **forwarded_kwargs
     )
 
     copy_file(
         name = "_{}_index_json_cp".format(name),
         src = "_{}_index_json".format(name),
         out = "_{}_index.json".format(name),
-        **forwarded_kwargs,
+        **forwarded_kwargs
     )
 
     # Matches the [name].digest target produced by rules_docker container_image
@@ -143,7 +143,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         srcs = ["_{}_index.json".format(name)],
         filter = """.manifests[0].digest""",
         out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
-        **forwarded_kwargs,
+        **forwarded_kwargs
     )
 
 def oci_push(name, remote_tags = None, **kwargs):
@@ -168,7 +168,7 @@ def oci_push(name, remote_tags = None, **kwargs):
             name = tags_label,
             out = "_{}.tags.txt".format(name),
             content = remote_tags,
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         remote_tags = tags_label
 
@@ -178,7 +178,7 @@ def oci_push(name, remote_tags = None, **kwargs):
         **kwargs
     )
 
-def oci_tarball(name, repo_tags = None, manual = True, **kwargs):
+def oci_tarball(name, repo_tags = None, **kwargs):
     """Macro wrapper around [oci_tarball_rule](#oci_tarball_rule).
 
     Allows the repo_tags attribute to be a list of strings in addition to a text file.
@@ -189,8 +189,6 @@ def oci_tarball(name, repo_tags = None, manual = True, **kwargs):
             or a label of a file containing tags one-per-line.
             See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
             as one example of a way to produce such a file.
-        manual: whether to add `manual` to the `tags`.
-            This target is meant for local development and produces large outputs, so the manual tag avoids unneeded load on the cache.
         **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
@@ -202,16 +200,12 @@ def oci_tarball(name, repo_tags = None, manual = True, **kwargs):
             name = tags_label,
             out = "_{}.tags.txt".format(name),
             content = repo_tags,
-            **forwarded_kwargs,
+            **forwarded_kwargs
         )
         repo_tags = tags_label
 
-    tags = kwargs.pop("tags", [])
-    if manual and not "manual" not in tags:
-        tags.append("manual")
     oci_tarball_rule(
         name = name,
         repo_tags = repo_tags,
-        tags = tags,
         **kwargs
     )
