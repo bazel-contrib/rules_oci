@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly IMAGE="{{image_path}}"
+readonly IMAGE="$(mktemp -u).tar"
+{{TAR}} --create --no-xattr --no-mac-metadata --file "$IMAGE" @"{{mtree_path}}"
+
 if [ -e "{{loader}}" ]; then
     CONTAINER_CLI="{{loader}}"
 elif command -v docker &> /dev/null; then

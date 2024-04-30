@@ -100,10 +100,10 @@ def _tarball_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"].jqinfo
 
     image = ctx.file.image
-    tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
     mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
     bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
     executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+
     # Represents either manifest.json or index.json depending on the image format
     image_json = ctx.actions.declare_file("{}/_tarball.json".format(ctx.label.name))
     repo_tags = ctx.file.repo_tags
@@ -141,6 +141,29 @@ def _tarball_impl(ctx):
         mnemonic = "OCITarballManifest",
     )
 
+    exe = ctx.actions.declare_file(ctx.label.name + ".sh")
+
+    ctx.actions.expand_template(
+        template = ctx.file._run_template,
+        output = exe,
+        substitutions = {
+            "{{TAR}}": bsdtar.tarinfo.binary.short_path,
+            "{{mtree_path}}": mtree_spec.short_path,
+            "{{loader}}": ctx.file.loader.path if ctx.file.loader else "",
+        },
+        is_executable = True,
+    )
+
+    runfiles = ctx.runfiles(
+        files = mtree_outputs + (
+            [ctx.file.loader] if ctx.file.loader else []
+        ),
+        transitive_files = tar_inputs,
+    )
+
+    # This action produces a large output and should rarely be run.
+    # It will only run if the "tarball" output_group is explicitly requested
+    tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
     tar_args = ctx.actions.args()
     tar_args.add_all(["--create", "--no-xattr", "--no-mac-metadata"])
     tar_args.add("--file", tarball)
@@ -150,26 +173,11 @@ def _tarball_impl(ctx):
         inputs = depset(direct = mtree_outputs, transitive = [tar_inputs]),
         outputs = [tarball],
         arguments = [tar_args],
-        mnemonic = "Tar",
+        mnemonic = "OCITarball",
     )
-
-    exe = ctx.actions.declare_file(ctx.label.name + ".sh")
-
-    ctx.actions.expand_template(
-        template = ctx.file._run_template,
-        output = exe,
-        substitutions = {
-            "{{image_path}}": tarball.short_path,
-            "{{loader}}": ctx.file.loader.path if ctx.file.loader else "",
-        },
-        is_executable = True,
-    )
-    runfiles = [tarball]
-    if ctx.file.loader:
-        runfiles.append(ctx.file.loader)
 
     return [
-        DefaultInfo(files = depset([mtree_spec]), runfiles = ctx.runfiles(files = runfiles), executable = exe),
+        DefaultInfo(files = depset([mtree_spec]), runfiles = runfiles, executable = exe),
         OutputGroupInfo(tarball = depset([tarball])),
     ]
 
