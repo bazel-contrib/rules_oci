@@ -17,7 +17,7 @@ readonly OUTPUT="{{output}}"
 function add_to_tar() {
     content=$1
     tar_path=$2
-    echo >>"${OUTPUT}" "${tar_path} uid=0 gid=0 mode=0755 time=1672560000 type=file content=${content}"
+    echo >>"${OUTPUT}" "${tar_path} uid=0 gid=0 mode=0755 time=1672560000 type=file content=${content#{{bindir}}/}"
 }
 
 MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
@@ -88,7 +88,6 @@ MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
 
 CONFIG_DIGEST=$(${JQ} -r '.config.digest  | sub(":"; "/")' ${MANIFEST_BLOB_PATH})
 CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
-add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
 LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH})
 
