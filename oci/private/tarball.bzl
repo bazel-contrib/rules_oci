@@ -127,15 +127,14 @@ def _tarball_impl(ctx):
         substitutions = substitutions,
     )
 
-    # inputs both for creating the mtree spec and also invoking `tar --create`
-    tar_inputs = depset(
+    mtree_inputs = depset(
         direct = [image, repo_tags, executable],
         transitive = [bsdtar.default.files],
     )
     mtree_outputs = [mtree_spec, image_json]
     ctx.actions.run(
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
-        inputs = tar_inputs,
+        inputs = mtree_inputs,
         outputs = mtree_outputs,
         tools = [jq.bin],
         mnemonic = "OCITarballManifest",
@@ -154,30 +153,29 @@ def _tarball_impl(ctx):
         is_executable = True,
     )
 
-    runfiles = ctx.runfiles(
-        files = mtree_outputs + (
-            [ctx.file.loader] if ctx.file.loader else []
-        ),
-        transitive_files = tar_inputs,
-    )
 
     # This action produces a large output and should rarely be run.
     # It will only run if the "tarball" output_group is explicitly requested
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
+    tar_inputs = depset(direct = mtree_outputs, transitive = [mtree_inputs])
     tar_args = ctx.actions.args()
     tar_args.add_all(["--create", "--no-xattr", "--no-mac-metadata"])
     tar_args.add("--file", tarball)
     tar_args.add(mtree_spec, format = "@%s")
     ctx.actions.run(
         executable = bsdtar.tarinfo.binary,
-        inputs = depset(direct = mtree_outputs, transitive = [tar_inputs]),
+        inputs = tar_inputs,
         outputs = [tarball],
         arguments = [tar_args],
         mnemonic = "OCITarball",
     )
 
     return [
-        DefaultInfo(files = depset([mtree_spec]), runfiles = runfiles, executable = exe),
+        DefaultInfo(
+            files = depset([mtree_spec]),
+            runfiles = ctx.runfiles(files = [ctx.file.loader] if ctx.file.loader else [], transitive_files = tar_inputs),
+            executable = exe,
+        ),
         OutputGroupInfo(tarball = depset([tarball])),
     ]
 

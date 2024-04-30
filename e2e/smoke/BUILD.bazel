@@ -22,23 +22,28 @@ tags = [
 ]
 
 oci_tarball(
-    name = "tar",
+    name = "tarball",
     image = ":image",
     repo_tags = tags,
+)
+
+filegroup(
+    name = "tarball.tar",
+    srcs = [":tarball"],
+    output_group = "tarball",
 )
 
 container_structure_test(
     name = "test",
     configs = ["test.yaml"],
-    driver = "tar",
-    image = ":tar",
+    image = ":image",
 )
 
 genrule(
     name = "tar_manifest",
-    srcs = [":tar"],
+    srcs = [":tarball.tar"],
     outs = ["manifest.json"],
-    cmd = "tar -xOf ./$(location :tar) manifest.json > $@",
+    cmd = "tar -xOf ./$(location :tarball.tar) manifest.json > $@",
 )
 
 write_file(

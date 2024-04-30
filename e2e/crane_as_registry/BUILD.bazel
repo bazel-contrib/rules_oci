@@ -23,15 +23,8 @@ oci_image(
     os = "linux",
 )
 
-oci_tarball(
-    name = "tar",
-    image = ":image",
-    repo_tags = [],
-)
-
 container_structure_test(
     name = "test",
     configs = ["test.yaml"],
-    driver = "tar",
-    image = ":tar",
+    image = ":image",
 )
