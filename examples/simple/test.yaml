@@ -8,6 +8,8 @@ metadataTest:
       value: "/test:/test"
     - key: PATH
       value: "/usr/local/bin:"
+    - key: LOCAL
+      value: "true"
   labels:
     - key: org.opencontainers.image.version
       value: 0.0.0

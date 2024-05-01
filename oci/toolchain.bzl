@@ -4,7 +4,7 @@ CraneInfo = provider(
     doc = "Information about how to invoke the crane executable.",
     fields = {
         "binary": "Executable crane binary",
-        "version": "Crane version"
+        "version": "Crane version",
     },
 )
 
@@ -19,7 +19,7 @@ def _crane_toolchain_impl(ctx):
     )
     crane_info = CraneInfo(
         binary = binary,
-        version = ctx.attr.version.removeprefix("v")
+        version = ctx.attr.version.removeprefix("v"),
     )
     toolchain_info = platform_common.ToolchainInfo(
         crane_info = crane_info,
@@ -42,38 +42,32 @@ crane_toolchain = rule(
             executable = True,
             cfg = "exec",
         ),
-        "version": attr.string(mandatory = True, doc = "Version of the crane binary")
+        "version": attr.string(mandatory = True, doc = "Version of the crane binary"),
     },
     doc = "Defines a crane toolchain. See: https://docs.bazel.build/versions/main/toolchains.html#defining-toolchains.",
 )
 
-RegistryInfo = provider(
-    doc = "Information about how to invoke the registry executable.",
+RegCtlInfo = provider(
+    doc = "Information about how to invoke the regctl executable.",
     fields = {
-        "launcher": "Executable launcher wrapper",
-        "registry": "Executable registry binary",
+        "binary": "Executable regctl binary",
     },
 )
 
-def _registry_toolchain_impl(ctx):
-    registry = ctx.executable.registry
-    launcher = ctx.executable.launcher
-
+def _regctl_toolchain_impl(ctx):
+    binary = ctx.executable.regctl
     template_variables = platform_common.TemplateVariableInfo({
-        "REGISTRY_BIN": registry.path,
-        "LAUNCHER_WRAPPER": launcher.path,
+        "REGCTL_BIN": binary.path,
     })
     default = DefaultInfo(
-        files = depset([registry, launcher]),
-        runfiles = ctx.runfiles(files = [registry, launcher]),
+        files = depset([binary]),
+        runfiles = ctx.runfiles(files = [binary]),
     )
-    registry_info = RegistryInfo(
-        registry = registry,
-        launcher = launcher,
+    regctl_info = RegCtlInfo(
+        binary = binary,
     )
-
     toolchain_info = platform_common.ToolchainInfo(
-        registry_info = registry_info,
+        regctl_info = regctl_info,
         template_variables = template_variables,
         default = default,
     )
@@ -83,23 +77,16 @@ def _registry_toolchain_impl(ctx):
         template_variables,
     ]
 
-registry_toolchain = rule(
-    implementation = _registry_toolchain_impl,
+regctl_toolchain = rule(
+    implementation = _regctl_toolchain_impl,
     attrs = {
-        "launcher": attr.label(
-            doc = "A bash launcher script defining a bash function named `start_registry` that takes the following arguments `storage_dir, output, deadline`; `stop_registry` stops the registry.",
+        "regctl": attr.label(
+            doc = "A hermetically downloaded executable target for the target platform.",
             mandatory = True,
+            allow_single_file = True,
             executable = True,
             cfg = "exec",
-            allow_single_file = True,
-        ),
-        "registry": attr.label(
-            doc = "A hermetically downloaded registry executable for the target platform.",
-            mandatory = True,
-            executable = True,
-            cfg = "exec",
-            allow_single_file = True,
         ),
     },
-    doc = "Defines a registry toolchain. See: https://docs.bazel.build/versions/main/toolchains.html#defining-toolchains.",
+    doc = "Defines a regctl toolchain. See: https://docs.bazel.build/versions/main/toolchains.html#defining-toolchains.",
 )

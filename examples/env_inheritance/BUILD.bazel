@@ -1,23 +1,23 @@
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("//oci:defs.bzl", "oci_image")
 
-pkg_tar(
+tar(
     name = "app",
     srcs = ["test.bash"],
 )
 
 oci_image(
     name = "middle_image",
-    base = "@ubuntu",
+    base = "@ubuntu_linux_amd64",
     cmd = ["test.sh"],
     env = {
         "ENV1": "$PATH:/test",
         "ENV2": "/prepend:${PATH}:/test2",
         "ENV3": "key1=value1 key2=value2",
     },
-    tars = ["app.tar"],
+    tars = [":app"],
 )
 
 oci_image(
@@ -45,9 +45,5 @@ genrule(
 assert_contains(
     name = "check_digest",
     actual = ":hash",
-    expected = "sha256:d15c83f8f8438e5e05ff40478dc98ad923e9afa272b6630c5b29baf6f7e93585",
-    # TODO: enable once there's a new version of crane
-    # https://github.com/google/go-containerregistry/issues/1542
-    # https://github.com/bazel-contrib/rules_oci/issues/58
-    tags = ["manual"],
+    expected = "sha256:71b67123d22c29a52e69c46e77bf63eced4c0d21c46e7d1c346c6afe7c79ca01",
 )

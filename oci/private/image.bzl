@@ -2,6 +2,14 @@
 
 load("//oci/private:util.bzl", "util")
 
+_ACCEPTED_TAR_EXTENSIONS = [
+    ".tar",
+    ".tgz",
+    ".tar.gz",
+    ".tzst",
+    ".tar.zst",
+]
+
 _DOC = """Build an OCI compatible container image.
 
 Note, most users should use the wrapper macro instead of this rule directly.
@@ -51,7 +59,7 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
-    "tars": attr.label_list(allow_files = [".tar", ".tar.gz"], doc = """\
+    "tars": attr.label_list(allow_files = _ACCEPTED_TAR_EXTENSIONS, doc = """\
         List of tar files to add to the image as layers.
         Do not sort this list; the order is preserved in the resulting image.
         Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.
@@ -80,30 +88,24 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
-    # Workaround for https://github.com/google/go-containerregistry/issues/1513
-    # We would prefer to not provide any tar file at all.
-    "_empty_tar": attr.label(default = "empty.tar", allow_single_file = True),
 }
 
 def _platform_str(os, arch, variant = None):
-    parts = [os, arch]
+    parts = dict(os = os, architecture = arch)
     if variant:
-        parts.append(variant)
-    return "/".join(parts)
+        parts["variant"] = variant
+    return json.encode(parts)
 
 def _oci_image_impl(ctx):
-    if not ctx.attr.base:
-        if not ctx.attr.os or not ctx.attr.architecture:
-            fail("'os' and 'architecture' are mandatory when 'base' is unspecified.")
-
+    if not ctx.attr.base and (not ctx.attr.os or not ctx.attr.architecture):
+        fail("'os' and 'architecture' are mandatory when 'base' is unspecified.")
     if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
-    util.assert_crane_version_at_least(ctx, "0.18.0", "oci_image")
-
-    crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
-    registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]
+    regctl = ctx.toolchains["@rules_oci//oci:regctl_toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    zstd = ctx.toolchains["@aspect_bazel_lib//lib:zstd_toolchain_type"]
 
     output = ctx.actions.declare_directory(ctx.label.name)
 
@@ -114,17 +116,16 @@ def _oci_image_impl(ctx):
         output = builder,
         is_executable = True,
         substitutions = {
-            "{{registry_impl}}": registry.registry_info.launcher.path,
-            "{{crane_path}}": crane.crane_info.binary.path,
-            "{{jq_path}}": jq.jqinfo.bin.path,
-            "{{empty_tar}}": ctx.file._empty_tar.path,
+            "{{regctl_path}}": regctl.regctl_info.binary.dirname,
+            "{{jq_path}}": jq.jqinfo.bin.dirname,
+            "{{coreutils_path}}": coreutils.coreutils_info.bin.dirname,
+            "{{zstd_path}}": zstd.zstdinfo.binary.dirname,
             "{{output}}": output.path,
         },
     )
 
-    inputs = [builder, ctx.file._empty_tar] + ctx.files.tars
+    inputs = [builder] + ctx.files.tars
     args = ctx.actions.args()
-    args.add("mutate")
 
     if ctx.attr.base:
         # reuse given base image
@@ -137,30 +138,30 @@ def _oci_image_impl(ctx):
     # add layers
     for layer in ctx.attr.tars:
         # tars are already added as input above.
-        args.add_all(layer[DefaultInfo].files, format_each = "--append=%s")
+        args.add_all(layer[DefaultInfo].files, format_each = "--layer=%s")
 
     if ctx.attr.entrypoint:
-        args.add(ctx.file.entrypoint.path, format = "--entrypoint-file=%s")
+        args.add(ctx.file.entrypoint.path, format = "--entrypoint=%s")
         inputs.append(ctx.file.entrypoint)
 
     if ctx.attr.exposed_ports:
-        args.add(ctx.file.exposed_ports.path, format = "--exposed-ports-file=%s")
+        args.add(ctx.file.exposed_ports.path, format = "--exposed-ports=%s")
         inputs.append(ctx.file.exposed_ports)
 
     if ctx.attr.cmd:
-        args.add(ctx.file.cmd.path, format = "--cmd-file=%s")
+        args.add(ctx.file.cmd.path, format = "--cmd=%s")
         inputs.append(ctx.file.cmd)
 
     if ctx.attr.env:
-        args.add(ctx.file.env.path, format = "--env-file=%s")
+        args.add(ctx.file.env.path, format = "--env=%s")
         inputs.append(ctx.file.env)
 
     if ctx.attr.labels:
-        args.add(ctx.file.labels.path, format = "--labels-file=%s")
+        args.add(ctx.file.labels.path, format = "--labels=%s")
         inputs.append(ctx.file.labels)
 
     if ctx.attr.annotations:
-        args.add(ctx.file.annotations.path, format = "--annotations-file=%s")
+        args.add(ctx.file.annotations.path, format = "--annotations=%s")
         inputs.append(ctx.file.annotations)
 
     if ctx.attr.user:
@@ -186,7 +187,12 @@ def _oci_image_impl(ctx):
         outputs = [output],
         env = action_env,
         executable = util.maybe_wrap_launcher_for_windows(ctx, builder),
-        tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
+        tools = [
+            regctl.regctl_info.binary,
+            jq.jqinfo.bin,
+            coreutils.coreutils_info.bin,
+            zstd.zstdinfo.binary,
+        ],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
         toolchain = None,
@@ -203,9 +209,10 @@ oci_image = rule(
     attrs = _attrs,
     doc = _DOC,
     toolchains = [
-        "@bazel_tools//tools/sh:toolchain_type",
-        "@rules_oci//oci:crane_toolchain_type",
-        "@rules_oci//oci:registry_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+        "@aspect_bazel_lib//lib:zstd_toolchain_type",
+        "@rules_oci//oci:regctl_toolchain_type",
+        "@bazel_tools//tools/sh:toolchain_type",
     ],
 )
