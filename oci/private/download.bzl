@@ -109,17 +109,12 @@ def _download(
     )
 
 # A dummy function that uses bazel downloader.
-#  Caveats
-#   - Doesn't support setting custom headers
 def _bazel_download(
         rctx,
-        # custom features
-        # buildifier: disable=unused-variable
         headers = {},
-        # passthrough
         **kwargs):
     # Passing headers to the downloader is only available as of 7.1
-    if versions.is_at_least("7.1.0", versions.get() or "7.1.0"):
+    if versions.is_at_least("7.1.0", versions.get()):
         return rctx.download(headers = headers, **kwargs)
     else:
         return rctx.download(**kwargs)
