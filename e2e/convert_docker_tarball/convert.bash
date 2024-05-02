@@ -14,24 +14,25 @@ set -o pipefail -o errexit -o nounset
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 RUNFILES="$SCRIPT_DIR/$(basename $0).runfiles"
 
-TMP=$(mktemp -d)
-export HOME="$TMP"
-
 readonly OUTPUT="${1}"
 readonly TARBALL="${2}"
 readonly CRANE="${RUNFILES}/${3#"external/"}"
-readonly REGISTRY_LAUNCHER=${RUNFILES}/${4#"external/"}
-
 
 # Launch a registry instance at a random port
-source "${REGISTRY_LAUNCHER}"
-REGISTRY=$(start_registry $TMP $TMP/output.log)
-trap "stop_registry ${TMP}" EXIT
-
+output=$(mktemp)
+$CRANE registry serve --address=localhost:0 >> $output 2>&1 &
+timeout=$((SECONDS+10))
+while [ "${SECONDS}" -lt "${timeout}" ]; do
+    port="$(cat $output | sed -nr 's/.+serving on port ([0-9]+)/\1/p')"
+    if [ -n "${port}" ]; then
+        break
+    fi
+done
+REGISTRY="localhost:$port"
+echo "Registry is running at ${REGISTRY}"
 readonly REPOSITORY="${REGISTRY}/local" 
 
 
-REF=$(mktemp)
-"${CRANE}" push "${TARBALL}" "${REPOSITORY}" --image-refs="${REF}"
+REF=$("${CRANE}" push "${TARBALL}" "${REPOSITORY}")
 
-"${CRANE}" pull "$(cat $REF)" "${OUTPUT}" --format=oci
+"${CRANE}" pull "$REF" "${OUTPUT}" --format=oci
