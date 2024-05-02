@@ -1,6 +1,7 @@
 <!-- Generated with Stardoc: http://skydoc.bazel.build -->
 
 Create a tarball from oci_image that can be loaded by runtimes such as podman and docker.
+Intended for use with `bazel run`.
 
 For example, given an `:image` target, you could write
 
@@ -31,6 +32,30 @@ oci_tarball(<a href="#oci_tarball-name">name</a>, <a href="#oci_tarball-format">
 Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
+
+### Outputs
+
+The default output is an mtree specification file.
+This is because producing the tarball in `bazel build` is expensive, and should typically not be an input to any other build actions,
+so producing it only creates unnecessary load on the action cache.
+
+If needed, the `tarball` output group allows you to depend on the tar output from another rule.
+
+On the command line, `bazel build //path/to:my_tarball --output_groups=tarball`
+
+or in a BUILD file:
+
+```starlark
+oci_tarball(
+    name = "my_tarball",
+    ...
+)
+filegroup(
+    name = "my_tarball.tar",
+    srcs = [":my_tarball"],
+    output_group = "tarball",
+)
+```
 
 
 **ATTRIBUTES**

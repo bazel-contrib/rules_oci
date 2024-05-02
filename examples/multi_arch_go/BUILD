@@ -84,11 +84,17 @@ write_file(
     content = [str(repo_tags)],
 )
 
+filegroup(
+    name = "image-multiarch.tar",
+    srcs = [":image-multiarch-tar"],
+    output_group = "tarball",
+)
+
 genrule(
     name = "tar_multiarch_index",
-    srcs = [":image-multiarch-tar"],
+    srcs = [":image-multiarch.tar"],
     outs = ["multiarch_index.json"],
-    cmd = "tar -xOf ./$(location :image-multiarch-tar) index.json > $@",
+    cmd = "tar -xOf ./$(location :image-multiarch.tar) index.json > $@",
 )
 
 assert_json_matches(
@@ -99,11 +105,17 @@ assert_json_matches(
     filter2 = ".[]",
 )
 
+filegroup(
+    name = "image-x86_64.tar",
+    srcs = [":image-x86_64-tar"],
+    output_group = "tarball",
+)
+
 genrule(
     name = "tar_x86_64_index",
-    srcs = [":image-x86_64-tar"],
+    srcs = [":image-x86_64.tar"],
     outs = ["x86_64_index.json"],
-    cmd = "tar -xOf ./$(location :image-x86_64-tar) manifest.json > $@",
+    cmd = "tar -xOf ./$(location :image-x86_64.tar) manifest.json > $@",
 )
 
 assert_json_matches(

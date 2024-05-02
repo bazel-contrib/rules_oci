@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly IMAGE="{{image_path}}"
 if [ -e "{{loader}}" ]; then
     CONTAINER_CLI="{{loader}}"
 elif command -v docker &> /dev/null; then
@@ -14,4 +13,6 @@ else
     exit 1
 fi
 
-"$CONTAINER_CLI" load --input "$IMAGE"
+"$CONTAINER_CLI" load --input <(
+    {{TAR}} --create --no-xattr --no-mac-metadata @"{{mtree_path}}"
+)
