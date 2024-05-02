@@ -13,8 +13,6 @@ else
     exit 1
 fi
 
-# TODO: some loader implementations don't need a tar input, so this might be wasted time
-readonly IMAGE="$(mktemp -u).tar"
-{{TAR}} --create --no-xattr --no-mac-metadata --file "$IMAGE" @"{{mtree_path}}"
-
-"$CONTAINER_CLI" load --input "$IMAGE"
+"$CONTAINER_CLI" load --input <(
+    {{TAR}} --create --no-xattr --no-mac-metadata @"{{mtree_path}}"
+)
