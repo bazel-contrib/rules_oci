@@ -60,21 +60,15 @@ jobs:
         bazelversion: ${{ fromJSON(needs.matrix-prep-bazelversion.outputs.bazelversions) }}
         folder:
           - .
-          - e2e/custom_registry
           - e2e/wasm
           - e2e/smoke
-          - e2e/crane_as_registry
           - e2e/pull
 
         bzlmodEnabled: [true, false]
         exclude:
           # macos is expensive (billed at 10X) so don't test these
           - os: macos-latest
-            folder: e2e/custom_registry
-          - os: macos-latest
             folder: e2e/wasm
-          - os: macos-latest
-            folder: e2e/crane_as_registry
           - os: macos-latest
             folder: e2e/pull
           - os: macos-latest
@@ -82,9 +76,6 @@ jobs:
           # e2e/pull is bzlmod only but it has test for both cases.
           - folder: e2e/pull
             bzlmodEnabled: false
-          # TODO: fix
-          - folder: e2e/custom_registry
-            bzlmodEnabled: true
           # TODO: fix
           - folder: e2e/wasm
             bzlmodEnabled: true
