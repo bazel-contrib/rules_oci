@@ -39,7 +39,7 @@ pkg_tar(
 # Making image
 # C++ programs usually need some fundamental libraries such as glibc, libstdc++, etc.
 # Correspondigly, use language-specific distroless images.
-# Here we usedocker.io/library/ubuntu image for this C++ program.
+# Here we use docker.io/library/ubuntu image for this C++ program.
 oci_image(
     name = "image",
     base = "@docker_lib_ubuntu",
