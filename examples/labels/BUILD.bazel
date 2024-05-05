@@ -16,7 +16,7 @@ expand_template(
     stamp_substitutions = {"0.0.0": "{{BUILD_EMBED_LABEL}}"},
     template = [
         "org.opencontainers.image.version=0.0.0",
-        "org.opencontainers.image.source=https://github.com/bazel-contrib/rules_oci",
+        "org.opencontainers.image.source=https://github.com/bazel-contrib/rules_oci=",
     ],
 )
 
@@ -41,7 +41,7 @@ oci_image(
     cmd = ["test.sh"],
     labels = {
         "org.opencontainers.image.version": "0.0.0",
-        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
     },
     tars = ["app.tar"],
 )

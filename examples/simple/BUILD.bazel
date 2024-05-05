@@ -3,21 +3,43 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("//oci:defs.bzl", "oci_image", "oci_tarball")
 
+# buildifier: leave-alone
 oci_image(
     name = "image",
-    architecture = select({
-        "@platforms//cpu:arm64": "arm64",
-        "@platforms//cpu:x86_64": "amd64",
-    }),
+    # platform attributes
+    os = "linux",
+    architecture = "amd64",
+    variant = "v8",
+    # entrypoint and args
+    entrypoint = ["/custom_bin"],
     cmd = [
         "--arg1",
         "--arg2",
     ],
-    entrypoint = ["/custom_bin"],
+    # env
     env = {
-        "ENV": "/test",
+        "ENV": "/test",  # ENV=/test
+        "ENV2": "/test:$ENV",  # ENV=/test:/test
+        "PATH": "/usr/local/bin:$PATH",  # PATH=/usr/local/bin:
     },
-    os = "linux",
+    # exposed_ports
+    exposed_ports = [
+        "1234/tcp",
+        "5678/udp",
+        "5000",
+    ],
+    # user & workdir
+    user = "root",
+    workdir = "/root",
+    # labels & annotations
+    labels = {
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
+    annotations = {
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
 )
 
 container_structure_test(

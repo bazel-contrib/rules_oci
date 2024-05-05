@@ -12,7 +12,6 @@ Just copy-paste this command into the terminal to run the tests
 
 ```bash
 for dir in "." "e2e/smoke" "e2e/platforms" "e2e/pull"; do
-    (cd "$dir" && bazel test //... || (echo "tests failed." && exit 1))
+    (echo "## $dir"; cd "$dir" && bazel test //...)
 done
-echo "ALL TESTS PASSED"
 ```

@@ -1,0 +1,23 @@
+schemaVersion: "2.0.0"
+
+metadataTest:
+  envVars:
+    - key: "ENV"
+      value: "/test"
+    - key: "ENV2"
+      value: "/test:/test"
+    - key: PATH
+      value: "/usr/local/bin:"
+  labels:
+    - key: org.opencontainers.image.version
+      value: 0.0.0
+    - key: org.opencontainers.image.source
+      value: https://github.com/bazel-contrib/rules_oci=
+  exposedPorts:
+    - "1234"
+    - "5678"
+    - "5000"
+  entrypoint: ["/custom_bin"]
+  cmd: ["--arg1", "--arg2"]
+  user: root
+  workdir: "/root"

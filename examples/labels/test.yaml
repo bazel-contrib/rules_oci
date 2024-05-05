@@ -11,4 +11,4 @@ metadataTest:
     - key: "org.opencontainers.image.version"
       value: "0.0.0"
     - key: "org.opencontainers.image.source"
-      value: "https://github.com/bazel-contrib/rules_oci"
+      value: "https://github.com/bazel-contrib/rules_oci="

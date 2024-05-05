@@ -1,1 +1,2 @@
+common --noexperimental_convenience_symlinks
 common --repository_cache=

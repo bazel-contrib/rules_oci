@@ -39,11 +39,11 @@ jobs:
       - id: linux
         run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
       - id: macos
-        run: echo "os=macos-latest" >> $GITHUB_OUTPUT
+        run: echo "os=macos-13" >> $GITHUB_OUTPUT
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
     outputs:
-      # Will look like ["ubuntu-latest", "macos-latest"]
+      # Will look like ["ubuntu-latest", "macos-13"]
       os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
@@ -67,11 +67,11 @@ jobs:
         bzlmodEnabled: [true, false]
         exclude:
           # macos is expensive (billed at 10X) so don't test these
-          - os: macos-latest
+          - os: macos-13
             folder: e2e/wasm
-          - os: macos-latest
+          - os: macos-13
             folder: e2e/pull
-          - os: macos-latest
+          - os: macos-13
             bazelversion: 6.4.0
           # e2e/pull is bzlmod only but it has test for both cases.
           - folder: e2e/pull
@@ -89,8 +89,9 @@ jobs:
           path: |
             ~/.cache/bazel
             ~/.cache/bazel-repo
-          key: bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE') }}
+          key: bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ matrix.bazelversion }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'WORKSPACE.bzlmod','MODULE.bzl') }}
           restore-keys: |
+            bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ matrix.bazelversion }}
             bazel-cache-${{ matrix.os }}-${{ matrix.folder }}
             bazel-cache-${{ matrix.os }}
             bazel-cache-
@@ -107,16 +108,39 @@ jobs:
         run: echo "${{ matrix.bazelversion }}" > .bazelversion
 
       - name: Configure TestContainers cloud
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ matrix.os == 'macos-13' }}
         uses: atomicjar/testcontainers-cloud-setup-action@main
         with:
           wait: true
           token: ${{ secrets.TC_CLOUD_TOKEN }}
 
       - name: Configure Remote Docker Host
-        if: ${{ matrix.os == 'macos-latest' }}
+        if: ${{ matrix.os == 'macos-13' }}
         run: echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
 
+      - name: Free space
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get remove -y '^dotnet-.*'
+          sudo apt-get remove -y '^llvm-.*'
+          sudo apt-get remove -y 'php.*'
+          sudo apt-get remove -y 'google*'
+          sudo apt-get autoremove -y
+          sudo apt-get clean
+          rm -rf /usr/share/dotnet/
+
+      - name: Override CST
+        if: ${{ matrix.bzlmodEnabled && matrix.folder == '.'}}
+        run: |
+          cat >> MODULE.bazel <<EOF
+          single_version_override(
+              module_name = "container_structure_test",
+              patch_strip = 1,
+              patches = [
+                  "//oci/tests:cst_exclusive.patch",
+              ],
+          )
+          EOF
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:

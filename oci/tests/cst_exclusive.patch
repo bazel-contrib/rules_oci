@@ -1,0 +1,17 @@
+diff --git a/defs.bzl b/defs.bzl
+index 2cecbc8..59e5902 100644
+--- a/defs.bzl
++++ b/defs.bzl
+@@ -2,7 +2,11 @@
+ 
+ load("//bazel:container_structure_test.bzl", "lib")
+ 
+-container_structure_test = rule(
++def container_structure_test(tags = [], **kwargs):
++    tags = tags + ["exclusive"]
++    _container_structure_test(tags = tags, **kwargs)
++
++_container_structure_test = rule(
+     implementation = lib.implementation,
+     attrs = lib.attrs,
+     doc = """\

@@ -1,6 +1,6 @@
 "Bazel dependencies"
 
-bazel_dep(name = "rules_oci", version = "0.0.0", dev_dependency = True)
+bazel_dep(name = "rules_oci", version = "0.0.0")
 bazel_dep(name = "platforms", version = "0.0.7")
 
 local_path_override(
