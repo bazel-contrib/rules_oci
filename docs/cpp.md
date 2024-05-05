@@ -39,10 +39,10 @@ pkg_tar(
 # Making image
 # C++ programs usually need some fundamental libraries such as glibc, libstdc++, etc.
 # Correspondigly, use language-specific distroless images.
-# Here we use gcr.io/distroless/cc-debian12 image for this C++ program.
+# Here we usedocker.io/library/ubuntu image for this C++ program.
 oci_image(
     name = "image",
-    base = "@distroless_cc_debian12",
+    base = "@docker_lib_ubuntu",
     tars = [":tar"],
     entrypoint = ["/example_binary"],
 )
@@ -60,17 +60,16 @@ In `MODULE.bazel` file, be sure to add the following sections:
 ```python
 # Pull needed base image
 oci.pull(
-    name = "distroless_cc_debian12",
-    image = "gcr.io/distroless/cc-debian12",
+    name = "docker_lib_ubuntu",
+    image = "docker.io/library/ubuntu",
     platforms = [
-        "linux/amd64",
-        "linux/arm/v7",
         "linux/arm64/v8",
+        "linux/amd64",
     ],
-    tag = "latest",
+    tag = "rolling",
 )
 # Expose the base image
-use_repo(oci, "distroless_cc_debian12")
+use_repo(oci, "docker_lib_ubuntu")
 ```
 ```python
 # Import rules_pkg
