@@ -5,7 +5,6 @@ set -o pipefail -o errexit -o nounset
 PATH="{{jq_path}}:$PATH"
 PATH="{{regctl_path}}:$PATH"
 PATH="{{coreutils_path}}:$PATH"
-PATH="{{zstd_path}}:$PATH"
 
 # Constants
 readonly OUTPUT="{{output}}"
@@ -18,7 +17,7 @@ readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | red
 
 function base_from_scratch() {
   local platform="$1"
-   # Create a new manifest
+  # Create a new manifest
   jq -n '{
     schemaVersion: 2, 
     mediaType: "application/vnd.oci.image.manifest.v1+json", 
@@ -26,7 +25,7 @@ function base_from_scratch() {
     layers: []
   }' | update_manifest
   # Create the image config when there is annotations
-  jq -n --argjson platform "$platform" '{config:{}, rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config > /dev/null
+  jq -n --argjson platform "$platform" '{config:{}, rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
 }
 
 function base_from() {
@@ -63,53 +62,41 @@ function update_manifest() {
 }
 
 function add_layer() {
-  local path=
+  local path="$1"
+  local desc=
   local media_type=
-  local compression=
-  local digest=
-  local diffid=
-  local size=
+  local comp_ext=
 
-  path="$1"
-  digest=$(regctl digest <"$path")
-  diffid="$digest"
-  size=$(wc -c "$path" | awk '{print $1}')
+  desc="$(cat "$2")"
 
-  if [[ $(coreutils od -An -t x1 --read-bytes 2 "$path") == " 1f 8b" ]]; then
-    compression="gzip"
-    diffid=$(zstd --decompress --format=gzip <"$path" | regctl digest)
-  elif zstd -t "$path" 2>/dev/null; then
-    compression="zstd"
-    diffid=$(zstd --decompress --format=zstd <"$path" | regctl digest)
-  fi
-
-  # If the base image uses docker media types, then add new layer with oci-spec 
+  # If the base image uses docker media types, then add new layer with oci-spec
   # interchangable media type.
-  if [[ $(get_manifest | jq -r '.mediaType') == "application/vnd.docker."* ]]; then 
+  if [[ $(get_manifest | jq -r '.mediaType') == "application/vnd.docker."* ]]; then
     media_type="application/vnd.docker.image.rootfs.diff.tar"
-    if [[ -n "$compression" ]]; then
-      media_type="$media_type.$compression"
-    fi
-  # otherwise, use oci-spec media types.
-  else 
+    comp_ext="."
+  else
+    # otherwise, use oci-spec media types.
     media_type="application/vnd.oci.image.layer.v1.tar"
-    if [[ -n "$compression" ]]; then
-      media_type="$media_type+$compression"
-    fi 
+    comp_ext="+"
   fi
 
-  # echo "$media_type $diffid $digest"
+  desc="$(jq --arg comp_ext "${comp_ext}" '.compression |= (if . != "" then "\($comp_ext)\(.)" end)' <<< "$desc")"
 
-  new_config_digest=$(get_config | jq --arg diffid "$diffid" '.rootfs.diff_ids += [$diffid]' | update_config)
+  new_config_digest=$(
+    get_config | jq --argjson desc "$desc" '.rootfs.diff_ids += [$desc.diffid]' | update_config
+  )
 
   get_manifest |
-    jq '.config.digest = $config_digest | .layers += [{size: $size, digest: $layer_digest, mediaType: $media_type}]' \
-      --arg config_digest "$new_config_digest" \
-      --arg layer_digest "$digest" \
-      --arg media_type "$media_type" \
-      --argjson size "$size" | update_manifest
+    jq '.config.digest = $config_digest |
+        .layers += [{size: $desc.size, digest: $desc.digest, mediaType: "\($media_type)\($desc.compression)"}]' \
+      --arg config_digest "${new_config_digest}" \
+      --argjson desc "${desc}" \
+      --arg media_type "${media_type}" | update_manifest
 
-  regctl blob put "$REF" <"$path" >/dev/null
+  local digest_path= 
+  digest_path="$(jq -r '.digest | sub(":"; "/")' <<< "$desc")"
+
+  coreutils cat "$path" > "$OUTPUT/blobs/$digest_path"
 }
 
 CONFIG="{}"
@@ -122,7 +109,10 @@ for ARG in "$@"; do
   --from=*)
     base_from "${ARG#--from=}"
     ;;
-  --layer=*) add_layer "${ARG#--layer=}" ;;
+  --layer=*)
+    IFS='=' read -r layer descriptor <<<"${ARG#--layer=}"
+    add_layer "${layer}" "$descriptor"
+    ;;
   --env=*)
     # Get environment from existing config
     env=$(get_config | jq '(.config.Env // []) | map(. | split("=") | {"key": .[0], "value": .[1:] | join("=")})')
@@ -171,4 +161,4 @@ done
 
 get_config | jq --argjson config "$CONFIG" '. *= $config' | update_config >/dev/null
 ## TODO: container structure is broken
-(JSON="$(cat "$OUTPUT/index.json")" && jq "del(.manifests[].annotations)" > "$OUTPUT/index.json" <<< "$JSON" )
+(JSON="$(cat "$OUTPUT/index.json")" && jq "del(.manifests[].annotations)" >"$OUTPUT/index.json" <<<"$JSON")

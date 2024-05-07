@@ -87,6 +87,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
+    "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
@@ -95,6 +96,35 @@ def _platform_str(os, arch, variant = None):
     if variant:
         parts["variant"] = variant
     return json.encode(parts)
+
+def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
+    descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
+    args = ctx.actions.args()
+    args.add(layer)
+    args.add(descriptor)
+    ctx.actions.run(
+        executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh),
+        inputs = [layer],
+        outputs = [descriptor],
+        arguments = [args],
+        env = {
+            "HPATH": ":".join([
+                zstd.zstdinfo.binary.dirname,
+                jq.jqinfo.bin.dirname,
+                coreutils.coreutils_info.bin.dirname,
+                regctl.regctl_info.binary.dirname,
+            ]),
+        },
+        tools = [
+            jq.jqinfo.bin,
+            zstd.zstdinfo.binary,
+            coreutils.coreutils_info.bin,
+            regctl.regctl_info.binary,
+        ],
+        mnemonic = "OCIDescriptor",
+        progress_message = "OCI Descriptor %{input}",
+    )
+    return descriptor
 
 def _oci_image_impl(ctx):
     if not ctx.attr.base and (not ctx.attr.os or not ctx.attr.architecture):
@@ -119,12 +149,12 @@ def _oci_image_impl(ctx):
             "{{regctl_path}}": regctl.regctl_info.binary.dirname,
             "{{jq_path}}": jq.jqinfo.bin.dirname,
             "{{coreutils_path}}": coreutils.coreutils_info.bin.dirname,
-            "{{zstd_path}}": zstd.zstdinfo.binary.dirname,
             "{{output}}": output.path,
         },
     )
 
     inputs = [builder] + ctx.files.tars
+
     args = ctx.actions.args()
 
     if ctx.attr.base:
@@ -136,9 +166,12 @@ def _oci_image_impl(ctx):
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
 
     # add layers
-    for layer in ctx.attr.tars:
+    for (i, layer) in enumerate(ctx.files.tars):
+        descriptor = _calculate_descriptor(ctx, i, layer, zstd, jq, coreutils, regctl)
+        inputs.append(descriptor)
+
         # tars are already added as input above.
-        args.add_all(layer[DefaultInfo].files, format_each = "--layer=%s")
+        args.add_joined([layer, descriptor], join_with = "=", format_joined = "--layer=%s")
 
     if ctx.attr.entrypoint:
         args.add(ctx.file.entrypoint.path, format = "--entrypoint=%s")
@@ -191,7 +224,6 @@ def _oci_image_impl(ctx):
             regctl.regctl_info.binary,
             jq.jqinfo.bin,
             coreutils.coreutils_info.bin,
-            zstd.zstdinfo.binary,
         ],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
