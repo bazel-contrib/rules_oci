@@ -3,7 +3,7 @@ schemaVersion: "2.0.0"
 commandTests:
   - name: "echo hello"
     command: "bash"
-    args: ["test.bash"]
+    args: ["examples/env_inheritance/test.bash"]
     expectedOutput: ["hello world!"]
 
 metadataTest:

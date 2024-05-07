@@ -16,3 +16,15 @@ CRANE_VERSIONS = {
         "windows_x86_64": "sha256-EerTSy1+/uaOcgfanzk5kTHpPkufFou01xtghEj6nco=",
     },
 }
+
+REGCTL_VERSIONS = {
+    "v0.6.0": {
+        "darwin-amd64": "sha256-jH9+I397Jjp5Catott8GAVy4Lq9ZE5sA3h7srrE8uUU=",
+        "darwin-arm64": "sha256-JRBv8uYOEKJ7AvNGu+aKkXKu44uy4g35zuGBLg6vS2o=",
+        "linux-amd64": "sha256-RCFsCrO9Qa4wsHOS1s2raXH0irP3JADmF/Xw3tTXB0I=",
+        "linux-arm64": "sha256-DFMgbsSpUHQvob0LZcY8AL+8YDGlKqZUp3QpTjDBLz8=",
+        "linux-ppc64le": "sha256-5sBcJpl6wK+XRjdSUg8rB5Nd+HOEsMSznW2oRCV0F2U=",
+        "linux-s390x": "sha256-HHz7RCyLivPZsx/YX+vvHDxA07sZzmrNxoiq2Zi5BX8=",
+        "windows-amd64": "sha256-KZDxscGWkz+TGfqiodSe+Uy4p9joPvOu3sZHfptzg8Y=",
+    },
+}

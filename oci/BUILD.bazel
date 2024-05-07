@@ -6,7 +6,7 @@ exports_files(
 )
 
 # These are the targets rule authors should put in their "toolchains"
-# attribute in order to get a crane/zot executable for the correct platform.
+# attribute in order to get a crane/regctl executable for the correct platform.
 # See https://docs.bazel.build/versions/main/toolchains.html#writing-rules-that-use-toolchains
 toolchain_type(
     name = "crane_toolchain_type",
@@ -14,7 +14,7 @@ toolchain_type(
 )
 
 toolchain_type(
-    name = "registry_toolchain_type",
+    name = "regctl_toolchain_type",
     visibility = ["//visibility:public"],
 )
 

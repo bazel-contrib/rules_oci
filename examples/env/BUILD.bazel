@@ -19,7 +19,7 @@ expand_template(
 
 oci_image(
     name = "image",
-    base = "@ubuntu",
+    base = "@debian",
     cmd = ["test.sh"],
     env = ":env",
     tars = ["app.tar"],

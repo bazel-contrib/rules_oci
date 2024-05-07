@@ -42,10 +42,19 @@ oci_image(
     },
 )
 
+oci_image(
+    name = "image_based",
+    base = ":image",
+    # adding a new env should preserve the previously set envs!
+    env = {
+        "LOCAL": "true",  # LOCAL=/test
+    },
+)
+
 container_structure_test(
     name = "test",
     configs = ["test.yaml"],
-    image = ":image",
+    image = ":image_based",
 )
 
 repo_tags = [

@@ -12,9 +12,16 @@ bazel_dep(name = "platforms", version = "0.0.8")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
 oci.toolchains()
-use_repo(oci, "oci_crane_registry_toolchains", "oci_crane_toolchains")
+use_repo(oci, "oci_crane_toolchains", "oci_regctl_toolchains")
 
-register_toolchains("@oci_crane_toolchains//:all", "@oci_crane_registry_toolchains//:all")
+register_toolchains("@oci_crane_toolchains//:all", "@oci_regctl_toolchains//:all")
+
+# Workaround https://github.com/aspect-build/bazel-lib/pull/832
+zstd = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
+zstd.zstd()
+use_repo(zstd, "zstd_toolchains")
+
+register_toolchains("@zstd_toolchains//:all")
 
 # Dev dependencies
 bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains", dev_dependency = True)
