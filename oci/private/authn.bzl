@@ -107,18 +107,16 @@ def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
         rctx.file(
             executable,
             content = """\
-        @echo off
-        echo %1 | docker-credential-{} get
-                """.format(helper_name),
+@echo off
+echo %1 | docker-credential-{} get """.format(helper_name),
         )
     else:
         executable = "{}.sh".format(helper_name)
         rctx.file(
             executable,
             content = """\
-        #!/usr/bin/env bash
-        exec "docker-credential-{}" get <<< "$1"
-                """.format(helper_name),
+#!/usr/bin/env bash
+exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         )
     result = rctx.execute([rctx.path(executable), raw_host])
     if result.return_code:
