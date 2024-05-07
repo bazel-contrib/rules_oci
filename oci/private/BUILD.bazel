@@ -27,7 +27,10 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
-    deps = [":util"],
+    deps = [
+        ":util",
+        "@bazel_features//:features",
+    ],
 )
 
 bzl_library(
