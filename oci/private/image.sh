@@ -7,6 +7,7 @@ PATH="{{regctl_path}}:$PATH"
 PATH="{{coreutils_path}}:$PATH"
 
 # Constants
+readonly USE_TREEARTIFACT_SYMLINKS="{{treeartifact_symlinks}}"
 readonly OUTPUT="{{output}}"
 readonly REF="ocidir://$OUTPUT:intermediate"
 # shellcheck disable=SC2016
@@ -96,7 +97,12 @@ function add_layer() {
   local digest_path= 
   digest_path="$(jq -r '.digest | sub(":"; "/")' <<< "$desc")"
 
-  coreutils cat "$path" > "$OUTPUT/blobs/$digest_path"
+  if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
+    relative=$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$path" --no-symlinks)
+    coreutils ln -s "$relative" "$OUTPUT/blobs/$digest_path"
+  else
+    coreutils cat "$path" > "$OUTPUT/blobs/$digest_path"
+  fi
 }
 
 CONFIG="{}"

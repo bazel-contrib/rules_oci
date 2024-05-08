@@ -1,5 +1,6 @@
 "Implementation details for image rule"
 
+load("@bazel_features//:features.bzl", "bazel_features")
 load("//oci/private:util.bzl", "util")
 
 _ACCEPTED_TAR_EXTENSIONS = [
@@ -139,6 +140,8 @@ def _oci_image_impl(ctx):
 
     output = ctx.actions.declare_directory(ctx.label.name)
 
+    use_symlinks = bazel_features.rules.permits_treeartifact_uplevel_symlinks
+
     # create the image builder
     builder = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
     ctx.actions.expand_template(
@@ -150,10 +153,12 @@ def _oci_image_impl(ctx):
             "{{jq_path}}": jq.jqinfo.bin.dirname,
             "{{coreutils_path}}": coreutils.coreutils_info.bin.dirname,
             "{{output}}": output.path,
+            "{{treeartifact_symlinks}}": str(int(use_symlinks)),
         },
     )
 
-    inputs = [builder] + ctx.files.tars
+    inputs = [builder]
+    transitive_inputs = []
 
     args = ctx.actions.args()
 
@@ -164,6 +169,12 @@ def _oci_image_impl(ctx):
     else:
         # create a scratch base image with given os/arch[/variant]
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
+
+    # If tree artifact symlinks are supported just add tars into runfiles.
+    if use_symlinks:
+        transitive_inputs = transitive_inputs + ctx.files.tars
+    else:
+        inputs = inputs + ctx.files.tars
 
     # add layers
     for (i, layer) in enumerate(ctx.files.tars):
@@ -233,6 +244,7 @@ def _oci_image_impl(ctx):
     return [
         DefaultInfo(
             files = depset([output]),
+            runfiles = ctx.runfiles(transitive_inputs),
         ),
     ]
 
