@@ -102,14 +102,22 @@ def _get_auth_file_path(rctx):
     return None
 
 def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
-    executable = "{}.sh".format(helper_name)
-    rctx.file(
-        executable,
-        content = """\
+    if rctx.os.name.startswith("windows"):
+        executable = "{}.bat".format(helper_name)
+        rctx.file(
+            executable,
+            content = """\
+@echo off
+echo %1 | docker-credential-{} get """.format(helper_name),
+        )
+    else:
+        executable = "{}.sh".format(helper_name)
+        rctx.file(
+            executable,
+            content = """\
 #!/usr/bin/env bash
-exec "docker-credential-{}" get <<< "$1"
-        """.format(helper_name),
-    )
+exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
+        )
     result = rctx.execute([rctx.path(executable), raw_host])
     if result.return_code:
         fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
