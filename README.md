@@ -5,7 +5,7 @@ Bazel rules based on the Open Containers Initiative: <https://opencontainers.org
 Please let us know about your success stories on our adoption discussion!
 <https://github.com/bazel-contrib/rules_oci/discussions/299>
 
-_Need help?_ This ruleset has support provided by https://aspect.dev.
+_Need help?_ This ruleset has support provided by [Aspect Build](https://www.aspect.build/services).
 
 ## Comparison with rules_docker
 
