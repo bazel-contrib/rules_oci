@@ -55,6 +55,7 @@ oci_tarball(
     name = "evil",
     image = ":base",
     repo_tags = ["hello:test"],
+    tags = ["manual"],
 )
 
 # 2- Create an image that extends the base without adding additional layers
