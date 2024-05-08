@@ -166,6 +166,8 @@ def _oci_image_impl(ctx):
         # reuse given base image
         args.add(ctx.file.base.path, format = "--from=%s")
         inputs.append(ctx.file.base)
+        if use_symlinks:
+            transitive_inputs.append(ctx.file.base)
     else:
         # create a scratch base image with given os/arch[/variant]
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
