@@ -4,7 +4,7 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
 _IMAGE_PLATFORM_VARIANT_DEFAULTS = {
-    "linux/arm64": "v8",
+    'linux/arm64': 'v8',
 }
 
 def _parse_image(image):
@@ -115,12 +115,12 @@ def _validate_image_platform(rctx, image_config):
     attr_variant_or_default = attr_variant or _IMAGE_PLATFORM_VARIANT_DEFAULTS.get(rctx.attr.platform, None)
     image_variant_or_default = image_variant or _IMAGE_PLATFORM_VARIANT_DEFAULTS.get(image_os + "/" + image_architecture, None)
     if image_variant_or_default != attr_variant_or_default:
-        fail("Image {}/{} has platform variant '{}', but 'platforms' attribute specifies variant '{}'".format(
-            rctx.attr.registry,
-            rctx.attr.repository,
-            image_variant,
-            attr_variant,
-        ))
+            fail("Image {}/{} has platform variant '{}', but 'platforms' attribute specifies variant '{}'".format(
+                rctx.attr.registry,
+                rctx.attr.repository,
+                image_variant,
+                attr_variant,
+            ))
 
 def _warning(rctx, message):
     rctx.execute([
@@ -176,7 +176,7 @@ def _file_exists(rctx, path):
     result = rctx.execute(["stat", path])
     return result.return_code == 0
 
-_INDEX_JSON_TMPL = """\
+_INDEX_JSON_TMPL="""\
 {{
    "schemaVersion": 2,
    "mediaType": "application/vnd.oci.image.index.v1+json",
@@ -190,6 +190,7 @@ _INDEX_JSON_TMPL = """\
 }}"""
 
 def _build_manifest_json(media_type, size, digest, platform):
+
     optional_platform = ""
 
     if platform:
@@ -210,7 +211,7 @@ def _build_manifest_json(media_type, size, digest, platform):
         media_type,
         size,
         digest,
-        optional_platform = optional_platform,
+        optional_platform = optional_platform
     )
 
 def _assert_crane_version_at_least(ctx, at_least, rule):
@@ -226,6 +227,7 @@ def _platform_triplet(platform_str):
         architecture, _, variant = architecture.partition("/")
     return os, architecture, variant
 
+
 util = struct(
     parse_image = _parse_image,
     sha256 = _sha256,
@@ -235,5 +237,5 @@ util = struct(
     file_exists = _file_exists,
     build_manifest_json = _build_manifest_json,
     assert_crane_version_at_least = _assert_crane_version_at_least,
-    platform_triplet = _platform_triplet,
+    platform_triplet = _platform_triplet
 )
