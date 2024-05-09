@@ -128,6 +128,7 @@ _attrs = {
         default = "push.sh.tpl",
         allow_single_file = True,
     ),
+    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _quote_args(args):
@@ -178,7 +179,7 @@ def _impl(ctx):
     runfiles = runfiles.merge(yq.default.default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
 
-    return DefaultInfo(executable = executable, runfiles = runfiles)
+    return DefaultInfo(executable = util.maybe_wrap_launcher_for_windows(ctx, executable), runfiles = runfiles)
 
 oci_push_lib = struct(
     implementation = _impl,
@@ -186,6 +187,7 @@ oci_push_lib = struct(
     toolchains = [
         "@rules_oci//oci:crane_toolchain_type",
         "@aspect_bazel_lib//lib:yq_toolchain_type",
+        "@bazel_tools//tools/sh:toolchain_type",
     ],
 )
 
