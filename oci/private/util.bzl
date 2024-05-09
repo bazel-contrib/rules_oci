@@ -160,7 +160,7 @@ if defined args (
   set args=!args:\=\\\\!
   set args=!args:"=\"!
 )
-"{bash_bin}" -c "%parent_dir%{launcher} --verbose !args!"
+"{bash_bin}" -c "%parent_dir%{launcher} !args!"
 """.format(
             bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
             launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
