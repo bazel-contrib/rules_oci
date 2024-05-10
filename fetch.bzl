@@ -31,18 +31,19 @@ def fetch_images():
         ],
     )
 
-    # Pull an image from public ECR. 
+    # Pull an image from public ECR.
     # When --credential_helper is provided, see .bazelrc at workspace root, it will take precende over
-    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail 
+    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail
     # unless oci_pull's authentication mechanism breaks and --credential_helper is absent.
     oci_pull(
         name = "ecr_lambda_python",
         image = "public.ecr.aws/lambda/python",
         tag = "3.11.2024.01.25.10",
+        # digest = "sha256:9499013bebe91a97ad3925269d1097408c092d85a1f6b96f91c7bb3a100e2c18",
         platforms = [
             "linux/amd64",
-            "linux/arm64/v8"
-        ]
+            "linux/arm64/v8",
+        ],
     )
 
     # Show that the digest is optional.
@@ -141,6 +142,7 @@ def fetch_images():
     oci_pull(
         name = "fluxcd_flux",
         image = "docker.io/fluxcd/flux:1.25.4",
+        # digest = "sha256:c18e0c96fbb510fffa27ca0fb2561c2124e74f975a8a826d1f33cd4c82552db1"
     )
 
     oci_pull(
@@ -172,7 +174,7 @@ def fetch_images():
         digest = "sha256:9a83bce5d337e7e19d789ee7f952d36d0d514c80987c3d76d90fd1afd2411a9a",
         platforms = [
             "linux/amd64",
-            "linux/arm64"
+            "linux/arm64",
         ],
     )
 
@@ -183,7 +185,7 @@ def fetch_images():
         digest = "sha256:8d38ffa8fad72f4bc2647644284c16491cc2d375602519a1f963f96ccc916276",
         platforms = [
             "linux/amd64",
-            "linux/arm64"
+            "linux/arm64",
         ],
     )
 

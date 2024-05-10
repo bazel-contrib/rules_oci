@@ -51,7 +51,6 @@ bzl_library(
     ],
     deps = [
         "//oci/private:authn",
-        "//oci/private:download",
         "//oci/private:util",
         "@bazel_skylib//lib:dicts",
     ],
@@ -82,13 +81,6 @@ bzl_library(
     name = "versions",
     srcs = ["versions.bzl"],
     visibility = ["//oci:__subpackages__"],
-)
-
-bzl_library(
-    name = "download",
-    srcs = ["download.bzl"],
-    visibility = ["//oci:__subpackages__"],
-    deps = ["@bazel_skylib//lib:versions"],
 )
 
 bzl_library(

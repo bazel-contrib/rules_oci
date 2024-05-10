@@ -1,8 +1,8 @@
 "Implementation details for oci_pull repository rules"
 
 load("@bazel_skylib//lib:dicts.bzl", "dicts")
+load("@bazel_skylib//lib:versions.bzl", "versions")
 load("//oci/private:authn.bzl", "authn")
-load("//oci/private:download.bzl", "download")
 load("//oci/private:util.bzl", "util")
 
 # attributes that are specific to image reference url. shared between multiple targets
@@ -44,11 +44,6 @@ OCI_MEDIA_TYPE_OR_AUTHN_ERROR = """\
 Unable to retrieve the manifest. This could be due to authentication problems or an attempt to fetch an image with OCI image media types.
 """
 
-CURL_FALLBACK_WARNING = """\
-The use of Curl fallback is deprecated and is set to be removed in version 2.0. 
-For more details, refer to: https://github.com/bazel-contrib/rules_oci/issues/456
-"""
-
 # Supported media types
 # * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
 # * Docker spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
@@ -85,7 +80,7 @@ def _digest_into_blob_path(digest):
     digest_path = digest.replace(":", "/", 1)
     return "blobs/{}".format(digest_path)
 
-def _download(rctx, authn, identifier, output, resource, download_fn = download.bazel, headers = {}, allow_fail = False):
+def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fail = False):
     "Use the Bazel Downloader to fetch from the remote registry"
 
     if resource != "blobs" and resource != "manifests":
@@ -108,17 +103,19 @@ def _download(rctx, authn, identifier, output, resource, download_fn = download.
     if identifier.startswith("sha256:"):
         sha256 = identifier[len("sha256:"):]
     else:
-        util.warning(rctx, "Fetching from {}@{} without an integrity hash. The result will not be cached.".format(rctx.attr.repository, identifier))
+        util.warning(rctx, "Fetching from {}@{} without an integrity hash, result will not be cached.".format(rctx.attr.repository, identifier))
 
-    return download_fn(
-        rctx,
+    kwargs = dict(
         output = output,
         sha256 = sha256,
         url = registry_url,
         auth = {registry_url: auth},
-        headers = headers,
         allow_fail = allow_fail,
     )
+    if versions.is_at_least("7.1.0", versions.get()):
+        return rctx.download(headers = headers, **kwargs)
+    else:
+        return rctx.download(**kwargs)
 
 def _download_manifest(rctx, authn, identifier, output):
     bytes = None
@@ -135,35 +132,17 @@ def _download_manifest(rctx, authn, identifier, output):
         headers = _DOWNLOAD_HEADERS,
     )
 
-    fallback_to_curl = False
     if result.success:
         bytes = rctx.read(output)
         manifest = json.decode(bytes)
         digest = "sha256:{}".format(result.sha256)
         if manifest["schemaVersion"] == 1:
-            fallback_to_curl = True
-            util.warning(rctx, SCHEMA1_ERROR)
+            fail(SCHEMA1_ERROR)
     else:
-        fallback_to_curl = True
-        util.warning(rctx, OCI_MEDIA_TYPE_OR_AUTHN_ERROR)
         explanation = authn.explain()
         if explanation:
             util.warning(rctx, explanation)
-
-    if fallback_to_curl:
-        util.warning(rctx, CURL_FALLBACK_WARNING)
-        _download(
-            rctx,
-            authn,
-            identifier,
-            output,
-            "manifests",
-            download.curl,
-            headers = _DOWNLOAD_HEADERS,
-        )
-        bytes = rctx.read(output)
-        manifest = json.decode(bytes)
-        digest = "sha256:{}".format(util.sha256(rctx, output))
+        fail(OCI_MEDIA_TYPE_OR_AUTHN_ERROR)
 
     return manifest, len(bytes), digest
 
