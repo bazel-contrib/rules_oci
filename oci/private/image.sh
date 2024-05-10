@@ -104,7 +104,7 @@ function add_layer() {
   digest_path="$(jq -r '.digest | sub(":"; "/")' <<< "$desc")"
 
   if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
-    relative=$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$path" --no-symlinks)
+    relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
     coreutils ln -s "$relative" "$OUTPUT/blobs/$digest_path"
   else
     coreutils cat "$path" > "$OUTPUT/blobs/$digest_path"

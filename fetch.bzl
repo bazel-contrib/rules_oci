@@ -31,9 +31,9 @@ def fetch_images():
         ],
     )
 
-    # Pull an image from public ECR. 
+    # Pull an image from public ECR.
     # When --credential_helper is provided, see .bazelrc at workspace root, it will take precende over
-    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail 
+    # auth from oci_pull. However, pulling from public ECR works out of the box so this will never fail
     # unless oci_pull's authentication mechanism breaks and --credential_helper is absent.
     oci_pull(
         name = "ecr_lambda_python",
@@ -41,8 +41,8 @@ def fetch_images():
         tag = "3.11.2024.01.25.10",
         platforms = [
             "linux/amd64",
-            "linux/arm64/v8"
-        ]
+            "linux/arm64/v8",
+        ],
     )
 
     # Show that the digest is optional.
@@ -172,7 +172,7 @@ def fetch_images():
         digest = "sha256:9a83bce5d337e7e19d789ee7f952d36d0d514c80987c3d76d90fd1afd2411a9a",
         platforms = [
             "linux/amd64",
-            "linux/arm64"
+            "linux/arm64",
         ],
     )
 
@@ -183,7 +183,7 @@ def fetch_images():
         digest = "sha256:8d38ffa8fad72f4bc2647644284c16491cc2d375602519a1f963f96ccc916276",
         platforms = [
             "linux/amd64",
-            "linux/arm64"
+            "linux/arm64",
         ],
     )
 
@@ -195,9 +195,12 @@ def fetch_images():
     )
 
     _DEB_TO_LAYER = """\
-alias(
+genrule(
     name = "layer",
-    actual = ":data.tar.xz",
+    srcs = [":data.tar.xz"],
+    outs = ["data.tar.zst"],
+    cmd = "$(BSDTAR_BIN) --zstd -cf $@ @$<",
+    toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
     visibility = ["//visibility:public"],
 )
 """
