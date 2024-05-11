@@ -1,4 +1,6 @@
 """Utilities"""
+
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
 _IMAGE_PLATFORM_VARIANT_DEFAULTS = {
@@ -150,16 +152,18 @@ SETLOCAL ENABLEEXTENSIONS
 SETLOCAL ENABLEDELAYEDEXPANSION
 for %%a in ("{bash_bin}") do set "bash_bin_dir=%%~dpa"
 set PATH=%bash_bin_dir%;%PATH%
+set "parent_dir=%~dp0"
+set "parent_dir=!parent_dir:\=/!"
 set args=%*
 rem Escape \ and * in args before passing it with double quote
 if defined args (
   set args=!args:\=\\\\!
   set args=!args:"=\"!
 )
-"{bash_bin}" -c "{launcher} !args!"
+"{bash_bin}" -c "%parent_dir%{launcher} !args!"
 """.format(
             bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
-            launcher = bash_launcher.path,
+            launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
         ),
         is_executable = True,
     )

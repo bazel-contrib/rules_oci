@@ -103,5 +103,8 @@ bzl_library(
     name = "util",
     srcs = ["util.bzl"],
     visibility = ["//oci:__subpackages__"],
-    deps = ["@bazel_skylib//lib:versions"],
+    deps = [
+        "@bazel_skylib//lib:paths",
+        "@bazel_skylib//lib:versions",
+    ],
 )
