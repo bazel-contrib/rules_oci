@@ -141,6 +141,10 @@ jobs:
               ],
           )
           EOF
+
+      - name: Setup buildx
+        run: bazel run examples/dockerfile:buildx -- create --name container --driver=docker-container || true
+
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:

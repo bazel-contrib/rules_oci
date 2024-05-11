@@ -80,3 +80,8 @@ new_local_repository(
 load(":fetch.bzl", "fetch_images")
 
 fetch_images()
+
+### Fetch buildx
+load("//examples/dockerfile:buildx.bzl", "fetch_buildx")
+
+fetch_buildx()
