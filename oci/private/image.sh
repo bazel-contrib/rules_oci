@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-# Add hermetically built jq, regctl, coreutils into PATH.
-PATH="{{jq_path}}:$PATH"
+# Replace PATH with hermetically built jq, regctl, coreutils.
+# shellcheck disable=SC2123
+PATH="{{jq_path}}"
 PATH="{{regctl_path}}:$PATH"
 PATH="{{coreutils_path}}:$PATH"
 
@@ -32,9 +33,9 @@ function base_from_scratch() {
 function base_from() {
   local path="$1"
   # shellcheck disable=SC2045
-  for blob in $(ls -1 -d "$path/blobs/"*/*); do
+  for blob in $(coreutils ls -1 -d "$path/blobs/"*/*); do
     local relative_to_blobs="${blob#"$path/blobs"}"
-    mkdir -p "$OUTPUT/blobs/$(dirname "$relative_to_blobs")"
+    coreutils mkdir -p "$OUTPUT/blobs/$(coreutils dirname "$relative_to_blobs")"
     if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
       # Relative path from `output/blobs/sha256/` to `$blob`
       relative="$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
@@ -54,7 +55,7 @@ function get_config() {
 function update_config() {
   local digest=
   local config=
-  config="$(cat -)"
+  config="$(coreutils cat -)"
   digest="$(echo -n "$config" | regctl blob put "$REF")"
   get_manifest | jq '.config.digest = $digest | .config.size = $size' --arg digest "$digest" --argjson size "${#config}" | update_manifest >/dev/null
   echo "$digest"
@@ -74,7 +75,7 @@ function add_layer() {
   local media_type=
   local comp_ext=
 
-  desc="$(cat "$2")"
+  desc="$(coreutils cat "$2")"
 
   # If the base image uses docker media types, then add new layer with oci-spec
   # interchangable media type.
@@ -173,4 +174,4 @@ done
 
 get_config | jq --argjson config "$CONFIG" '. *= $config' | update_config >/dev/null
 ## TODO: container structure is broken
-(JSON="$(cat "$OUTPUT/index.json")" && jq "del(.manifests[].annotations)" >"$OUTPUT/index.json" <<<"$JSON")
+(JSON="$(coreutils cat "$OUTPUT/index.json")" && jq "del(.manifests[].annotations)" >"$OUTPUT/index.json" <<<"$JSON")
