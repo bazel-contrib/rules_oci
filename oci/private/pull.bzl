@@ -178,6 +178,7 @@ copy_to_directory(
         "oci-layout",
         "index.json",
     ],
+    tags = {tags},
     visibility = ["//visibility:public"]
 )
 """
@@ -250,8 +251,11 @@ def _oci_pull_impl(rctx):
     ))
     rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
 
+    tags = "[\"{}\"]".format("\", \"".join(rctx.attr.tags))
+
     rctx.file("BUILD.bazel", content = _BUILD_FILE_TMPL.format(
         target_name = rctx.attr.target_name,
+        tags = tags,
     ))
 
 oci_pull = repository_rule(
