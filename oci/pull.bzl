@@ -103,7 +103,7 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, config_path = None, import_tags = []):
+def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, config_path = None, bazel_tags = []):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -138,7 +138,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         config: Label to a `.docker/config.json` file.
         config_path: Deprecated. use `config` attribute or DOCKER_CONFIG environment variable.
         is_bzlmod: whether the oci_pull is being called from a module extension
-        import_tags: Tags to be propagated to generated rules.
+        bazel_tags: Bazel tags to be propagated to generated rules.
     """
 
     # Check syntax sugar for registry/repository in place of image
@@ -184,7 +184,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 config = config,
                 # TODO(2.0): remove
                 config_path = config_path,
-                tags = import_tags,
+                tags = bazel_tags,
             )
 
             if plat in _PLATFORM_TO_BAZEL_CPU:
@@ -209,7 +209,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             config = config,
             # TODO(2.0): remove
             config_path = config_path,
-            tags = import_tags,
+            tags = bazel_tags,
         )
 
     oci_alias(
@@ -228,5 +228,5 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         config = config,
         # TODO(2.0): remove
         config_path = config_path,
-        tags = import_tags,
+        tags = bazel_tags,
     )
