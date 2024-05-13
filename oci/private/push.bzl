@@ -186,7 +186,7 @@ oci_push_lib = struct(
     attrs = _attrs,
     toolchains = [
         "@rules_oci//oci:crane_toolchain_type",
-        "@aspect_bazel_lib//lib:yq_toolchain_type",
+        "@aspect_bazel_lib//lib:jq_toolchain_type",
         "@bazel_tools//tools/sh:toolchain_type",
     ],
 )
