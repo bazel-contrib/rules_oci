@@ -25,7 +25,7 @@ if [[ "${MANIFESTS_LENGTH}" != 1 ]]; then
   exit 1
 fi
 
-MEDIA_TYPE=$("${YQ}" eval ".manifests[0].mediaType" "${INDEX_FILE}")
+MEDIA_TYPE=$("${YQ}" -r eval ".manifests[0].mediaType" "${INDEX_FILE}")
 
 # Check that we know how to generate the output format given the input format.
 # We may expand the supported options here in the future, but for now,
