@@ -112,7 +112,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
   # }
   repo_tags="${REPOTAGS[@]}" "${YQ}" -o json eval "(.manifests = ${MANIFEST_COPIES}) *d {\"manifests\": (env(repo_tags) | split \" \" | map {\"annotations\": {\"org.opencontainers.image.ref.name\": .}})}" "${INDEX_FILE}" > "${STAGING_DIR}/index.json"
 
-  tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" index.json blobs oci-layout
+  tar --directory "${STAGING_DIR}" --create --no-xattr --file "${TARBALL_PATH}" index.json blobs oci-layout
   exit 0
 fi
 
@@ -137,4 +137,4 @@ layers="${LAYERS}" \
         --output-format json > "${STAGING_DIR}/manifest.json"
 
 # TODO: https://github.com/bazel-contrib/rules_oci/issues/217
-tar -C "${STAGING_DIR}" -cf "${TARBALL_PATH}" manifest.json blobs
+tar --directory "${STAGING_DIR}" --create --no-xattr --file "${TARBALL_PATH}" manifest.json blobs
