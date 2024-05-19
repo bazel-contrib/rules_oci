@@ -29,6 +29,8 @@ Overriding the default is only permitted in the root module.
 
 def _oci_extension(module_ctx):
     registrations = {}
+    root_direct_deps = []
+    root_direct_dev_deps = []
     for mod in module_ctx.modules:
         for pull in mod.tags.pull:
             oci_pull(
@@ -41,6 +43,11 @@ def _oci_extension(module_ctx):
                 config = pull.config,
                 is_bzlmod = True,
             )
+            if mod.is_root:
+                if module_ctx.is_dev_dependency(pull):
+                    root_direct_dev_deps.append(pull.name)
+                else:
+                    root_direct_deps.append(pull.name)
         for toolchains in mod.tags.toolchains:
             if toolchains.name != "oci" and not mod.is_root:
                 fail("""\
@@ -60,6 +67,11 @@ def _oci_extension(module_ctx):
         else:
             selected = versions[0]
         oci_register_toolchains(name, crane_version = selected[0], zot_version = selected[1], register = False)
+
+    return module_ctx.extension_metadata(
+        root_module_direct_deps = root_direct_deps,
+        root_module_direct_dev_deps = root_direct_dev_deps,
+    )
 
 oci = module_extension(
     implementation = _oci_extension,
