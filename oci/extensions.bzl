@@ -68,6 +68,8 @@ def _oci_extension(module_ctx):
             selected = versions[0]
         oci_register_toolchains(name, crane_version = selected[0], zot_version = selected[1], register = False)
 
+    # Allow use_repo calls to be automatically managed by `bazel mod tidy`. See
+    # https://docs.google.com/document/d/1dj8SN5L6nwhNOufNqjBhYkk5f-BJI_FPYWKxlB3GAmA/edit#heading=h.5mcn15i0e1ch
     return module_ctx.extension_metadata(
         root_module_direct_deps = root_direct_deps,
         root_module_direct_dev_deps = root_direct_dev_deps,
