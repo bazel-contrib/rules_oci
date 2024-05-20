@@ -26,6 +26,8 @@ Overriding the default is only permitted in the root module.
 })
 
 def _oci_extension(module_ctx):
+    root_direct_deps = []
+    root_direct_dev_deps = []
     for mod in module_ctx.modules:
         for pull in mod.tags.pull:
             oci_pull(
@@ -39,6 +41,11 @@ def _oci_extension(module_ctx):
                 is_bzlmod = True,
             )
 
+            if mod.is_root:
+                if module_ctx.is_dev_dependency(pull):
+                    root_direct_dev_deps.append(pull.name)
+                else:
+                    root_direct_deps.append(pull.name)
         for toolchains in mod.tags.toolchains:
             if toolchains.name != "oci" and not mod.is_root:
                 fail("""\
@@ -47,6 +54,13 @@ def _oci_extension(module_ctx):
                 """)
 
             oci_register_toolchains(toolchains.name, register = False)
+
+    # Allow use_repo calls to be automatically managed by `bazel mod tidy`. See
+    # https://docs.google.com/document/d/1dj8SN5L6nwhNOufNqjBhYkk5f-BJI_FPYWKxlB3GAmA/edit#heading=h.5mcn15i0e1ch
+    return module_ctx.extension_metadata(
+        root_module_direct_deps = root_direct_deps,
+        root_module_direct_dev_deps = root_direct_dev_deps,
+    )
 
 oci = module_extension(
     implementation = _oci_extension,
