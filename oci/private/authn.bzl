@@ -124,14 +124,69 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
 
     response = json.decode(result.stdout)
 
-    if response["Username"] == "<token>":
-        fail("Identity tokens are not supported at the moment. See: https://github.com/bazel-contrib/rules_oci/issues/129")
-
     return {
         "type": "basic",
         "login": response["Username"],
         "password": response["Secret"],
     }
+
+def _oauth2(rctx, realm, scope, service, secret):
+    if not rctx.os.environ.get("SUPPORT_OAUTH2", False):
+        fail("oauth2 support is disabled (set SUPPORT_OAUTH2 to True)")
+
+    python_bin = "python3"
+
+    # oauth2 requires python to be available in the env
+    if not rctx.which(python_bin):
+        fail("oauth2 failed: to use oauth2, make sure %s is available" % python_bin)
+
+    # oauth2 requires "requests" package installed alongside python
+    result = rctx.execute([python_bin, "-c", "import requests"])
+    if result.return_code:
+        fail("oauth2 failed: to use oauth2, make sure \"requests\" package is installed")
+
+    executable = "oauth2.py"
+
+    rctx.file(
+        executable,
+        content = """\
+import json
+import requests
+import sys
+
+if __name__ == "__main__":
+    url = sys.argv[1]
+    
+    params = {}
+    params["grant_type"] = "refresh_token"
+    params["service"] = sys.argv[2]
+    params["scope"] = sys.argv[3]
+    params["refresh_token"] = sys.argv[4]
+    
+    response = requests.post(url, data=params)
+
+    ret = {
+        "code": response.status_code,
+    }
+
+    if response.status_code == 200:
+        ret["response"] = json.loads(response.text.encode('utf8'))
+    else:
+        ret["response"] = {}
+
+    print(json.dumps(ret))
+"""
+    )
+    
+    result = rctx.execute([python_bin, rctx.path(executable), realm, service, scope, secret])
+    if result.return_code:
+        fail("oauth2 failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+        
+    response = json.decode(result.stdout)
+    if response["code"] != 200:
+        fail("oauth2 failed: status code %s != 200" % response["code"])
+
+    return response
 
 def _get_auth(rctx, state, registry):
     # if we have a cached auth for this registry then just return it.
@@ -201,16 +256,34 @@ def _get_token(rctx, state, registry, repository):
             # if a token for this repository and registry is acquired, use that instead.
             if url in state["token"]:
                 return state["token"][url]
+            
+            auth = None
+            if pattern["login"] == "<token>":
+                ret = _oauth2(
+                    rctx = rctx,
+                    realm = "https://" + www_authenticate["realm"].format(registry = registry),
+                    scope = www_authenticate["scope"].format(repository = repository),
+                    service = www_authenticate["service"].format(registry = registry),
+                    secret = pattern["password"],
+                )
 
-            rctx.download(
-                url = [url],
-                output = "www-authenticate.json",
-                # optionally, sending the credentials to authenticate using the credentials.
-                # this is for fetching from private repositories that require WWW-Authenticate
-                auth = {url: pattern},
-            )
+                rctx.file(
+                    "www-authenticate.json",
+                    content = json.encode_indent(ret["response"]),
+                    executable = False,
+                )
+            else:
+                rctx.download(
+                    url = [url],
+                    output = "www-authenticate.json",
+                    # optionally, sending the credentials to authenticate using the credentials.
+                    # this is for fetching from private repositories that require WWW-Authenticate
+                    auth = {url: pattern},
+                )
+
             auth_raw = rctx.read("www-authenticate.json")
             auth = json.decode(auth_raw)
+            
             token = ""
             if "token" in auth:
                 token = auth["token"]
