@@ -1,0 +1,57 @@
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//oci:defs.bzl", "oci_image")
+
+# Case 1: image name containing a capital case.
+oci_image(
+    name = "imagE",
+    architecture = "amd64",
+    cmd = ["noop"],
+    os = "linux",
+)
+
+# Case 2: existing layer added again.
+tar(
+    name = "empty_tar",
+    srcs = [],
+)
+
+oci_image(
+    name = "same_tar_multiple_times",
+    architecture = "amd64",
+    cmd = ["noop"],
+    os = "linux",
+    tars = [
+        ":empty_tar",
+    ],
+)
+
+oci_image(
+    name = "case2",
+    base = ":same_tar_multiple_times",
+    tars = [
+        ":empty_tar",
+    ],
+)
+
+# Case 3: Adding an identical tar from another directory multiple times
+oci_image(
+    name = "case3",
+    architecture = "arm64",
+    os = "linux",
+    tars = [
+        # layer_0 and layer_1 is identical
+        "//examples/just_tar:layer_0",
+        "//examples/just_tar:layer_1",
+    ],
+)
+
+# build them as test.
+build_test(
+    name = "test",
+    targets = [
+        ":imagE",
+        ":case2",
+        ":case3",
+    ],
+)

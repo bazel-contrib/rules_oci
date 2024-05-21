@@ -102,13 +102,15 @@ function add_layer() {
       --arg media_type "${media_type}" | update_manifest
 
   local digest_path= 
+  local output_path=
   digest_path="$(jq -r '.digest | sub(":"; "/")' <<< "$desc")"
+  output_path="$OUTPUT/blobs/$digest_path"
 
   if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
     relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
-    coreutils ln -s "$relative" "$OUTPUT/blobs/$digest_path"
+    coreutils ln --force --symbolic "$relative" "$output_path"
   else
-    coreutils cat "$path" > "$OUTPUT/blobs/$digest_path"
+    coreutils cat "$path" > "$output_path"
   fi
 }
 
