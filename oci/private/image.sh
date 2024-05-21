@@ -106,11 +106,9 @@ function add_layer() {
   digest_path="$(jq -r '.digest | sub(":"; "/")' <<< "$desc")"
   output_path="$OUTPUT/blobs/$digest_path"
 
-  if [[ -e "$output_path" ]]; then
-    : # noop, blob exists already, whether symlink or regular file.
-  elif [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
+  if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
     relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
-    coreutils ln -s "$relative" "$output_path"
+    coreutils ln --force --symbolic "$relative" "$output_path"
   else
     coreutils cat "$path" > "$output_path"
   fi

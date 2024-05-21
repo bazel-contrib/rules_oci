@@ -27,10 +27,22 @@ oci_image(
 )
 
 oci_image(
-    name = "same_tar_multiple_times_2",
+    name = "case2",
     base = ":same_tar_multiple_times",
     tars = [
         ":empty_tar",
+    ],
+)
+
+# Case 3: Adding an identical tar from another directory multiple times
+oci_image(
+    name = "case3",
+    architecture = "arm64",
+    os = "linux",
+    tars = [
+        # layer_0 and layer_1 is identical
+        "//examples/just_tar:layer_0",
+        "//examples/just_tar:layer_1",
     ],
 )
 
@@ -39,6 +51,7 @@ build_test(
     name = "test",
     targets = [
         ":imagE",
-        ":same_tar_multiple_times_2",
+        ":case2",
+        ":case3",
     ],
 )
