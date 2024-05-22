@@ -80,7 +80,7 @@ def _digest_into_blob_path(digest):
     digest_path = digest.replace(":", "/", 1)
     return "blobs/{}".format(digest_path)
 
-def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fail = False):
+def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fail = False, block = True):
     "Use the Bazel Downloader to fetch from the remote registry"
 
     if resource != "blobs" and resource != "manifests":
@@ -112,10 +112,13 @@ def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fai
         auth = {registry_url: auth},
         allow_fail = allow_fail,
     )
+
+    # Use non-blocking download, and forward headers, on Bazel 7.1.0 and later.
     if versions.is_at_least("7.1.0", versions.get()):
-        return rctx.download(headers = headers, **kwargs)
-    else:
-        return rctx.download(**kwargs)
+        kwargs["block"] = block
+        kwargs["headers"] = headers
+
+    return rctx.download(**kwargs)
 
 def _download_manifest(rctx, authn, identifier, output):
     bytes = None
@@ -148,7 +151,7 @@ def _download_manifest(rctx, authn, identifier, output):
 
 def _create_downloader(rctx, authn):
     return struct(
-        download_blob = lambda identifier, output: _download(rctx, authn, identifier, output, "blobs"),
+        download_blob = lambda identifier, output, block: _download(rctx, authn, identifier, output, "blobs", block = block),
         download_manifest = lambda identifier, output: _download_manifest(rctx, authn, identifier, output),
     )
 
@@ -218,7 +221,7 @@ def _oci_pull_impl(rctx):
     rctx.template(_digest_into_blob_path(digest), "manifest.json")
 
     config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
-    downloader.download_blob(manifest["config"]["digest"], config_output_path)
+    downloader.download_blob(manifest["config"]["digest"], config_output_path, block = True)
 
     # if the user provided a platform for the image, validate it matches the config as best effort.
     if rctx.attr.platform:
@@ -228,8 +231,14 @@ def _oci_pull_impl(rctx):
 
     # download all layers
     # TODO: we should avoid eager-download of the layers ("shallow pull")
+    results = []
     for layer in manifest["layers"]:
-        downloader.download_blob(layer["digest"], _digest_into_blob_path(layer["digest"]))
+        results.append(downloader.download_blob(layer["digest"], _digest_into_blob_path(layer["digest"]), block = False))
+
+    # wait for all downloads to complete, if download is asynchronous
+    for r in results:
+        if hasattr(r, "wait"):
+            r.wait()
 
     rctx.file("index.json", util.build_manifest_json(
         media_type = manifest["mediaType"],
@@ -303,7 +312,7 @@ def _oci_alias_impl(rctx):
         elif manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
             # single arch image where the user specified the platform.
             config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
-            downloader.download_blob(manifest["config"]["digest"], config_output_path)
+            downloader.download_blob(manifest["config"]["digest"], config_output_path, block = True)
             config_bytes = rctx.read(config_output_path)
             config = json.decode(config_bytes)
             if "os" in config and "architecture" in config:
