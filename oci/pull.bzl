@@ -157,13 +157,14 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     else:
         scheme = None
 
-    if digest and tag:
-        # Users might wish to leave tag=latest as "documentation" however if we just ignore tag
-        # then it's never checked which means the documentation can be wrong.
-        # For now just forbid having both, it's a non-breaking change to allow it later.
-        fail("Only one of 'digest' or 'tag' may be set")
+    if digest and tag and not reproducible:
+        # digest and tag may drift apart for tags like 'latest', but in some cases tags are known
+        # to be immutable. As with the warning produced on tags alone, we'll require setting
+        # reproducible to True as a measure to inform users that there's some subtlty in how rules_oci
+        # prefers digest over tag, and that the latter is only used for documentation/upgrade tooling.
+        fail("Only one of 'digest' or 'tag' may be set when 'reproducible' is False. Set 'reproducible' to True to silence this failure.")
     if not digest and not tag:
-        fail("One of 'digest' or 'tag' must be set")
+        fail("At least one of 'digest' or 'tag' must be set")
 
     platform_to_image = None
     single_platform = None
