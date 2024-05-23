@@ -24,11 +24,12 @@ use_repo(zstd, "zstd_toolchains")
 
 register_toolchains("@zstd_toolchains//:all")
 
-# Dev dependencies
-bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains", dev_dependency = True)
+bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
 bazel_lib.jq()
 bazel_lib.tar()
 use_repo(bazel_lib, "bsd_tar_toolchains", "jq_toolchains")
+
+# Dev dependencies
 
 bazel_dep(name = "rules_go", version = "0.46.0", dev_dependency = True, repo_name = "io_bazel_rules_go")
 bazel_dep(name = "rules_pkg", version = "0.7.0", dev_dependency = True)
