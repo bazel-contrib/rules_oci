@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM python:3.11.9-bullseye
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -10,3 +10,9 @@ RUN apt-get -y update \
     && apt-get -y install jq \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN pip install cowsay
+
+COPY src /app
+
+CMD ["/app/say.py"]

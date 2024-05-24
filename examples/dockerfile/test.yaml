@@ -9,13 +9,20 @@ metadataTest:
     - key: "LANGUAGE"
       value: "C.UTF-8"
   entrypoint: []
-  cmd: ["/bin/bash"]
+  cmd: ["/app/say.py"]
 
 commandTests:
   - name: "jq should be installed"
     command: "jq"
-    expectedError: ["jq - commandline JSON processor"]
-    exitCode: 2
+    args: ["--version"]
+    expectedOutput: ["jq\\-1\\.6"]
+    exitCode: 0
+
+  - name: "should say moo"
+    command: "python"
+    args: ["/app/say.py"]
+    expectedOutput: ["moo!"]
+    exitCode: 0
 
 fileExistenceTests:
   - name: "should not remove /var/lib/apt/lists"

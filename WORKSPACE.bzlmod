@@ -19,3 +19,8 @@ fetch_images()
 load("//cosign:repositories.bzl", "cosign_register_toolchains")
 
 cosign_register_toolchains(name = "oci_cosign")
+
+### Fetch buildx
+load("//examples/dockerfile:buildx.bzl", "fetch_buildx")
+
+fetch_buildx()

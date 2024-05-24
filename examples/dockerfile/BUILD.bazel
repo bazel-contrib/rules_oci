@@ -1,0 +1,50 @@
+load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@container_structure_test//:defs.bzl", "container_structure_test")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+
+native_binary(
+    name = "buildx",
+    src = select({
+        "@bazel_tools//src/conditions:linux_x86_64": "@buildx_linux_amd64//file",
+        "@bazel_tools//src/conditions:darwin_arm64": "@buildx_darwin_arm64//file",
+        "@bazel_tools//src/conditions:darwin_x86_64": "@buildx_darwin_amd64//file",
+    }),
+    out = "buildx",
+)
+
+# docker buildx create --name container --driver=docker-container
+run_binary(
+    name = "base",
+    srcs = ["Dockerfile"] + glob(["src/*"]),
+    args = [
+        "build",
+        "./examples/dockerfile",
+        "--builder",
+        "container",
+        "--output=type=oci,tar=false,dest=$@",
+    ],
+    execution_requirements = {"local": "1"},
+    out_dirs = ["base"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
+    tool = ":buildx",
+)
+
+oci_image(
+    name = "image",
+    base = ":base",
+)
+
+oci_tarball(
+    name = "tar",
+    image = ":image",
+    repo_tags = [],
+)
+
+container_structure_test(
+    name = "test",
+    configs = ["test.yaml"],
+    image = ":image",
+)
