@@ -19,7 +19,8 @@ register_toolchains("@oci_crane_toolchains//:all", "@oci_crane_registry_toolchai
 # Dev dependencies
 bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains", dev_dependency = True)
 bazel_lib.jq()
-use_repo(bazel_lib, "jq_toolchains")
+bazel_lib.yq()
+use_repo(bazel_lib, "jq_toolchains", "yq_toolchains")
 
 bazel_dep(name = "rules_go", version = "0.46.0", dev_dependency = True, repo_name = "io_bazel_rules_go")
 bazel_dep(name = "rules_pkg", version = "0.7.0", dev_dependency = True)
