@@ -9,8 +9,11 @@ test --test_env=DOCKER_HOST
 # Disable bzlmod lockfile
 common --lockfile_mode=off
 
-# TODO(2.0): enable once we drop support for Bazel 5.
-# common --credential_helper=public.ecr.aws=%workspace%/examples/credential_helper/auth.sh
+# On bazel 6.4.0 these are needed to successfully fetch images.
+common:needs_credential_helpers --credential_helper=public.ecr.aws=%workspace%/examples/credential_helper/auth.sh
+common:needs_credential_helpers --credential_helper=index.docker.io=%workspace%/examples/credential_helper/auth.sh
+common:needs_credential_helpers --credential_helper=docker.elastic.co=%workspace%/examples/credential_helper/auth.sh
+common:needs_credential_helpers --credential_helper_cache_duration=0
 
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members

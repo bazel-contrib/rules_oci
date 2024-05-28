@@ -38,10 +38,16 @@ _IMAGE_REFERENCE_ATTRS = {
 SCHEMA1_ERROR = """\
 The registry sent a manifest with schemaVersion=1. 
 This commonly occurs when fetching from a registry that needs the Docker-Distribution-API-Version header to be set.
+See: https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md#authentication-using-credential-helpers
 """
 
 OCI_MEDIA_TYPE_OR_AUTHN_ERROR = """\
-Unable to retrieve the manifest. This could be due to authentication problems or an attempt to fetch an image with OCI image media types.
+Unable to retrieve the image manifest. This could be due to authentication problems or an attempt to fetch an image with OCI image media types.
+See: https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md#authentication-using-credential-helpers
+"""
+
+OCI_MEDIA_TYPE_OR_AUTHN_ERROR_BAZEL7 = """\
+Unable to retrieve the image manifest. This could be due to authentication problems.
 """
 
 # Supported media types
@@ -142,7 +148,9 @@ def _download_manifest(rctx, authn, identifier, output):
         explanation = authn.explain()
         if explanation:
             util.warning(rctx, explanation)
-        fail(OCI_MEDIA_TYPE_OR_AUTHN_ERROR)
+        fail(
+            OCI_MEDIA_TYPE_OR_AUTHN_ERROR_BAZEL7 if versions.is_at_least("7.1.0", versions.get()) else OCI_MEDIA_TYPE_OR_AUTHN_ERROR,
+        )
 
     return manifest, len(bytes), digest
 

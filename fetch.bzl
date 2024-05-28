@@ -39,7 +39,6 @@ def fetch_images():
         name = "ecr_lambda_python",
         image = "public.ecr.aws/lambda/python",
         tag = "3.11.2024.01.25.10",
-        # digest = "sha256:9499013bebe91a97ad3925269d1097408c092d85a1f6b96f91c7bb3a100e2c18",
         platforms = [
             "linux/amd64",
             "linux/arm64/v8",
@@ -142,7 +141,6 @@ def fetch_images():
     oci_pull(
         name = "fluxcd_flux",
         image = "docker.io/fluxcd/flux:1.25.4",
-        # digest = "sha256:c18e0c96fbb510fffa27ca0fb2561c2124e74f975a8a826d1f33cd4c82552db1"
     )
 
     oci_pull(
@@ -197,9 +195,12 @@ def fetch_images():
     )
 
     _DEB_TO_LAYER = """\
-alias(
+genrule(
     name = "layer",
-    actual = ":data.tar.xz",
+    srcs = [":data.tar.xz"],
+    outs = ["data.tar.zst"],
+    cmd = "$(BSDTAR_BIN) --zstd -cf $@ @$<",
+    toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
     visibility = ["//visibility:public"],
 )
 """
