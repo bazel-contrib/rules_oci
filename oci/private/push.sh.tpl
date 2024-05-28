@@ -44,7 +44,7 @@ while (( $# > 0 )); do
   esac
 done
 
-DIGEST=$("${YQ}" eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
+DIGEST=$("${YQ}" --unwrapScalar eval '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 REFS=$(mktemp)
 "${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
