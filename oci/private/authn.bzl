@@ -4,7 +4,6 @@ load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
 load(":util.bzl", "util")
 
-
 # Unfortunately bazel downloader doesn't let us sniff the WWW-Authenticate header, therefore we need to
 # keep a map of known registries that require us to acquire a temporary token for authentication.
 _WWW_AUTH = {
@@ -167,6 +166,8 @@ def _get_auth(rctx, state, registry):
                     login, sep, password = base64.decode(raw_auth).partition(":")
                     if not sep:
                         fail("auth string must be in form username:password")
+                    if not password and "identitytoken" in auth_val:
+                        password = auth_val["identitytoken"]
                     pattern = {
                         "type": "basic",
                         "login": login,
@@ -228,7 +229,7 @@ def _get_token(rctx, state, registry, repository):
             state["token"][url] = pattern
     return pattern
 
-NO_CONFIG_FOUND_ERROR="""\
+NO_CONFIG_FOUND_ERROR = """\
 Could not find the `$HOME/.docker/config.json` and `$XDG_RUNTIME_DIR/containers/auth.json` file
 
 Running one of `podman login`, `docker login`, `crane login` may help.
@@ -238,7 +239,6 @@ def _explain(state):
     if not state["config"]:
         return NO_CONFIG_FOUND_ERROR
     return None
-       
 
 def _new_auth(rctx, config_path = None):
     if not config_path:
@@ -253,15 +253,15 @@ def _new_auth(rctx, config_path = None):
     }
     return struct(
         get_token = lambda reg, repo: _get_token(rctx, state, reg, repo),
-        explain = lambda: _explain(state)
+        explain = lambda: _explain(state),
     )
 
 authn = struct(
-    new  = _new_auth,
+    new = _new_auth,
     ENVIRON = [
         "DOCKER_CONFIG",
         "REGISTRY_AUTH_FILE",
         "XDG_RUNTIME_DIR",
         "HOME",
-    ]
+    ],
 )
