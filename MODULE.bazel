@@ -17,7 +17,7 @@ use_repo(oci, "oci_crane_registry_toolchains", "oci_crane_toolchains")
 register_toolchains("@oci_crane_toolchains//:all", "@oci_crane_registry_toolchains//:all")
 
 # Dev dependencies
-bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains", dev_dependency = True)
+bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
 bazel_lib.jq()
 bazel_lib.yq()
 use_repo(bazel_lib, "jq_toolchains", "yq_toolchains")
