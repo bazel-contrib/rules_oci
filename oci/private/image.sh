@@ -44,7 +44,7 @@ function base_from() {
       coreutils cp "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
-  coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
+  coreutils cp --no-preserve=mode "$path/oci-layout" "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"
 }
 
