@@ -204,8 +204,9 @@ def _oci_pull_impl(rctx):
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
 
     if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
-        # plain image manifest: use the contents.
-        pass
+        # copy manifest.json to blobs with its digest.
+        rctx.template(_digest_into_blob_path(digest), "manifest.json")
+
     elif manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
         # image index manifest: download the image manifest for the target platform.
         if not rctx.attr.platform:
@@ -221,12 +222,35 @@ def _oci_pull_impl(rctx):
                 rctx.attr.repository,
                 rctx.attr.platform,
             ))
-        manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "manifest.json")
+
+        # NB: do _NOT_ download to `manifest.json` as there is a race condition in Bazel when it is writing the cache entry
+        # for the `manifest.json` above where it may do so only after this download completes and overwrites `manifest.json`.
+        # If this race condition occurs, this results in Bazel writing the contents of this download to the cache for the
+        # download above which corrupts the cache and causes build failures for other platforms:
+        # ```
+        # (01:43:58) ERROR: An error occurred during the fetch of repository 'debian_golden_linux_arm64_v8':
+        #    Traceback (most recent call last):
+        # 	File "/mnt/ephemeral/output/__main__/external/rules_oci/oci/private/pull.bzl", line 241, column 37, in _oci_pull_impl
+        # 		util.validate_image_platform(rctx, config)
+        # 	File "/mnt/ephemeral/output/__main__/external/rules_oci/oci/private/util.bzl", line 96, column 13, in _validate_image_platform
+        # 		fail("Expected image {}/{} to have architecture '{}', got: '{}'".format(
+        # Error in fail: Expected image index.docker.io/library/debian to have architecture 'arm64', got: 'amd64'
+        # (01:43:58) ERROR: /mnt/ephemeral/workdir/aspect-build/silo/WORKSPACE:305:19: fetching oci_pull rule //external:debian_golden_linux_arm64_v8: Traceback (most recent call last):
+        # 	File "/mnt/ephemeral/output/__main__/external/rules_oci/oci/private/pull.bzl", line 241, column 37, in _oci_pull_impl
+        # 		util.validate_image_platform(rctx, config)
+        # 	File "/mnt/ephemeral/output/__main__/external/rules_oci/oci/private/util.bzl", line 96, column 13, in _validate_image_platform
+        # 		fail("Expected image {}/{} to have architecture '{}', got: '{}'".format(
+        # Error in fail: Expected image index.docker.io/library/debian to have architecture 'arm64', got: 'amd64'
+        # (01:43:58) ERROR: no such package '@@debian_golden_linux_arm64_v8//': Expected image index.docker.io/library/debian to have architecture 'arm64', got: 'amd64'
+        # (01:43:58) ERROR: /mnt/ephemeral/output/__main__/external/debian_golden/BUILD.bazel:1:6: @@debian_golden//:debian_golden depends on @@debian_golden_linux_arm64_v8//:debian_golden_linux_arm64_v8 in repository @@debian_golden_linux_arm64_v8 which failed to fetch. no such package '@@debian_golden_linux_arm64_v8//': Expected image index.docker.io/library/debian to have architecture 'arm64', got: 'amd64'
+        # ```
+        # See https://github.com/bazel-contrib/rules_oci/pull/596 for more details on this race codition.
+        manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "platform-manifest.json")
+
+        # copy platform-manifest.json to blobs with its digest.
+        rctx.template(_digest_into_blob_path(digest), "platform-manifest.json")
     else:
         fail("Unrecognized mediaType {} in manifest file".format(manifest["mediaType"]))
-
-    # copy manifest.json to blobs with its digest.
-    rctx.template(_digest_into_blob_path(digest), "manifest.json")
 
     config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
     downloader.download_blob(manifest["config"]["digest"], config_output_path, block = True)
