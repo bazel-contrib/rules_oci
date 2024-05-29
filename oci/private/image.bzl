@@ -157,7 +157,10 @@ def _oci_image_impl(ctx):
         },
     )
 
-    inputs = [builder]
+    # Unfortunately even though tars are not needed directly in the sandbox we have
+    # to add it to the inputs so bazel can calculate the hash for the output treeartifact.
+    # See: https://github.com/bazelbuild/bazel/issues/22504
+    inputs = [builder] + ctx.files.tars
     transitive_inputs = []
 
     args = ctx.actions.args()
@@ -172,11 +175,9 @@ def _oci_image_impl(ctx):
         # create a scratch base image with given os/arch[/variant]
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
 
-    # If tree artifact symlinks are supported just add tars into runfiles.
+    # If tree artifact symlinks are supported also add tars into runfiles.
     if use_symlinks:
         transitive_inputs = transitive_inputs + ctx.files.tars
-    else:
-        inputs = inputs + ctx.files.tars
 
     # add layers
     for (i, layer) in enumerate(ctx.files.tars):
