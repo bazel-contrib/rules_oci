@@ -103,6 +103,19 @@ jobs:
         if: matrix.bzlmodEnabled
         run: echo "bzlmod_flag=--enable_bzlmod" >> $GITHUB_OUTPUT
 
+      - name: Set credential helpers flag
+        # Add --config needs_credential_helpers to add additional credential helpers
+        # to fetch from registries with HTTP headers set by credential helpers.
+        id: set_credential_helper_flag
+        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        run: echo "credential_helper_flag=--config=needs_credential_helpers" >> $GITHUB_OUTPUT
+
+      - name: Setup crane for credential helpers to use
+        uses: imjasonh/setup-crane@v0.3
+        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        with:
+          version: "v0.19.1"
+
       - name: Configure Bazel version
         working-directory: ${{ matrix.folder }}
         run: echo "${{ matrix.bazelversion }}" > .bazelversion
@@ -153,4 +166,10 @@ jobs:
         env:
           # Bazelisk will download bazel to here, ensure it is cached between runs.
           XDG_CACHE_HOME: ~/.cache/bazel-repo
-        run: bazel --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc --bazelrc=.bazelrc test ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} //...
+        run: |
+          bazel \
+          --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
+          --bazelrc=.bazelrc  \
+          test //... \
+          ${{ steps.set_bzlmod_flag.outputs.bzlmod_flag }} \
+          ${{ steps.set_credential_helper_flag.outputs.credential_helper_flag }}
