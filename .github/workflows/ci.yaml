@@ -110,7 +110,7 @@ jobs:
         if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
         run: echo "credential_helper_flag=--config=needs_credential_helpers" >> $GITHUB_OUTPUT
 
-      - name: Setup credential helpers
+      - name: Setup crane for credential helpers to use
         uses: imjasonh/setup-crane@v0.3
         if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
         with:
