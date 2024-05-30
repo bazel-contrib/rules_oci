@@ -184,7 +184,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 config = config,
                 # TODO(2.0): remove
                 config_path = config_path,
-                tags = bazel_tags,
+                bazel_tags = bazel_tags,
             )
 
             if plat in _PLATFORM_TO_BAZEL_CPU:
@@ -209,7 +209,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             config = config,
             # TODO(2.0): remove
             config_path = config_path,
-            tags = bazel_tags,
+            bazel_tags = bazel_tags,
         )
 
     oci_alias(
@@ -228,5 +228,4 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         config = config,
         # TODO(2.0): remove
         config_path = config_path,
-        tags = bazel_tags,
     )
