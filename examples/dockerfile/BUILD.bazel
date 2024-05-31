@@ -26,6 +26,7 @@ run_binary(
     ],
     execution_requirements = {"local": "1"},
     out_dirs = ["base"],
+    tags = ["manual"],
     target_compatible_with = [
         "@platforms//os:linux",
     ],
@@ -35,16 +36,19 @@ run_binary(
 oci_image(
     name = "image",
     base = ":base",
+    tags = ["manual"],
 )
 
 oci_tarball(
     name = "tar",
     image = ":image",
     repo_tags = [],
+    tags = ["manual"],
 )
 
 container_structure_test(
     name = "test",
     configs = ["test.yaml"],
     image = ":image",
+    tags = ["manual"],
 )
