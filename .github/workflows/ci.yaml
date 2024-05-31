@@ -155,12 +155,6 @@ jobs:
           )
           EOF
 
-      # the /examples/dockerfile uses buildx to build Dockerfile images which needs to use a docker-container
-      # builder to work, which does not exist by default. Create one here.
-      - name: Setup buildx
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: bazel run examples/dockerfile:buildx -- create --name container --driver=docker-container
-
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:
