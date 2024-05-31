@@ -98,6 +98,23 @@ oci_push(
 ```
 """
 
+# Helper rule for ensuring that the crane and yq toolchains are actually
+# resolved for the architecture we are targeting.
+def _transition_to_target_impl(settings, attr):
+    return {
+        # String conversion is needed to prevent a crash with Bazel 6.x.
+        "//command_line_option:extra_execution_platforms": [
+            str(platform)
+            for platform in settings["//command_line_option:platforms"]
+        ],
+    }
+
+_transition_to_target = transition(
+    implementation = _transition_to_target_impl,
+    inputs = ["//command_line_option:platforms"],
+    outputs = ["//command_line_option:extra_execution_platforms"],
+)
+
 _attrs = {
     "image": attr.label(
         allow_single_file = True,
@@ -124,19 +141,30 @@ _attrs = {
         """,
         allow_single_file = [".txt"],
     ),
+    "_allowlist_function_transition": attr.label(
+        default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+    ),
+    "_crane": attr.label(
+        cfg = _transition_to_target,
+        default = "@oci_crane_toolchains//:current_toolchain",
+    ),
     "_push_sh_tpl": attr.label(
         default = "push.sh.tpl",
         allow_single_file = True,
     ),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    "_jq": attr.label(
+        cfg = _transition_to_target,
+        default = "@jq_toolchains//:resolved_toolchain",
+    ),
 }
 
 def _quote_args(args):
     return ["\"{}\"".format(arg) for arg in args]
 
 def _impl(ctx):
-    crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    crane = ctx.attr._crane[0][platform_common.ToolchainInfo]
+    jq = ctx.attr._jq[0][platform_common.ToolchainInfo]
 
     if ctx.attr.repository and ctx.attr.repository_file:
         fail("must specify exactly one of 'repository_file' or 'repository'")
@@ -184,11 +212,7 @@ def _impl(ctx):
 oci_push_lib = struct(
     implementation = _impl,
     attrs = _attrs,
-    toolchains = [
-        "@rules_oci//oci:crane_toolchain_type",
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@bazel_tools//tools/sh:toolchain_type",
-    ],
+    toolchains = ["@bazel_tools//tools/sh:toolchain_type"],
 )
 
 oci_push = rule(
