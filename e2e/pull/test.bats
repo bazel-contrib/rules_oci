@@ -91,6 +91,17 @@ EOF
     assert_success
 }
 
+@test "global credstore" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "credsStore": "oci"
+}
+EOF
+    update_assert '{"Authorization": ["Basic dGVzdGluZzpvY2k="]}'
+    run bazel build @empty_image//... $BAZEL_FLAGS
+    assert_success
+}
+
 @test "credstore misbehaves" {
     cat > "$DOCKER_CONFIG/config.json" <<EOF
 {
