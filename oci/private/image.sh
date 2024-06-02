@@ -41,7 +41,7 @@ function base_from() {
       relative="$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
       coreutils ln -s "$relative" "$OUTPUT/blobs/$relative_to_blobs"
     else
-      coreutils cp "$blob" "$OUTPUT/blobs/$relative_to_blobs"
+      coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
   coreutils cp --no-preserve=mode "$path/oci-layout" "$OUTPUT/oci-layout"
@@ -110,7 +110,7 @@ function add_layer() {
     relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
     coreutils ln --force --symbolic "$relative" "$output_path"
   else
-    coreutils cp "$path" "$output_path"
+    coreutils cp --no-preserve=mode "$path" "$output_path"
   fi
 }
 
