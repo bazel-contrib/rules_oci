@@ -42,16 +42,21 @@ def _oci_extension(module_ctx):
             )
 
             if mod.is_root:
-                if module_ctx.is_dev_dependency(pull):
-                    root_direct_dev_deps.append(pull.name)
-                else:
-                    root_direct_deps.append(pull.name)
+                deps = root_direct_dev_deps if module_ctx.is_dev_dependency(pull) else root_direct_deps
+                deps.append(pull.name)
+                for platform in pull.platforms:
+                    deps.append("_".join([pull.name] + platform.split("/")))
+
         for toolchains in mod.tags.toolchains:
             if toolchains.name != "oci" and not mod.is_root:
                 fail("""\
                 Only the root module may override the default name for the oci toolchains.
                 This prevents conflicting registrations in the global namespace of external repos.
                 """)
+            if mod.is_root:
+                deps = root_direct_dev_deps if module_ctx.is_dev_dependency(toolchains) else root_direct_deps
+                deps.append("%s_crane_toolchains" % toolchains.name)
+                deps.append("%s_regctl_toolchains" % toolchains.name)
 
             oci_register_toolchains(toolchains.name, register = False)
 
