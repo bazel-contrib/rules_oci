@@ -1,6 +1,7 @@
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("//oci:defs.bzl", "oci_image")
+load("//oci:defs.bzl", "oci_image", "oci_tarball")
 
 # Case 1: image name containing a capital case.
 oci_image(
@@ -46,6 +47,52 @@ oci_image(
     ],
 )
 
+# Case 4: Transition an oci_image and feed to oci_tarball
+oci_image(
+    name = "case4",
+    architecture = "arm64",
+    os = "linux",
+)
+
+platform_transition_filegroup(
+    name = "case4_transition",
+    srcs = [":case4"],
+    target_platform = "//examples:linux_arm64",
+)
+
+oci_tarball(
+    name = "case4_tarball",
+    image = ":case4_transition",
+    repo_tags = ["case4:example"],
+)
+
+filegroup(
+    name = "case4_tarball_tar",
+    srcs = [":case4_tarball"],
+    output_group = "tarball",
+)
+
+# Case 5:
+
+# Case 4: An oci_image directly fed into oci_tarball
+oci_image(
+    name = "case5",
+    architecture = "arm64",
+    os = "linux",
+)
+
+oci_tarball(
+    name = "case5_tarball",
+    image = ":case5",
+    repo_tags = ["case5:example"],
+)
+
+filegroup(
+    name = "case5_tarball_tar",
+    srcs = [":case5_tarball"],
+    output_group = "tarball",
+)
+
 # build them as test.
 build_test(
     name = "test",
@@ -53,5 +100,7 @@ build_test(
         ":imagE",
         ":case2",
         ":case3",
+        ":case4_tarball_tar",
+        ":case5_tarball_tar",
     ],
 )
