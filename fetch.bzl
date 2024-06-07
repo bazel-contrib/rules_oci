@@ -4,7 +4,7 @@ This file is similar to how bazel_gazelle can manage go_repository calls
 by writing them to a generated macro in a .bzl file.
 """
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
 
 def fetch_images():
@@ -221,4 +221,31 @@ genrule(
             "http://ftp.us.debian.org/debian/pool/main/b/bash/bash_5.1-2+deb11u1_arm64.deb",
         ],
         sha256 = "d7c7af5d86f43a885069408a89788f67f248e8124c682bb73936f33874e0611b",
+    )
+
+    http_file(
+        name = "jd_darwin_arm64",
+        urls = [
+            "https://github.com/josephburnett/jd/releases/download/v1.8.1/jd-arm64-darwin",
+        ],
+        sha256 = "8b0e51b902650287b7dedc2beee476b96c5d589309d3a7f556334c1baedbec61",
+        executable = True,
+    )
+
+    http_file(
+        name = "jd_darwin_amd64",
+        urls = [
+            "https://github.com/josephburnett/jd/releases/download/v1.8.1/jd-amd64-darwin",
+        ],
+        sha256 = "c5fb5503d2804b1bf631bf12616d56b89711fd451ab233b688ca922402ff3444",
+        executable = True,
+    )
+
+    http_file(
+        name = "jd_linux_amd64",
+        urls = [
+            "https://github.com/josephburnett/jd/releases/download/v1.8.1/jd-amd64-linux",
+        ],
+        sha256 = "ab918f52130561abd4f88d9c2d3ae95d4d56f1a2dff9762665890349d61c763e",
+        executable = True,
     )
