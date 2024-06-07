@@ -15,6 +15,11 @@ common:needs_credential_helpers --credential_helper=index.docker.io=%workspace%/
 common:needs_credential_helpers --credential_helper=docker.elastic.co=%workspace%/examples/credential_helper/auth.sh
 common:needs_credential_helpers --credential_helper_cache_duration=0
 
+# Don’t want to push a rules author to update their deps if not needed.
+# https://bazel.build/reference/command-line-reference#flag--check_direct_dependencies
+# https://bazelbuild.slack.com/archives/C014RARENH0/p1691158021917459?thread_ts=1691156601.420349&cid=C014RARENH0
+common --check_direct_dependencies=off
+
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members
 # This needs to be last statement in this
