@@ -178,6 +178,7 @@ copy_to_directory(
         "oci-layout",
         "index.json",
     ],
+    tags = {bazel_tags},
     visibility = ["//visibility:public"]
 )
 """
@@ -280,8 +281,11 @@ def _oci_pull_impl(rctx):
     ))
     rctx.file("oci-layout", json.encode_indent({"imageLayoutVersion": "1.0.0"}, indent = "    "))
 
+    bazel_tags = "[\"{}\"]".format("\", \"".join(rctx.attr.bazel_tags))
+
     rctx.file("BUILD.bazel", content = _BUILD_FILE_TMPL.format(
         target_name = rctx.attr.target_name,
+        bazel_tags = bazel_tags,
     ))
 
 oci_pull = repository_rule(
@@ -295,6 +299,9 @@ oci_pull = repository_rule(
             "target_name": attr.string(
                 doc = "Name given for the image target, e.g. 'image'",
                 mandatory = True,
+            ),
+            "bazel_tags": attr.string_list(
+                doc = "Bazel tags to apply to generated targets of this rule",
             ),
         },
     ),
