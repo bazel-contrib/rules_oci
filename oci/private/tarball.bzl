@@ -113,7 +113,6 @@ def _tarball_impl(ctx):
         "{{jq_path}}": jq.bin.path,
         "{{tar}}": bsdtar.tarinfo.binary.path,
         "{{image_dir}}": image.path,
-        "{{bindir}}": ctx.bin_dir.path,
         "{{output}}": mtree_spec.path,
         "{{json_out}}": image_json.path,
     }
@@ -148,7 +147,7 @@ def _tarball_impl(ctx):
         output = exe,
         substitutions = {
             "{{TAR}}": bsdtar.tarinfo.binary.short_path,
-            "{{mtree_path}}": mtree_spec.short_path,
+            "{{mtree_path}}": mtree_spec.path,
             "{{loader}}": ctx.file.loader.path if ctx.file.loader else "",
         },
         is_executable = True,
@@ -160,10 +159,8 @@ def _tarball_impl(ctx):
     tar_inputs = depset(direct = mtree_outputs, transitive = [mtree_inputs])
     tar_args = ctx.actions.args()
     tar_args.add_all(["--create", "--no-xattr", "--no-mac-metadata"])
-    tar_args.add_all(["--cd", ctx.bin_dir.path])
     tar_args.add("--file", tarball)
-    # To reference our mtree spec file, we have to undo the --cd by removing three path segments
-    tar_args.add(mtree_spec, format = "@../../../%s")
+    tar_args.add(mtree_spec, format = "@%s")
     ctx.actions.run(
         executable = bsdtar.tarinfo.binary,
         inputs = tar_inputs,
