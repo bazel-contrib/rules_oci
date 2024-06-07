@@ -131,9 +131,11 @@ for ARG in "$@"; do
   --env=*)
     # Get environment from existing config
     env=$(get_config | jq '(.config.Env // []) | map(. | split("=") | {"key": .[0], "value": .[1:] | join("=")})')
-
     while IFS= read -r expansion || [ -n "$expansion" ]; do
-      IFS="=" read -r key value <<<"${expansion}"
+      # collect all characters until a `=` is encountered
+      key="${expansion%%=*}"
+      # skip `length(k) + 1` to collect the rest.
+      value="${expansion:${#key}+1}"
       value_from_base=$(jq -nr --arg raw "${value}" --argjson envs "${env}" "${ENV_EXPAND_FILTER}")
       env=$(
         # update the existing env if it exists, or append to the end of env array.
