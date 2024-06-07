@@ -181,6 +181,10 @@ def _get_auth(rctx, state, registry):
                         "password": auth_val["password"],
                     }
 
+    # look for generic credentials-store all lookups for host-specific auth fails
+    if "credsStore" in config and len(pattern.keys()) == 0:
+        pattern = _fetch_auth_via_creds_helper(rctx, registry, config["credsStore"])
+
     # cache the result so that we don't do this again unnecessarily.
     state["auth"][registry] = pattern
 
