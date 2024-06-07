@@ -26,7 +26,7 @@ function add_image() {
                 --argjson manifest "${manifest}" \
                 '.manifests |= [$manifest + {"platform": $platform}]'\
                 "${output_path}/manifest_list.json" > "${output_path}/manifest_list.new.json"
-        cat "${output_path}/manifest_list.new.json" > "${output_path}/manifest_list.json"
+        "${COREUTILS}" cp --no-preserve=mode "${output_path}/manifest_list.new.json" "${output_path}/manifest_list.json"
     done
 }
 
@@ -36,7 +36,7 @@ function copy_blob() {
     local blob_image_relative_path="$3"
     local dest_path="${output_path}/${blob_image_relative_path}"
     mkdirp "$(dirname "${dest_path}")"
-    "${COREUTILS}" cat "${image_path}/${blob_image_relative_path}" > "${dest_path}"
+    "${COREUTILS}" cp --no-preserve=mode "${image_path}/${blob_image_relative_path}" "${dest_path}"
 }
 
 function create_oci_layout() {

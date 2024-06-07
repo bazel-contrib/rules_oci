@@ -41,10 +41,10 @@ function base_from() {
       relative="$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
       coreutils ln -s "$relative" "$OUTPUT/blobs/$relative_to_blobs"
     else
-      coreutils cat "$blob" > "$OUTPUT/blobs/$relative_to_blobs"
+      coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
-  coreutils cat "$path/oci-layout" >"$OUTPUT/oci-layout"
+  coreutils cp --no-preserve=mode "$path/oci-layout" "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"
 }
 
@@ -110,7 +110,7 @@ function add_layer() {
     relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
     coreutils ln --force --symbolic "$relative" "$output_path"
   else
-    coreutils cat "$path" > "$output_path"
+    coreutils cp --no-preserve=mode "$path" "$output_path"
   fi
 }
 
