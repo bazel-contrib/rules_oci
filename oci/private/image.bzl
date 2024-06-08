@@ -99,7 +99,7 @@ def _oci_image_impl(ctx):
     if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
-    util.assert_crane_version_at_least(ctx, "0.18.0", "oci_image")
+    util.assert_crane_version_at_least(ctx, "0.19.1", "oci_image")
 
     crane = ctx.toolchains["@rules_oci//oci:crane_toolchain_type"]
     registry = ctx.toolchains["@rules_oci//oci:registry_toolchain_type"]

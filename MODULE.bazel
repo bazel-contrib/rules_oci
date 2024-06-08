@@ -11,7 +11,7 @@ bazel_dep(name = "bazel_skylib", version = "1.4.1")
 bazel_dep(name = "platforms", version = "0.0.5")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
-oci.toolchains(crane_version = "v0.18.0")
+oci.toolchains(crane_version = "v0.19.1")
 use_repo(oci, "oci_crane_registry_toolchains", "oci_crane_toolchains")
 
 register_toolchains("@oci_crane_toolchains//:all", "@oci_crane_registry_toolchains//:all")
