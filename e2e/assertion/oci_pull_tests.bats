@@ -46,3 +46,16 @@ setup() {
     run bazel build @distroless_base_single_arch_wrong_amd64_platforms_attr//... --platforms=//platforms:linux_arm64 $BAZEL_FLAGS
     assert_failure
 }
+
+
+@test "when oci_pull with a tag, it should print a warning" {
+    # Even if the target
+    run bazel build @distroless_base_with_tag//... --platforms=//platforms:linux_x86_64 $BAZEL_FLAGS
+    assert_output --partial 'WARNING: Fetching from distroless/cc-debian12@latest without an integrity hash, result will not be cached'
+    assert_output --partial 'For reproducible builds, a digest is recommended.'
+    assert_output --partial "Either set 'reproducible = False' to silence this warning"
+    assert_output --partial "or run the following command to change"
+    assert_output --partial "to use a digest:"
+    assert_output --partial "'remove tag' 'remove platforms'"
+    assert_output --partial 'add platforms "linux/amd64" "linux/arm64/v8" "linux/arm/v7" "linux/s390x" "linux/ppc64le"'
+}

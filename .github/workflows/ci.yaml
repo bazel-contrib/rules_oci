@@ -63,7 +63,7 @@ jobs:
           - .
           - e2e/wasm
           - e2e/smoke
-          - e2e/pull
+          - e2e/assertion
 
         bzlmodEnabled: [true, false]
         exclude:
@@ -71,11 +71,11 @@ jobs:
           - os: macos-13
             folder: e2e/wasm
           - os: macos-13
-            folder: e2e/pull
+            folder: e2e/assertion
           - os: macos-13
             bazelversion: 6.4.0
-          # e2e/pull is bzlmod only but it has test for both cases.
-          - folder: e2e/pull
+          # e2e/assertion is bzlmod only but it has test for both cases.
+          - folder: e2e/assertion
             bzlmodEnabled: false
           # TODO: fix
           - folder: e2e/wasm

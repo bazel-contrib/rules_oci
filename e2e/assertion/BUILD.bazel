@@ -1,0 +1,65 @@
+load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
+
+[
+    bats_test(
+        name = "test_oci_pull_auth_%s" % name,
+        size = "large",
+        srcs = [
+            "oci_pull_auth_tests.bats",
+        ],
+        args = [
+            "--verbose-run",
+            "--timing",
+            "--trace",
+        ],
+        data = glob(["credential-helper/**"]) + [
+            "wksp",
+            "//registry:auth",
+        ],
+        env = {
+            "WKSP": "$(location :wksp)",
+            "REGISTRY": "$(rootpath //registry:auth)",
+            "BAZEL_FLAGS": flags,
+        },
+        tags = [
+            "exclusive",
+            "local",
+            "no-remote",
+            "no-remote-exec",
+        ],
+    )
+    for (name, flags) in [
+        ("bzlmod", "--noenable_bzlmod"),
+        ("nobzlmod", "--enable_bzlmod"),
+    ]
+]
+
+[
+    bats_test(
+        name = "test_oci_pull_%s" % name,
+        size = "large",
+        srcs = [
+            "oci_pull_tests.bats",
+        ],
+        args = [
+            "--verbose-run",
+            "--timing",
+            "--trace",
+        ],
+        data = [":wksp"],
+        env = {
+            "WKSP": "$(location :wksp)",
+            "BAZEL_FLAGS": flags,
+        },
+        tags = [
+            "exclusive",
+            "local",
+            "no-remote",
+            "no-remote-exec",
+        ],
+    )
+    for (name, flags) in [
+        ("bzlmod", "--noenable_bzlmod"),
+        ("nobzlmod", "--enable_bzlmod"),
+    ]
+]
