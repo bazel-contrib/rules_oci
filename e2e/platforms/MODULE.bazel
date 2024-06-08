@@ -1,3 +1,0 @@
-"Bazel dependencies"
-
-bazel_dep(name = "aspect_bazel_lib", version = "2.7.2")

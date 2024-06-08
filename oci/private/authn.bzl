@@ -4,7 +4,6 @@ load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
 load(":util.bzl", "util")
 
-
 # Unfortunately bazel downloader doesn't let us sniff the WWW-Authenticate header, therefore we need to
 # keep a map of known registries that require us to acquire a temporary token for authentication.
 _WWW_AUTH = {
@@ -101,7 +100,7 @@ def _get_auth_file_path(rctx):
 
     return None
 
-def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
+def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name, allow_fail = False):
     if rctx.os.name.startswith("windows"):
         executable = "{}.bat".format(helper_name)
         rctx.file(
@@ -120,7 +119,10 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         )
     result = rctx.execute([rctx.path(executable), raw_host])
     if result.return_code:
-        fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+        if not allow_fail:
+            fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+        else:
+            return {}
 
     response = json.decode(result.stdout)
 
@@ -183,7 +185,7 @@ def _get_auth(rctx, state, registry):
 
     # look for generic credentials-store all lookups for host-specific auth fails
     if "credsStore" in config and len(pattern.keys()) == 0:
-        pattern = _fetch_auth_via_creds_helper(rctx, registry, config["credsStore"])
+        pattern = _fetch_auth_via_creds_helper(rctx, registry, config["credsStore"], allow_fail = True)
 
     # cache the result so that we don't do this again unnecessarily.
     state["auth"][registry] = pattern
@@ -232,7 +234,7 @@ def _get_token(rctx, state, registry, repository):
             state["token"][url] = pattern
     return pattern
 
-NO_CONFIG_FOUND_ERROR="""\
+NO_CONFIG_FOUND_ERROR = """\
 Could not find the `$HOME/.docker/config.json` and `$XDG_RUNTIME_DIR/containers/auth.json` file
 
 Running one of `podman login`, `docker login`, `crane login` may help.
@@ -242,7 +244,6 @@ def _explain(state):
     if not state["config"]:
         return NO_CONFIG_FOUND_ERROR
     return None
-       
 
 def _new_auth(rctx, config_path = None):
     if not config_path:
@@ -257,15 +258,15 @@ def _new_auth(rctx, config_path = None):
     }
     return struct(
         get_token = lambda reg, repo: _get_token(rctx, state, reg, repo),
-        explain = lambda: _explain(state)
+        explain = lambda: _explain(state),
     )
 
 authn = struct(
-    new  = _new_auth,
+    new = _new_auth,
     ENVIRON = [
         "DOCKER_CONFIG",
         "REGISTRY_AUTH_FILE",
         "XDG_RUNTIME_DIR",
         "HOME",
-    ]
+    ],
 )
