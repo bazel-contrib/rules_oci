@@ -1,9 +1,9 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("//oci:defs.bzl", "oci_image")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("//examples:assert.bzl", "assert_oci_config")
 
-pkg_tar(
+tar(
     name = "app",
     srcs = ["test.bash"],
 )
@@ -25,13 +25,17 @@ oci_image(
     base = "@ubuntu",
     cmd = ["test.sh"],
     labels = ":labels",
-    tars = ["app.tar"],
+    tars = [":app"],
 )
 
-container_structure_test(
-    name = "test",
-    configs = ["test.yaml"],
+assert_oci_config(
+    name = "assert_labels_from_file",
     image = ":image",
+    labels_eq = {
+        "org.opencontainers.image.ref.name": "ubuntu",
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
 )
 
 # Test again, using the macro-provided syntax sugar where labels is a dict.
@@ -43,11 +47,15 @@ oci_image(
         "org.opencontainers.image.version": "0.0.0",
         "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
     },
-    tars = ["app.tar"],
+    tars = [":app"],
 )
 
-container_structure_test(
-    name = "test2",
-    configs = ["test.yaml"],
+assert_oci_config(
+    name = "assert_labels_dict",
     image = ":image_labels_dict",
+    labels_eq = {
+        "org.opencontainers.image.ref.name": "ubuntu",
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
 )

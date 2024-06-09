@@ -1,7 +1,7 @@
 #/bin/bash
 echo "hello world!"
 
-args=("$@")
+args=( "$@" )
 ELEMENTS=${#args[@]}
 for (( i=0;i<$ELEMENTS;i++)); do
     val="${args[${i}]}"

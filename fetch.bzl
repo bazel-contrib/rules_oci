@@ -4,11 +4,13 @@ This file is similar to how bazel_gazelle can manage go_repository calls
 by writing them to a generated macro in a .bzl file.
 """
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
+load("//examples:setup_assertion_repos.bzl", "setup_assertion_repos")
+load("//examples/dockerfile:buildx.bzl", "fetch_buildx")
 
 def fetch_images():
-    "Fetch external images"
+    "fetch external images"
 
     # A single-arch base image
     oci_pull(
@@ -223,29 +225,27 @@ genrule(
         sha256 = "d7c7af5d86f43a885069408a89788f67f248e8124c682bb73936f33874e0611b",
     )
 
-    http_file(
-        name = "jd_darwin_arm64",
-        urls = [
-            "https://github.com/josephburnett/jd/releases/download/v1.8.1/jd-arm64-darwin",
-        ],
-        sha256 = "8b0e51b902650287b7dedc2beee476b96c5d589309d3a7f556334c1baedbec61",
-        executable = True,
+def fetch_test_repos():
+    "fetch repos needed for testing"
+
+    # For sign_external test
+    native.new_local_repository(
+        name = "empty_image",
+        build_file = "//examples/assertion/sign_external:BUILD.template",
+        path = "examples/assertion/sign_external/workspace",
     )
 
-    http_file(
-        name = "jd_darwin_amd64",
-        urls = [
-            "https://github.com/josephburnett/jd/releases/download/v1.8.1/jd-amd64-darwin",
-        ],
-        sha256 = "c5fb5503d2804b1bf631bf12616d56b89711fd451ab233b688ca922402ff3444",
-        executable = True,
+    # For attest_external test
+    native.new_local_repository(
+        name = "example_sbom",
+        build_file = "//examples/assertion/attest_external:BUILD.template",
+        path = "examples/assertion/attest_external/workspace",
     )
 
-    http_file(
-        name = "jd_linux_amd64",
-        urls = [
-            "https://github.com/josephburnett/jd/releases/download/v1.8.1/jd-amd64-linux",
-        ],
-        sha256 = "ab918f52130561abd4f88d9c2d3ae95d4d56f1a2dff9762665890349d61c763e",
-        executable = True,
-    )
+
+    # Fetch buildx
+    fetch_buildx()
+
+    # Fetch necessary repos for docker testing
+    setup_assertion_repos()
+

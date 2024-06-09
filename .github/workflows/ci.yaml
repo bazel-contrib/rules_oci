@@ -130,31 +130,7 @@ jobs:
       - name: Configure Remote Docker Host
         if: ${{ matrix.os == 'macos-13' }}
         run: echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
-
-      - name: Free space
-        if: ${{ matrix.os == 'ubuntu-latest' }}
-        run: |
-          sudo apt-get remove -y '^dotnet-.*'
-          sudo apt-get remove -y '^llvm-.*'
-          sudo apt-get remove -y 'php.*'
-          sudo apt-get remove -y 'google*'
-          sudo apt-get autoremove -y
-          sudo apt-get clean
-          rm -rf /usr/share/dotnet/
-
-      - name: Override CST
-        if: ${{ matrix.bzlmodEnabled && matrix.folder == '.'}}
-        run: |
-          cat >> MODULE.bazel <<EOF
-          single_version_override(
-              module_name = "container_structure_test",
-              patch_strip = 1,
-              patches = [
-                  "//oci/tests:cst_exclusive.patch",
-              ],
-          )
-          EOF
-
+        
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:

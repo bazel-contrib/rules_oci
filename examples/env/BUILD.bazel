@@ -1,9 +1,9 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("//oci:defs.bzl", "oci_image")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("//examples:assert.bzl", "assert_oci_image_command")
 
-pkg_tar(
+tar(
     name = "app",
     srcs = ["test.bash"],
 )
@@ -20,13 +20,14 @@ expand_template(
 oci_image(
     name = "image",
     base = "@debian",
-    cmd = ["test.sh"],
+    cmd = ["/examples/env/test.bash"],
     env = ":env",
-    tars = ["app.tar"],
+    tars = [":app"],
 )
 
-container_structure_test(
-    name = "test",
-    configs = ["test.yaml"],
+assert_oci_image_command(
+    name = "assert_version_is_correct",
     image = ":image",
+    output_eq = "version: 1.2.3",
+    exit_code_eq = 0
 )

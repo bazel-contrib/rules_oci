@@ -1,7 +1,12 @@
 "assertion rules to test metadata"
 
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+
+# THIS LOAD STATEMENT DEPENDS ON setup_assertion_repos.bzl
+load("@docker_configure//:defs.bzl", "TARGET_COMPATIBLE_WITH")
+load("//oci:defs.bzl", "oci_tarball")
 
 DIGEST_CMD = """
 image_path="$(location {image})"
@@ -18,7 +23,7 @@ def assert_oci_config(
         entrypoint_eq = None,
         cmd_eq = None,
         env_eq = None,
-        ports_eq = None,
+        exposed_ports_eq = None,
         user_eq = None,
         workdir_eq = None,
         architecture_eq = None,
@@ -38,9 +43,9 @@ def assert_oci_config(
     if env_eq:
         config["Env"] = ["=".join(e) for e in env_eq.items()]
     if workdir_eq:
-        config["Workdir"] = workdir_eq
-    if ports_eq:
-        config["Ports"] = ports_eq
+        config["WorkingDir"] = workdir_eq
+    if exposed_ports_eq:
+        config["ExposedPorts"] = {port: {} for port in exposed_ports_eq}
     if user_eq:
         config["User"] = user_eq
     if labels_eq:
@@ -98,3 +103,79 @@ def assert_oci_config(
         }),
         out = name,
     )
+
+def assert_oci_image_command(
+        name,
+        image,
+        args = [],
+        tags = [],
+        exit_code_eq = None,
+        output_eq = None):
+    "assert a that a container works with the given command."
+
+    tag = "oci.local/assert/" + native.package_name().replace("/", "_") + ":latest"
+    oci_tarball(
+        name = name + "_tarball",
+        image = image,
+        repo_tags = [tag],
+        tags = tags + ["manual"],
+    )
+
+    native.filegroup(
+        name = name + "_tarball_archive",
+        srcs = [name + "_tarball"],
+        output_group = "tarball",
+        tags = tags + ["manual"],
+    )
+
+    docker_args = " ".join(['"' + arg + '"' for arg in ([tag] + args)])
+
+    native.genrule(
+        name = name + "_gen",
+        srcs = [
+            name + "_tarball_archive",
+        ],
+        output_to_bindir = True,
+        cmd = """
+docker=$(location //examples:docker_cli)
+$$docker load -i $(location :{name}_tarball_archive)
+container_id=$$($$docker run -d {docker_args})
+$$docker wait $$container_id > $(location :{name}_exit_code)
+$$docker logs $$container_id > $(location :{name}_output)
+
+""".format(name = name, docker_args = docker_args),
+        outs = [
+            name + "_output",
+            name + "_exit_code",
+        ],
+        target_compatible_with = TARGET_COMPATIBLE_WITH,
+        tools = ["//examples:docker_cli"],
+    )
+
+    if output_eq:
+        write_file(
+            name = name + "_output_eq_expected",
+            out = name + "_output_eq_expected.txt",
+            content = [output_eq],
+            tags = tags + ["manual"],
+        )
+        diff_test(
+            name = name + "_assert_output_eq",
+            file1 = name + "_output",
+            file2 = name + "_output_eq_expected",
+            tags = tags,
+        )
+
+    if exit_code_eq != None:
+        write_file(
+            name = name + "_exit_code_expected",
+            out = name + "_exit_code_expected.txt",
+            content = [str(exit_code_eq) + "\n"],
+            tags = tags + ["manual"],
+        )
+        diff_test(
+            name = name + "_assert_exit_code_eq",
+            file1 = name + "_exit_code",
+            file2 = name + "_exit_code_expected",
+            tags = tags,
+        )

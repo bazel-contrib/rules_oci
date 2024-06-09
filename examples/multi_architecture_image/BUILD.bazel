@@ -1,9 +1,9 @@
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("//oci:defs.bzl", "oci_image", "oci_image_index")
 load(":transition.bzl", "multi_arch")
 
-pkg_tar(
+tar(
     name = "app",
     srcs = ["test.bash"],
 )
@@ -11,9 +11,9 @@ pkg_tar(
 oci_image(
     name = "image",
     base = "@ubuntu",
-    cmd = ["test.bash"],
+    cmd = ["examples/multi_architecture_image/test.bash"],
     entrypoint = ["bash"],
-    tars = ["app.tar"],
+    tars = [":app"],
 )
 
 multi_arch(
@@ -43,5 +43,5 @@ genrule(
 assert_contains(
     name = "check_digest",
     actual = ":hash",
-    expected = "sha256:57e3811e25d18fe08b36359a690c100e231ad0af4d18ad76e26016b11e25450c",
+    expected = "sha256:9163db354e086c5ef0170ce0ec318312dde887f660552c4a438926863d473d3c",
 )

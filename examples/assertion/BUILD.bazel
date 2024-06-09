@@ -1,8 +1,10 @@
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("//oci:defs.bzl", "oci_image", "oci_tarball")
-load(":assert.bzl", "assert_oci_config")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("//examples:assert.bzl", "assert_oci_config")
 
 # Case 1: image name containing a capital case.
 oci_image(
@@ -124,6 +126,168 @@ assert_oci_config(
         "REFS": "VAL:VAL:",
     },
     image = ":case6",
+)
+
+# Case 7: oci_image inheriting env from the base and appending to it.
+oci_image(
+    name = "case7_base",
+    architecture = "arm64",
+    env = {
+        "PATH": "/usr/local/bin",
+    },
+    os = "linux",
+)
+
+oci_image(
+    name = "case7",
+    base = ":case7_base",
+    env = {
+        "PATH": "${PATH}:/usr/bin",
+        "PATH1": "$PATH:/test",
+        "PATH2": "/prepend:${PATH}:/test2",
+        "PATH3": "key1=value1 key2=value2",
+    },
+)
+
+assert_oci_config(
+    name = "test_case7",
+    env_eq = {
+        "PATH": "/usr/local/bin:/usr/bin",
+        "PATH1": "/usr/local/bin:/usr/bin:/test",
+        "PATH2": "/prepend:/usr/local/bin:/usr/bin:/test2",
+        "PATH3": "key1=value1 key2=value2",
+    },
+    image = ":case7",
+)
+
+# Case 8: Test all attributes of oci_image
+
+# buildifier: leave-alone
+oci_image(
+    name = "case8_base",
+    # platform attributes
+    os = "linux",
+    architecture = "amd64",
+    variant = "v8",
+    # entrypoint and args
+    entrypoint = ["/custom_bin"],
+    cmd = [
+        "--arg1",
+        "--arg2",
+    ],
+    # env
+    env = {
+        "ENV": "/test",  # ENV=/test
+        "ENV2": "/test:$ENV",  # ENV=/test:/test
+        "PATH": "/usr/local/bin:$PATH",  # PATH=/usr/local/bin:
+    },
+    # exposed_ports
+    exposed_ports = [
+        "1234/tcp",
+        "5678/udp",
+        "5000",
+    ],
+    # user & workdir
+    user = "root",
+    workdir = "/root",
+    # labels & annotations
+    labels = {
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
+    annotations = {
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
+)
+
+oci_image(
+    name = "case8",
+    base = ":case8_base",
+    # adding a new env should preserve the previously set envs!
+    env = {
+        "LOCAL": "true",  # LOCAL=/test
+    },
+)
+
+assert_oci_config(
+    name = "test_case8",
+    cmd_eq = [
+        "--arg1",
+        "--arg2",
+    ],
+    entrypoint_eq = [
+        "/custom_bin",
+    ],
+    env_eq = {
+        "ENV": "/test",
+        "ENV2": "/test:/test",
+        "PATH": "/usr/local/bin:",
+        "LOCAL": "true",
+    },
+    exposed_ports_eq = [
+        "1234/tcp",
+        "5678/udp",
+        "5000",
+    ],
+    image = ":case8",
+    labels_eq = {
+        "org.opencontainers.image.version": "0.0.0",
+        "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
+    },
+    user_eq = "root",
+    workdir_eq = "/root",
+)
+
+# Case 9: Test oci_tarball repotags
+
+repo_tags = [
+    "gcr.io/empty_base:latest",
+    "two:is_a_company",
+    "three:is_a_crowd",  # Used to test support for more than two repo_tags.
+]
+
+oci_image(
+    name = "case9_image",
+    architecture = "amd64",
+    os = "linux",
+)
+
+# Intended to be `bazel run` to load the tarball into a container runtime.
+# Produces only an mtree specification as the default output.
+oci_tarball(
+    name = "case9_tarball",
+    image = ":case9_image",
+    repo_tags = repo_tags,
+)
+
+# Not typically recommended: ask the tarball rule to write the .tar file
+# that would have been created when `bazel run`.
+filegroup(
+    name = "case9_tarball.tar",
+    srcs = [":case9_tarball"],
+    output_group = "tarball",
+)
+
+genrule(
+    name = "case9_manifest",
+    srcs = [":case9_tarball.tar"],
+    outs = ["case9_manifest.json"],
+    cmd = "$(BSDTAR_BIN) -xOf ./$(location :case9_tarball.tar) manifest.json > $@",
+    toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
+)
+
+write_file(
+    name = "case9_expected_repo_tags",
+    out = "case9_expected_repo_tags.json",
+    content = [str(repo_tags)],
+)
+
+assert_json_matches(
+    name = "test_case9",
+    file1 = ":case9_manifest",
+    file2 = ":case9_expected_repo_tags",
+    filter1 = ".[0].RepoTags",
 )
 
 # build them as test.
