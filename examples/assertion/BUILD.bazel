@@ -290,6 +290,28 @@ assert_json_matches(
     filter1 = ".[0].RepoTags",
 )
 
+# Case 10: An oci_image directly fed into oci_tarball
+oci_image(
+    name = "case10",
+    architecture = "arm64",
+    os = "linux",
+)
+
+oci_tarball(
+    name = "case10_tarball",
+    image = ":case10",
+    repo_tags = ["case10:example"],
+)
+
+genrule(
+    name = "case10_run",
+    outs = ["out.txt"],
+    cmd = """
+$(location :case10_tarball) && echo "worked" > $@
+""",
+    tools = [":case10_tarball"],
+)
+
 # build them as test.
 build_test(
     name = "test",
@@ -299,5 +321,6 @@ build_test(
         ":case3",
         ":case4_tarball_tar",
         ":case5_tarball_tar",
+        ":case10_run",
     ],
 )

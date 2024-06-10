@@ -17,7 +17,10 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
-    deps = [":util"],
+    deps = [
+        ":util",
+        "@aspect_bazel_lib//lib:paths",
+    ],
 )
 
 bzl_library(

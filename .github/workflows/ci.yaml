@@ -129,8 +129,11 @@ jobs:
 
       - name: Configure Remote Docker Host
         if: ${{ matrix.os == 'macos-13' }}
-        run: echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
-        
+        run: |
+          echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
+          curl -fsSL https://download.docker.com/mac/static/stable/x86_64/docker-23.0.0.tgz | tar -xOvf - docker/docker > /usr/local/bin/docker
+          chmod +x /usr/local/bin/docker
+
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
         env:
