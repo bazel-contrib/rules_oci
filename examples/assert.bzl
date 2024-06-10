@@ -104,6 +104,7 @@ def assert_oci_config(
         out = name,
     )
 
+# buildifier: disable=function-docstring-args
 def assert_oci_image_command(
         name,
         image,
@@ -121,24 +122,14 @@ def assert_oci_image_command(
         tags = tags + ["manual"],
     )
 
-    native.filegroup(
-        name = name + "_tarball_archive",
-        srcs = [name + "_tarball"],
-        output_group = "tarball",
-        tags = tags + ["manual"],
-    )
-
     docker_args = " ".join(['"' + arg + '"' for arg in ([tag] + args)])
 
     native.genrule(
         name = name + "_gen",
-        srcs = [
-            name + "_tarball_archive",
-        ],
         output_to_bindir = True,
         cmd = """
 docker=$(location //examples:docker_cli)
-$$docker load -i $(location :{name}_tarball_archive)
+$(location :{name}_tarball)
 container_id=$$($$docker run -d {docker_args})
 $$docker wait $$container_id > $(location :{name}_exit_code)
 $$docker logs $$container_id > $(location :{name}_output)
@@ -149,7 +140,7 @@ $$docker logs $$container_id > $(location :{name}_output)
             name + "_exit_code",
         ],
         target_compatible_with = TARGET_COMPATIBLE_WITH,
-        tools = ["//examples:docker_cli"],
+        tools = [name + "_tarball", "//examples:docker_cli"],
     )
 
     if output_eq:

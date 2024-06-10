@@ -19,6 +19,7 @@ docker run --rm my-repository:latest
 ```
 """
 
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("//oci/private:util.bzl", "util")
 
 doc = """Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
@@ -93,28 +94,29 @@ attrs = {
         allow_single_file = True,
     ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
+    "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _tarball_impl(ctx):
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"].jqinfo
+    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
 
     image = ctx.file.image
-    mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
-    bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
-    executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
-
-    # Represents either manifest.json or index.json depending on the image format
-    image_json = ctx.actions.declare_file("{}/_tarball.json".format(ctx.label.name))
     repo_tags = ctx.file.repo_tags
 
+    mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
+    executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+    manifest_json = ctx.actions.declare_file("{}/manifest.json".format(ctx.label.name))
+
+    # Represents either manifest.json or index.json depending on the image format
     substitutions = {
         "{{format}}": ctx.attr.format,
-        "{{jq_path}}": jq.bin.path,
+        "{{jq_path}}": jq.jqinfo.bin.path,
         "{{tar}}": bsdtar.tarinfo.binary.path,
         "{{image_dir}}": image.path,
         "{{output}}": mtree_spec.path,
-        "{{json_out}}": image_json.path,
+        "{{json_out}}": manifest_json.path,
     }
 
     if ctx.attr.repo_tags:
@@ -131,26 +133,13 @@ def _tarball_impl(ctx):
         direct = [image, repo_tags, executable],
         transitive = [bsdtar.default.files],
     )
-    mtree_outputs = [mtree_spec, image_json]
+    mtree_outputs = [mtree_spec, manifest_json]
     ctx.actions.run(
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
         inputs = mtree_inputs,
         outputs = mtree_outputs,
-        tools = [jq.bin],
+        tools = [jq.jqinfo.bin],
         mnemonic = "OCITarballManifest",
-    )
-
-    exe = ctx.actions.declare_file(ctx.label.name + ".sh")
-
-    ctx.actions.expand_template(
-        template = ctx.file._run_template,
-        output = exe,
-        substitutions = {
-            "{{TAR}}": bsdtar.tarinfo.binary.short_path,
-            "{{mtree_path}}": mtree_spec.path,
-            "{{loader}}": ctx.file.loader.path if ctx.file.loader else "",
-        },
-        is_executable = True,
     )
 
     # This action produces a large output and should rarely be used as it puts load on the cache.
@@ -169,11 +158,36 @@ def _tarball_impl(ctx):
         mnemonic = "OCITarball",
     )
 
+    # Create an executable runner script that will create the tarball at runtime,
+    # as opposed to at build to avoid uploading large artifacts to remote cache.
+    runnable_loader = ctx.actions.declare_file(ctx.label.name + ".sh")
+
+    runtime_deps = []
+    if ctx.file.loader:
+        runtime_deps.append(ctx.file.loader)
+    runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
+    runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
+
+    ctx.actions.expand_template(
+        template = ctx.file._run_template,
+        output = runnable_loader,
+        substitutions = {
+            "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+            "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
+            "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
+            "{{loader}}": to_rlocation_path(ctx, ctx.file.loader) if ctx.file.loader else "",
+            "{{manifest_root}}": manifest_json.root.path,
+            "{{image_root}}": image.root.path,
+            "{{workspace_name}}": ctx.workspace_name,
+        },
+        is_executable = True,
+    )
+
     return [
         DefaultInfo(
             files = depset([mtree_spec]),
-            runfiles = ctx.runfiles(files = [ctx.file.loader] if ctx.file.loader else [], transitive_files = tar_inputs),
-            executable = exe,
+            runfiles = runfiles,
+            executable = runnable_loader,
         ),
         OutputGroupInfo(tarball = depset([tarball])),
     ]
