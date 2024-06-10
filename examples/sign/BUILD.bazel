@@ -1,8 +1,8 @@
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("//cosign:defs.bzl", "cosign_sign")
 load("//oci:defs.bzl", "oci_image")
 
-pkg_tar(
+tar(
     name = "app",
     srcs = ["app.bash"],
 )
@@ -10,8 +10,8 @@ pkg_tar(
 oci_image(
     name = "image",
     base = "@ubuntu",
-    cmd = ["app.bash"],
-    tars = [":app.tar"],
+    cmd = ["examples/sign/app.bash"],
+    tars = [":app"],
 )
 
 cosign_sign(

@@ -1,7 +1,8 @@
 load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
-load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@configure_buildx//:defs.bzl", "BUILDER_NAME", "TARGET_COMPATIBLE_WITH")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
 
 native_binary(
     name = "buildx",
@@ -21,34 +22,68 @@ run_binary(
         "build",
         "./examples/dockerfile",
         "--builder",
-        "container",
+        BUILDER_NAME,
         "--output=type=oci,tar=false,dest=$@",
     ],
     execution_requirements = {"local": "1"},
+    mnemonic = "BuildDocker",
     out_dirs = ["base"],
-    tags = ["manual"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
+    target_compatible_with = TARGET_COMPATIBLE_WITH,
     tool = ":buildx",
 )
 
 oci_image(
     name = "image",
     base = ":base",
-    tags = ["manual"],
 )
 
-oci_tarball(
-    name = "tar",
+assert_oci_config(
+    name = "assert_metadata",
+    cmd_eq = ["/app/say.py"],
+    entrypoint_eq = [],
     image = ":image",
-    repo_tags = [],
-    tags = ["manual"],
 )
 
-container_structure_test(
-    name = "test",
-    configs = ["test.yaml"],
+assert_oci_image_command(
+    name = "assert_jq_works",
+    args = [
+        "jq",
+        "--version",
+    ],
     image = ":image",
-    tags = ["manual"],
+    exit_code_eq = 0,
+    output_eq = "jq-1.6\n",
+)
+
+assert_oci_image_command(
+    name = "assert_apt_lists_still_exist",
+    args = [
+        "file",
+        "/var/lib/apt/lists",
+    ],
+    image = ":image",
+    exit_code_eq = 0,
+    output_eq = "/var/lib/apt/lists: directory\n",
+)
+
+assert_oci_image_command(
+    name = "assert_cow_says_moo",
+    args = [
+        "python",
+        "/app/say.py",
+    ],
+    image = ":image",
+    exit_code_eq = 0,
+    output_eq = """\
+  ____
+| moo! |
+  ====
+    \\
+     \\
+       ^__^
+       (oo)\\_______
+       (__)\\       )\\/\\
+           ||----w |
+           ||     ||
+""",
 )

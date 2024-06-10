@@ -1,7 +1,7 @@
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("//oci:defs.bzl", "oci_image", "oci_tarball")
 
-pkg_tar(
+tar(
     name = "app",
     srcs = ["test.bash"],
 )
@@ -9,8 +9,8 @@ pkg_tar(
 oci_image(
     name = "image",
     base = "@ubuntu",
-    cmd = ["test.sh"],
-    tars = ["app.tar"],
+    cmd = ["examples/tarball_incremental_loader/test.sh"],
+    tars = [":app"],
 )
 
 oci_tarball(

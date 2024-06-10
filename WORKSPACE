@@ -38,11 +38,6 @@ load("@bazel_skylib//lib:unittest.bzl", "register_unittest_toolchains")
 
 register_unittest_toolchains()
 
-load("@container_structure_test//:repositories.bzl", "container_structure_test_register_toolchain")
-
-## Setup container structure test
-container_structure_test_register_toolchain(name = "container_structure_test")
-
 ## Setup rules_go
 load("@io_bazel_rules_go//go:deps.bzl", "go_register_toolchains", "go_rules_dependencies")
 
@@ -55,33 +50,9 @@ load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 
 gazelle_dependencies()
 
-## Setup rules_pkg
-load("@rules_pkg//:deps.bzl", "rules_pkg_dependencies")
-
-rules_pkg_dependencies()
-
-## Unit test repositories
-
-# For sign_external test
-new_local_repository(
-    name = "empty_image",
-    build_file = "//examples/sign_external:BUILD.template",
-    path = "examples/sign_external/workspace",
-)
-
-# For attest_external test
-new_local_repository(
-    name = "example_sbom",
-    build_file = "//examples/attest_external:BUILD.template",
-    path = "examples/attest_external/workspace",
-)
-
-# For testing fetching from various registries
-load(":fetch.bzl", "fetch_images")
+## Setup test repositories
+load(":fetch.bzl", "fetch_images", "fetch_test_repos")
 
 fetch_images()
 
-### Fetch buildx
-load("//examples/dockerfile:buildx.bzl", "fetch_buildx")
-
-fetch_buildx()
+fetch_test_repos()

@@ -4,7 +4,7 @@
 
 build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
-test --test_env=DOCKER_HOST
+common --test_env=DOCKER_HOST --action_env=DOCKER_HOST --repo_env=DOCKER_HOST
 
 # Disable bzlmod lockfile
 common --lockfile_mode=off

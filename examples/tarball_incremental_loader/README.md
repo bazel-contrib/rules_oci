@@ -8,7 +8,8 @@ This an example demonstrating a hack different than the rules_docker and https:/
 - Uses crane to push the tarball efficiently to the local registry. (loses the repo_tags)
 - Pulls the image from the local registry to Docker daemon.
 
-Demo: 
+Demo:
+
 ```
 INFO: Analyzed target //examples/incremental_load:tarball (0 packages loaded, 0 targets configured).
 INFO: Found 1 target...
@@ -26,6 +27,5 @@ localhost:6000/image@sha256:065294fa481b167724c861a328a60dc198bbd7b7ceba3a4cd7e2
 
 bazel run examples/incremental_load:tarball  0.17s user 0.12s system 34% cpu 0.821 total
 ```
-
 
 > Disclaimer: This hasn't been tested with Remote Execution.

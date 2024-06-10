@@ -1,26 +1,11 @@
-new_local_repository(
-    name = "empty_image",  # for sign_external test
-    build_file = "//examples/sign_external:BUILD.template",
-    path = "examples/sign_external/workspace",
-)
-
-new_local_repository(
-    name = "example_sbom",  # for attest_external test
-    build_file = "//examples/attest_external:BUILD.template",
-    path = "examples/attest_external/workspace",
-)
-
-# Fetching various images
-load(":fetch.bzl", "fetch_images")
+## Setup test repositories
+load(":fetch.bzl", "fetch_images", "fetch_test_repos")
 
 fetch_images()
+
+fetch_test_repos()
 
 ### Setup rules_oci cosign
 load("//cosign:repositories.bzl", "cosign_register_toolchains")
 
 cosign_register_toolchains(name = "oci_cosign")
-
-### Fetch buildx
-load("//examples/dockerfile:buildx.bzl", "fetch_buildx")
-
-fetch_buildx()

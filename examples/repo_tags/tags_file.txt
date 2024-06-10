@@ -1,6 +1,0 @@
-gcr.io/empty_base:latest
-
-
-two:is_a_company
-
-three:is_a_crowd

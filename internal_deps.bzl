@@ -58,23 +58,3 @@ def rules_oci_internal_deps():
             "https://github.com/bazelbuild/stardoc/releases/download/0.5.6/stardoc-0.5.6.tar.gz",
         ],
     )
-
-    http_archive(
-        name = "container_structure_test",
-        sha256 = "2da13da4c4fec9d4627d4084b122be0f4d118bd02dfa52857ff118fde88e4faa",
-        strip_prefix = "container-structure-test-1.16.0",
-        urls = ["https://github.com/GoogleContainerTools/container-structure-test/archive/v1.16.0.zip"],
-        patches = [
-            "//oci/tests:cst_exclusive.patch",
-        ],
-        patch_args = ["-p1"],
-    )
-
-    http_archive(
-        name = "rules_pkg",
-        urls = [
-            "https://github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
-            "https://mirror.bazel.build/github.com/bazelbuild/rules_pkg/releases/download/0.7.0/rules_pkg-0.7.0.tar.gz",
-        ],
-        sha256 = "8a298e832762eda1830597d64fe7db58178aa84cd5926d76d5b744d6558941c2",
-    )
