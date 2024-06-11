@@ -130,63 +130,86 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         "password": response["Secret"],
     }
 
+
 def _oauth2(rctx, realm, scope, service, secret):
-    if not rctx.os.environ.get("SUPPORT_OAUTH2", False):
-        fail("oauth2 support is disabled (set SUPPORT_OAUTH2 to True)")
+    if rctx.os.name.startswith("windows") and rctx.which("powershell"):
+        executable = "oauth2.ps1"
+        rctx.file(
+            executable,
+            content = """\
+param (
+    [string]$url,
+    [string]$service,
+    [string]$scope,
+    [string]$refresh_token
+)
 
-    python_bin = "python3"
+try {
+    $response = Invoke-RestMethod -Uri $url -Method Post -Body @{
+        grant_type = "refresh_token"
+        service = $service
+        scope = $scope
+        refresh_token = $refresh_token
+    } -ErrorAction Stop
 
-    # oauth2 requires python to be available in the env
-    if not rctx.which(python_bin):
-        fail("oauth2 failed: to use oauth2, make sure %s is available" % python_bin)
-
-    # oauth2 requires "requests" package installed alongside python
-    result = rctx.execute([python_bin, "-c", "import requests"])
-    if result.return_code:
-        fail("oauth2 failed: to use oauth2, make sure \"requests\" package is installed")
-
-    executable = "oauth2.py"
-
-    rctx.file(
-        executable,
-        content = """\
-import json
-import requests
-import sys
-
-if __name__ == "__main__":
-    url = sys.argv[1]
-    
-    params = {}
-    params["grant_type"] = "refresh_token"
-    params["service"] = sys.argv[2]
-    params["scope"] = sys.argv[3]
-    params["refresh_token"] = sys.argv[4]
-    
-    response = requests.post(url, data=params)
-
-    ret = {
-        "code": response.status_code,
-    }
-
-    if response.status_code == 200:
-        ret["response"] = json.loads(response.text.encode('utf8'))
-    else:
-        ret["response"] = {}
-
-    print(json.dumps(ret))
+    $jsonResponse = $response | ConvertTo-Json
+    echo $jsonResponse
+} catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Error "oauth2 failed: PowerShell request failed with error: $ErrorMessage"
+    exit 1
+}
 """
-    )
-    
-    result = rctx.execute([python_bin, rctx.path(executable), realm, service, scope, secret])
+        )
+        result = rctx.execute(["powershell", "-File", rctx.path(executable), realm, service, scope, secret])
+    elif rctx.which("curl"):
+        executable = "oauth2.sh"
+        rctx.file(
+            executable,
+            content = """\
+url=$1
+service=$2
+scope=$3
+refresh_token=$4
+
+response=$(curl --silent --show-error --fail --request POST --data "grant_type=refresh_token&service=$service&scope=$scope&refresh_token=$refresh_token" $url)
+
+if [ $? -ne 0 ]; then
+    echo "oauth2 failed: curl request failed" >&2
+    exit 1
+fi
+
+echo "$response"
+"""
+        )
+        result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
+    elif rctx.which("wget"):
+        executable = "oauth2.sh"
+        rctx.file(
+            executable,
+            content = """\
+url=$1
+service=$2
+scope=$3
+refresh_token=$4
+
+response=$(wget --quiet --output-document=- --post-data "grant_type=refresh_token&service=$service&scope=$scope&refresh_token=$refresh_token" $url)
+
+if [ $? -ne 0 ]; then
+    echo "oauth2 failed: wget request failed" >&2
+    exit 1
+fi
+
+echo "$response"
+"""
+        )
+        result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
+    else:
+        fail("oauth2 failed, could not find either of: curl, wget, powershell")
+
     if result.return_code:
         fail("oauth2 failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
-        
-    response = json.decode(result.stdout)
-    if response["code"] != 200:
-        fail("oauth2 failed: status code %s != 200" % response["code"])
-
-    return response
+    return result.stdout
 
 def _get_auth(rctx, state, registry):
     # if we have a cached auth for this registry then just return it.
@@ -259,7 +282,7 @@ def _get_token(rctx, state, registry, repository):
             
             auth = None
             if pattern["login"] == "<token>":
-                ret = _oauth2(
+                response = _oauth2(
                     rctx = rctx,
                     realm = "https://" + www_authenticate["realm"].format(registry = registry),
                     scope = www_authenticate["scope"].format(repository = repository),
@@ -269,7 +292,7 @@ def _get_token(rctx, state, registry, repository):
 
                 rctx.file(
                     "www-authenticate.json",
-                    content = json.encode_indent(ret["response"]),
+                    content = response,
                     executable = False,
                 )
             else:
