@@ -65,6 +65,7 @@ def _oci_image_index_impl(ctx):
         arguments = [args],
         outputs = [output],
         executable = launcher,
+        use_default_shell_env = True,
         tools = [yq.yqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",

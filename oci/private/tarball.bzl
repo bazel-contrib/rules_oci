@@ -101,6 +101,7 @@ def _tarball_impl(ctx):
         outputs = [tarball],
         tools = [yq_bin],
         mnemonic = "OCITarball",
+        use_default_shell_env = True,
         progress_message = "OCI Tarball %{label}",
     )
 
