@@ -166,7 +166,7 @@ for ARG in "$@"; do
   --annotations=*)
     get_manifest |
       jq --rawfile annotations "${ARG#--annotations=}" \
-        '.annotations += ($annotations | split("\n") | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' |
+      '.annotations += ([($annotations | split("\n") | .[] | select(. != ""))] | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' |
       update_manifest
     ;;
   *)
