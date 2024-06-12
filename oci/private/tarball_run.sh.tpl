@@ -3,6 +3,8 @@ set -o pipefail -o errexit -o nounset
 
 {{BASH_RLOCATION_FUNCTION}}
 
+runfiles_export_envvars
+
 readonly TAR="$(rlocation "{{tar}}")"
 readonly MTREE="$(rlocation "{{mtree_path}}")"
 readonly LOADER="$(rlocation "{{loader}}")"

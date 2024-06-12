@@ -290,7 +290,7 @@ assert_json_matches(
     filter1 = ".[0].RepoTags",
 )
 
-# Case 10: An oci_image directly fed into oci_tarball
+# Case 10: an oci_tarball run as part of a genrule
 oci_image(
     name = "case10",
     architecture = "arm64",
@@ -310,6 +310,38 @@ genrule(
 $(location :case10_tarball) && echo "worked" > $@
 """,
     tools = [":case10_tarball"],
+)
+
+# Case 11: an oci_tarball run as part of sh_test
+oci_image(
+    name = "case11",
+    architecture = "arm64",
+    os = "linux",
+)
+
+oci_tarball(
+    name = "case11_tarball",
+    image = ":case11",
+    repo_tags = ["case11:example"],
+)
+
+write_file(
+    name = "case11_test_sh",
+    out = "case11_test.sh",
+    content = [
+        "output=$($1)",
+        'if [[ "$output" != "Loaded image: case11:example" ]]; then',
+        '   echo "failed to load: $output"',
+        "   exit 1",
+        "fi",
+    ],
+)
+
+sh_test(
+    name = "case11_test",
+    srcs = ["case11_test.sh"],
+    args = ["$(location :case11_tarball)"],
+    data = [":case11_tarball"],
 )
 
 # build them as test.
