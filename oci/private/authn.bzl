@@ -164,7 +164,6 @@ refresh_token=$4
 response=$(curl --silent --show-error --fail --request POST --data "grant_type=refresh_token&service=$service&scope=$scope&refresh_token=$refresh_token" $url)
 
 if [ $? -ne 0 ]; then
-    echo "oauth2 failed: curl request failed" >&2
     exit 1
 fi
 
@@ -180,7 +179,6 @@ refresh_token=$4
 response=$(wget --quiet --output-document=- --post-data "grant_type=refresh_token&service=$service&scope=$scope&refresh_token=$refresh_token" $url)
 
 if [ $? -ne 0 ]; then
-    echo "oauth2 failed: wget request failed" >&2
     exit 1
 fi
 
@@ -204,7 +202,7 @@ def _oauth2(rctx, realm, scope, service, secret):
         fail("oauth2 failed, could not find either of: curl, wget, powershell")
 
     if result.return_code:
-        fail("oauth2 failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+        fail("oauth2 failed:\nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
     return result.stdout
 
 def _get_auth(rctx, state, registry):
