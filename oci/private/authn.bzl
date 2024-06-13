@@ -260,6 +260,14 @@ def _get_auth(rctx, state, registry):
 
     return pattern
 
+IDENTITY_TOKEN_WARNING = """\
+OAuth2 support for oci_pull is highly experimental and is not enabled by default.
+
+We may change or abandon it without a notice. Use it at your own peril!
+
+To enable this feature, add `common --repo_env=OCI_ENABLE_OAUTH2_SUPPORT=1` to the `.bazelrc` file.
+"""
+
 def _get_token(rctx, state, registry, repository):
     pattern = _get_auth(rctx, state, registry)
 
@@ -275,9 +283,12 @@ def _get_token(rctx, state, registry, repository):
             # if a token for this repository and registry is acquired, use that instead.
             if url in state["token"]:
                 return state["token"][url]
-            
+
             auth = None
             if pattern["login"] == "<token>":
+                if not rctx.getenv("OCI_ENABLE_OAUTH2_SUPPORT"):
+                    fail(IDENTITY_TOKEN_WARNING)
+
                 response = _oauth2(
                     rctx = rctx,
                     realm = "https://" + www_authenticate["realm"].format(registry = registry),
