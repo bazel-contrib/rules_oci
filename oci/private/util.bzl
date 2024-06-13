@@ -171,10 +171,7 @@ if defined args (
     return win_launcher
 
 def _file_exists(rctx, path):
-    if rctx.os.name.startswith("windows"):
-        result = rctx.execute(["cmd", "/c", "if exist {0} (exit 0) else (exit 1)".format(path)])
-    else:
-        result = rctx.execute(["stat", path])
+    result = rctx.execute(["stat", path])
     return result.return_code == 0
 
 _INDEX_JSON_TMPL="""\
