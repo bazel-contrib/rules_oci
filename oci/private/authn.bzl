@@ -130,13 +130,7 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         "password": response["Secret"],
     }
 
-
-def _oauth2(rctx, realm, scope, service, secret):
-    if rctx.os.name.startswith("windows") and rctx.which("powershell"):
-        executable = "oauth2.ps1"
-        rctx.file(
-            executable,
-            content = """\
+OAUTH_2_SCRIPT_POWERSHELL = """\
 param (
     [string]$url,
     [string]$service,
@@ -160,13 +154,8 @@ try {
     exit 1
 }
 """
-        )
-        result = rctx.execute(["powershell", "-File", rctx.path(executable), realm, service, scope, secret])
-    elif rctx.which("curl"):
-        executable = "oauth2.sh"
-        rctx.file(
-            executable,
-            content = """\
+
+OAUTH_2_SCRIPT_CURL = """\
 url=$1
 service=$2
 scope=$3
@@ -181,13 +170,8 @@ fi
 
 echo "$response"
 """
-        )
-        result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
-    elif rctx.which("wget"):
-        executable = "oauth2.sh"
-        rctx.file(
-            executable,
-            content = """\
+
+OAUTH_2_SCRIPT_WGET = """\
 url=$1
 service=$2
 scope=$3
@@ -202,7 +186,19 @@ fi
 
 echo "$response"
 """
-        )
+
+def _oauth2(rctx, realm, scope, service, secret):
+    if rctx.os.name.startswith("windows") and rctx.which("powershell"):
+        executable = "oauth2.ps1"
+        rctx.file(executable, content = OAUTH_2_SCRIPT_POWERSHELL)
+        result = rctx.execute(["powershell", "-File", rctx.path(executable), realm, service, scope, secret])
+    elif rctx.which("curl"):
+        executable = "oauth2.sh"
+        rctx.file(executable, content = OAUTH_2_SCRIPT_CURL)
+        result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
+    elif rctx.which("wget"):
+        executable = "oauth2.sh"
+        rctx.file(executable, content = OAUTH_2_SCRIPT_WGET)
         result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
     else:
         fail("oauth2 failed, could not find either of: curl, wget, powershell")
