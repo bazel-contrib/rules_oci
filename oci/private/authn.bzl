@@ -2,6 +2,7 @@
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
+load("@bazel_skylib//lib:versions.bzl", "versions")
 load(":util.bzl", "util")
 
 
@@ -284,8 +285,12 @@ def _get_token(rctx, state, registry, repository):
 
             auth = None
             if pattern["login"] == "<token>":
-                if not rctx.getenv("OCI_ENABLE_OAUTH2_SUPPORT"):
-                    fail(IDENTITY_TOKEN_WARNING)
+                if versions.is_at_least("7.0.0", versions.get() or "0.0.0"):
+                    if not rctx.getenv("OCI_ENABLE_OAUTH2_SUPPORT"):
+                        fail(IDENTITY_TOKEN_WARNING)
+                else:
+                    if not rctx.os.environ.get("OCI_ENABLE_OAUTH2_SUPPORT"):
+                        fail(IDENTITY_TOKEN_WARNING)
 
                 response = _oauth2(
                     rctx = rctx,
