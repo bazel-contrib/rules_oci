@@ -239,6 +239,8 @@ def _get_auth(rctx, state, registry):
                     login, sep, password = base64.decode(raw_auth).partition(":")
                     if not sep:
                         fail("auth string must be in form username:password")
+                    if not password and "identitytoken" in auth_val:
+                        password = auth_val["identitytoken"]
                     pattern = {
                         "type": "basic",
                         "login": login,
