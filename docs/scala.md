@@ -7,9 +7,7 @@ You can request the *_deploy.jar output of a scala_binary target, which is a sin
 
 ## Example
 
-An example is needed! Please consider contributing one. :pray:
-
-For example, we will use `App.scala` like below:
+For this example, we will use `App.scala` like below:
 
 **App.scala**
 
