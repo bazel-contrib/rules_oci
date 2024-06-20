@@ -22,7 +22,7 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
-def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, **kwargs):
+def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, volumes = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
@@ -44,6 +44,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         cmd: Command & argument configured by default in the running container. See documentation above.
         entrypoint: Entrypoint configured by default in the running container. See documentation above.
         exposed_ports: Exposed ports in the running container. See documentation above.
+        volumes: Volumes for the container. See documentation above.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
@@ -109,6 +110,16 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         )
         exposed_ports = exposed_ports_label
 
+    if types.is_list(volumes):
+        volumes_label = "_{}_write_volumes".format(name)
+        write_file(
+            name = volumes_label,
+            out = "_{}.volumes.txt".format(name),
+            content = [",".join(volumes)],
+            **forwarded_kwargs
+        )
+        volumes = volumes_label
+
     oci_image_rule(
         name = name,
         annotations = annotations,
@@ -117,6 +128,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         cmd = cmd,
         entrypoint = entrypoint,
         exposed_ports = exposed_ports,
+        volumes = volumes,
         **kwargs
     )
 

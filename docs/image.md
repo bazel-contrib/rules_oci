@@ -14,7 +14,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 
 <pre>
 oci_image_rule(<a href="#oci_image_rule-name">name</a>, <a href="#oci_image_rule-annotations">annotations</a>, <a href="#oci_image_rule-architecture">architecture</a>, <a href="#oci_image_rule-base">base</a>, <a href="#oci_image_rule-cmd">cmd</a>, <a href="#oci_image_rule-entrypoint">entrypoint</a>, <a href="#oci_image_rule-env">env</a>, <a href="#oci_image_rule-exposed_ports">exposed_ports</a>, <a href="#oci_image_rule-labels">labels</a>,
-               <a href="#oci_image_rule-os">os</a>, <a href="#oci_image_rule-tars">tars</a>, <a href="#oci_image_rule-user">user</a>, <a href="#oci_image_rule-variant">variant</a>, <a href="#oci_image_rule-workdir">workdir</a>)
+               <a href="#oci_image_rule-os">os</a>, <a href="#oci_image_rule-tars">tars</a>, <a href="#oci_image_rule-user">user</a>, <a href="#oci_image_rule-variant">variant</a>, <a href="#oci_image_rule-volumes">volumes</a>, <a href="#oci_image_rule-workdir">workdir</a>)
 </pre>
 
 Build an OCI compatible container image.
@@ -83,6 +83,7 @@ oci_image(
 | <a id="oci_image_rule-tars"></a>tars |  List of tar files to add to the image as layers.         Do not sort this list; the order is preserved in the resulting image.         Less-frequently changed files belong in lower layers to reduce the network bandwidth required to pull and push.<br><br>        The authors recommend [dive](https://github.com/wagoodman/dive) to explore the layering of the resulting image.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional | <code>[]</code> |
 | <a id="oci_image_rule-user"></a>user |  The <code>username</code> or <code>UID</code> which is a platform-specific structure that allows specific control over which user the process run as. This acts as a default value to use when the value is not specified when creating a container. For Linux based systems, all of the following are valid: <code>user</code>, <code>uid</code>, <code>user:group</code>, <code>uid:gid</code>, <code>uid:group</code>, <code>user:gid</code>. If <code>group/gid</code> is not specified, the default group and supplementary groups of the given <code>user/uid</code> in <code>/etc/passwd</code> from the container are applied.   | String | optional | <code>""</code> |
 | <a id="oci_image_rule-variant"></a>variant |  The variant of the specified CPU architecture. eg: <code>v6</code>, <code>v7</code>, <code>v8</code>. See: https://github.com/opencontainers/image-spec/blob/main/image-index.md#platform-variants for more.   | String | optional | <code>""</code> |
+| <a id="oci_image_rule-volumes"></a>volumes |  A file containing a comma separated list of volumes. (e.g. /srv/data,/srv/other-data)   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
 | <a id="oci_image_rule-workdir"></a>workdir |  Sets the current working directory of the <code>entrypoint</code> process in the container. This value acts as a default and may be replaced by a working directory specified when creating a container.   | String | optional | <code>""</code> |
 
 
@@ -91,7 +92,7 @@ oci_image(
 ## oci_image
 
 <pre>
-oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-exposed_ports">exposed_ports</a>, <a href="#oci_image-kwargs">kwargs</a>)
+oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-exposed_ports">exposed_ports</a>, <a href="#oci_image-volumes">volumes</a>, <a href="#oci_image-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_image_rule](#oci_image_rule).
@@ -120,6 +121,7 @@ This is similar to the same-named target created by rules_docker's `container_im
 | <a id="oci_image-cmd"></a>cmd |  Command & argument configured by default in the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-entrypoint"></a>entrypoint |  Entrypoint configured by default in the running container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-exposed_ports"></a>exposed_ports |  Exposed ports in the running container. See documentation above.   |  <code>None</code> |
+| <a id="oci_image-volumes"></a>volumes |  Volumes for the container. See documentation above.   |  <code>None</code> |
 | <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule) and [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
 
 

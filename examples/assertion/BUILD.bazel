@@ -187,6 +187,7 @@ oci_image(
         "5678/udp",
         "5000",
     ],
+    volumes = ["/srv/data"],
     # user & workdir
     user = "root",
     workdir = "/root",
@@ -229,6 +230,9 @@ assert_oci_config(
         "1234/tcp",
         "5678/udp",
         "5000",
+    ],
+    volumes_eq = [
+        "/srv/data",
     ],
     image = ":case8",
     labels_eq = {
