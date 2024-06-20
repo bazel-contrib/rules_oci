@@ -24,7 +24,7 @@ function add_image() {
         local platform=$("${JQ}" -c '{"os": .os, "architecture": .architecture, "variant": .variant, "os.version": .["os.version"], "os.features": .["os.features"]} | with_entries(select( .value != null ))' "${image_path}/blobs/${config_blob_path}")
         "${JQ}" --argjson platform "${platform}" \
                 --argjson manifest "${manifest}" \
-                '.manifests |= [$manifest + {"platform": $platform}]'\
+                '.manifests += [$manifest + {"platform": $platform}]'\
                 "${output_path}/manifest_list.json" > "${output_path}/manifest_list.new.json"
         "${COREUTILS}" cp --no-preserve=mode "${output_path}/manifest_list.new.json" "${output_path}/manifest_list.json"
     done
