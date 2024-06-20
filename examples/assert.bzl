@@ -24,6 +24,7 @@ def assert_oci_config(
         cmd_eq = None,
         env_eq = None,
         exposed_ports_eq = None,
+        volumes_eq = None,
         user_eq = None,
         workdir_eq = None,
         architecture_eq = None,
@@ -46,6 +47,8 @@ def assert_oci_config(
         config["WorkingDir"] = workdir_eq
     if exposed_ports_eq:
         config["ExposedPorts"] = {port: {} for port in exposed_ports_eq}
+    if volumes_eq:
+        config["Volumes"] = {volume: {} for volume in volumes_eq}
     if user_eq:
         config["User"] = user_eq
     if labels_eq:

@@ -154,6 +154,9 @@ for ARG in "$@"; do
   --exposed-ports=*)
     CONFIG=$(jq --rawfile ep "${ARG#--exposed-ports=}" '.config.ExposedPorts = ($ep | split(",") | map({key: ., value: {}}) | from_entries)' <<<"$CONFIG")
     ;;
+  --volumes=*)
+    CONFIG=$(jq --rawfile volumes "${ARG#--volumes=}" '.config.Volumes = ($volumes | split(",") | map({key: ., value: {}}) | from_entries)' <<<"$CONFIG")
+    ;;
   --user=*)
     CONFIG=$(jq --arg user "${ARG#--user=}" '.config.User = $user' <<<"$CONFIG")
     ;;

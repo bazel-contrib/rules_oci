@@ -27,7 +27,7 @@ Let's compare them to their rules_oci counterparts:
 - `SHELL`       -> Use `oci_image#entrypoint` instead.
 - `STOPSIGNAL`  -> Not supported
 - `USER`        -> Not supported. Use the tar rule's mechanism for setting gid/uid
-- `VOLUME`      -> See: https://github.com/bazel-contrib/rules_oci/issues/406
+- `VOLUME`      -> Use `oci_image#volumes`
 - `WORKDIR`     -> Use `oci_image#workdir`
 
 
