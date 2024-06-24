@@ -303,8 +303,9 @@ oci_pull = repository_rule(
 )
 
 _MULTI_PLATFORM_IMAGE_ALIAS_TMPL = """\
-exports_files(
-    ["digest"],
+filegroup(
+    name = "digest",
+    srcs = ["digest"],
     visibility = ["//visibility:public"],
 )
 
@@ -319,8 +320,9 @@ alias(
 """
 
 _SINGLE_PLATFORM_IMAGE_ALIAS_TMPL = """\
-exports_files(
-    ["digest"],
+filegroup(
+    name = "digest",
+    srcs = ["digest"],
     visibility = ["//visibility:public"],
 )
 
