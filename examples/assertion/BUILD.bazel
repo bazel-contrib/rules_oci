@@ -3,7 +3,7 @@ load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("//examples:assert.bzl", "assert_oci_config")
 
 # Case 1: image name containing a capital case.
@@ -63,15 +63,15 @@ platform_transition_filegroup(
     target_platform = "//examples:linux_arm64",
 )
 
-oci_tarball(
-    name = "case4_tarball",
+oci_load(
+    name = "case4_load",
     image = ":case4_transition",
     repo_tags = ["case4:example"],
 )
 
 filegroup(
-    name = "case4_tarball_tar",
-    srcs = [":case4_tarball"],
+    name = "case4_tar",
+    srcs = [":case4_load"],
     output_group = "tarball",
 )
 
@@ -82,15 +82,15 @@ oci_image(
     os = "linux",
 )
 
-oci_tarball(
-    name = "case5_tarball",
+oci_load(
+    name = "case5_load",
     image = ":case5",
     repo_tags = ["case5:example"],
 )
 
 filegroup(
-    name = "case5_tarball_tar",
-    srcs = [":case5_tarball"],
+    name = "case5_tar",
+    srcs = [":case5_load"],
     output_group = "tarball",
 )
 
@@ -231,15 +231,15 @@ assert_oci_config(
         "5678/udp",
         "5000",
     ],
-    volumes_eq = [
-        "/srv/data",
-    ],
     image = ":case8",
     labels_eq = {
         "org.opencontainers.image.version": "0.0.0",
         "org.opencontainers.image.source": "https://github.com/bazel-contrib/rules_oci=",
     },
     user_eq = "root",
+    volumes_eq = [
+        "/srv/data",
+    ],
     workdir_eq = "/root",
 )
 
@@ -257,9 +257,9 @@ oci_image(
     os = "linux",
 )
 
-# Intended to be `bazel run` to load the tarball into a container runtime.
+# Intended to be `bazel run` to load the image into a container runtime.
 # Produces only an mtree specification as the default output.
-oci_tarball(
+oci_load(
     name = "case9_tarball",
     image = ":case9_image",
     repo_tags = repo_tags,
@@ -301,7 +301,7 @@ oci_image(
     os = "linux",
 )
 
-oci_tarball(
+oci_load(
     name = "case10_tarball",
     image = ":case10",
     repo_tags = ["case10:example"],
@@ -323,7 +323,7 @@ oci_image(
     os = "linux",
 )
 
-oci_tarball(
+oci_load(
     name = "case11_tarball",
     image = ":case11",
     repo_tags = ["case11:example"],
@@ -355,8 +355,8 @@ build_test(
         ":imagE",
         ":case2",
         ":case3",
-        ":case4_tarball_tar",
-        ":case5_tarball_tar",
+        ":case4_tar",
+        ":case5_tar",
         ":case10_run",
     ],
 )

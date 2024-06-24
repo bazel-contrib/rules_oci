@@ -12,8 +12,8 @@ stardoc_with_diff_test(
 )
 
 stardoc_with_diff_test(
-    name = "tarball",
-    bzl_library_target = "//oci/private:tarball",
+    name = "load",
+    bzl_library_target = "//oci/private:load",
 )
 
 stardoc_with_diff_test(

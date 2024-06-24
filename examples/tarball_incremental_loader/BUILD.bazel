@@ -1,5 +1,5 @@
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
-load("//oci:defs.bzl", "oci_image", "oci_tarball")
+load("//oci:defs.bzl", "oci_image", "oci_load")
 
 tar(
     name = "app",
@@ -13,8 +13,8 @@ oci_image(
     tars = [":app"],
 )
 
-oci_tarball(
-    name = "tarball",
+oci_load(
+    name = "load",
     image = ":image",
     loader = "loader.sh",
     repo_tags = ["test:test"],

@@ -6,7 +6,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 # THIS LOAD STATEMENT DEPENDS ON setup_assertion_repos.bzl
 load("@docker_configure//:defs.bzl", "TARGET_COMPATIBLE_WITH")
-load("//oci:defs.bzl", "oci_tarball")
+load("//oci:defs.bzl", "oci_load")
 
 DIGEST_CMD = """
 image_path="$(location {image})"
@@ -118,7 +118,7 @@ def assert_oci_image_command(
     "assert a that a container works with the given command."
 
     tag = "oci.local/assert/" + native.package_name().replace("/", "_") + ":latest"
-    oci_tarball(
+    oci_load(
         name = name + "_tarball",
         image = image,
         repo_tags = [tag],

@@ -1,11 +1,11 @@
-"""Create a tarball from oci_image that can be loaded by runtimes such as podman and docker.
+"""Load an oci_image into runtimes such as podman and docker.
 Intended for use with `bazel run`.
 
 For example, given an `:image` target, you could write
 
 ```
-oci_tarball(
-    name = "tarball",
+oci_load(
+    name = "load",
     image = ":image",
     repo_tags = ["my-repository:latest"],
 )
@@ -14,7 +14,7 @@ oci_tarball(
 and then run it in a container like so:
 
 ```
-bazel run :tarball
+bazel run :load
 docker run --rm my-repository:latest
 ```
 """
@@ -22,11 +22,11 @@ docker run --rm my-repository:latest
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("//oci/private:util.bzl", "util")
 
-doc = """Creates tarball from OCI layouts that can be loaded into docker daemon without needing to publish the image first.
+doc = """Loads an OCI layout into a container daemon without needing to publish the image first.
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
 
-### Outputs
+### Build Outputs
 
 The default output is an mtree specification file.
 This is because producing the tarball in `bazel build` is expensive, and should typically not be an input to any other build actions,
@@ -39,7 +39,7 @@ On the command line, `bazel build //path/to:my_tarball --output_groups=tarball`
 or in a BUILD file:
 
 ```starlark
-oci_tarball(
+oci_load(
     name = "my_tarball",
     ...
 )
@@ -68,13 +68,9 @@ attrs = {
     "loader": attr.label(
         doc = """\
             Alternative target for a container cli tool that will be
-            used to load the image into the local engine when using `bazel run` on this oci_tarball.
+            used to load the image into the local engine when using `bazel run` on this target.
 
             By default, we look for `docker` or `podman` on the PATH, and run the `load` command.
-            
-            > Note that rules_docker has an "incremental loader" which is faster than oci_tarball by design.
-            > Something similar can be done for oci_tarball. 
-            > See [loader.sh](/examples/incremental_loader/loader.sh) and explanation about [how](/examples/incremental_loader/README.md) it works.
 
             See the _run_template attribute for the script that calls this loader tool.
             """,
@@ -84,9 +80,9 @@ attrs = {
         cfg = "target",
     ),
     "_run_template": attr.label(
-        default = Label("//oci/private:tarball_run.sh.tpl"),
+        default = Label("//oci/private:load.sh.tpl"),
         doc = """ \
-              The template used to load the container when using `bazel run` on this oci_tarball.
+              The template used to load the container when using `bazel run` on this target.
               
               See the `loader` attribute to replace the tool which is called.
               Please reference the default template to see available substitutions. 
@@ -98,7 +94,7 @@ attrs = {
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
-def _tarball_impl(ctx):
+def _load_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
 
@@ -106,7 +102,7 @@ def _tarball_impl(ctx):
     repo_tags = ctx.file.repo_tags
 
     mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
-    executable = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
+    executable = ctx.actions.declare_file("{}/load.sh".format(ctx.label.name))
     manifest_json = ctx.actions.declare_file("{}/manifest.json".format(ctx.label.name))
 
     # Represents either manifest.json or index.json depending on the image format
@@ -192,8 +188,8 @@ def _tarball_impl(ctx):
         OutputGroupInfo(tarball = depset([tarball])),
     ]
 
-oci_tarball = rule(
-    implementation = _tarball_impl,
+oci_load = rule(
+    implementation = _load_impl,
     attrs = attrs,
     doc = doc,
     toolchains = [

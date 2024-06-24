@@ -10,9 +10,9 @@ _Need help?_ This ruleset has support provided by [Aspect Build](https://www.asp
 ## Comparison with rules_docker
 
 This ruleset is not intended as a complete replacement for [rules_docker]!
-Many use cases can be accomodated, and we know that many users have completely replaced rules_docker.
+Many use cases can be accomodated, and we know that many users have completely replaced rules*docker.
 You can find a migration guide at <https://docs.aspect.build/guides/rules_oci_migration>.
-However, some other use cases such as `container_run_and_*` rules have no equivalent.
+However, some other use cases such as `container_run_and*\*` rules have no equivalent.
 
 [rules_docker] was largely unmaintained for 18 months, and as of October 2023 it has been archived.
 See https://github.com/bazelbuild/rules_docker/discussions/2038.
@@ -78,7 +78,7 @@ Note that these examples rely on the setup code in the `/WORKSPACE` file in the 
 
 - [oci_image](docs/image.md) Build an OCI compatible container image.
 - [oci_image_index](docs/image_index.md) Build a multi-architecture OCI compatible container image.
-- [oci_tarball](docs/tarball.md) Creates tarball from `oci_image` that can be loaded by runtimes.
+- [oci_load](docs/load.md) Loads an `oci_image` into a container daemon. Can optionally produce a loadable tarball.
 
 ### Pull and Push
 

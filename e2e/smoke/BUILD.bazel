@@ -1,7 +1,7 @@
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 oci_image(
     name = "image",
@@ -21,15 +21,15 @@ tags = [
     "my/image:latest",
 ]
 
-oci_tarball(
-    name = "tarball",
+oci_load(
+    name = "load",
     image = ":image",
     repo_tags = tags,
 )
 
 filegroup(
     name = "tarball.tar",
-    srcs = [":tarball"],
+    srcs = [":load"],
     output_group = "tarball",
 )
 
