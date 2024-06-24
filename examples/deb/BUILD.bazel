@@ -1,4 +1,4 @@
-load("//oci:defs.bzl", "oci_image", "oci_tarball")
+load("//oci:defs.bzl", "oci_image", "oci_load")
 
 _ARCH = [
     "amd64",
@@ -20,8 +20,8 @@ _ARCH = [
     for architecture in _ARCH
 ]
 
-oci_tarball(
-    name = "tarball",
+oci_load(
+    name = "load",
     image = ":image_amd64",
     repo_tags = ["test:test"],
 )

@@ -11,8 +11,8 @@ exports_files(glob([
 ]) + ["empty.tar"])
 
 bzl_library(
-    name = "tarball",
-    srcs = ["tarball.bzl"],
+    name = "load",
+    srcs = ["load.bzl"],
     visibility = [
         "//docs:__pkg__",
         "//oci:__subpackages__",

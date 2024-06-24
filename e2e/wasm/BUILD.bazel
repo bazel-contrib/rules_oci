@@ -1,7 +1,7 @@
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
 
 package(default_visibility = ["//visibility:public"])
@@ -48,7 +48,7 @@ build_test(
 # then run the following;
 #  `bazel run :tarball``
 #  `docker run --runtime=io.containerd.wasmedge.v1 --platform=wasi/wasm32 --pull=never gcr.io/wasm:latest`
-oci_tarball(
+oci_load(
     name = "tarball",
     image = ":image",
     repo_tags = ["gcr.io/wasm:latest"],

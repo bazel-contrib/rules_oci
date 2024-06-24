@@ -47,7 +47,7 @@ And finally the build rules for our image.
 **./frontend/BUILD**
 
 ```python
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 filegroup(
     name = "static",
@@ -70,7 +70,7 @@ oci_image(
     # entrypoint = [],
     # cmd = [],
 )
-oci_tarball(
+oci_load(
     name = "frontend_tarball",
     image = ":frontend_image",
     repo_tags = ["ourfrontend:latest"],

@@ -6,6 +6,7 @@ in rules_docker.
 ## An example of packaging a simple C++ program
 
 Using a minimal example C++ program `example.cc`:
+
 ```cpp
 #include <iostream>
 
@@ -15,8 +16,9 @@ int main(){
 ```
 
 To make a container image for this program, the `BUILD.bazel` would have something like this:
+
 ```python
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
@@ -47,16 +49,17 @@ oci_image(
     entrypoint = ["/example_binary"],
 )
 
-# Create tarball from oci image that can be run by container runtime. 
+# Use with 'bazel run' to load the oci image into a container runtime.
 # The image is designated using `repo_tags` attribute.
-oci_tarball(
-    name = "image_tarball",
+oci_load(
+    name = "image_load",
     image = ":image",
     repo_tags = ["example:latest"],
 )
 ```
 
 In `MODULE.bazel` file, be sure to add the following sections:
+
 ```python
 # Pull needed base image
 oci.pull(
@@ -71,17 +74,20 @@ oci.pull(
 # Expose the base image
 use_repo(oci, "docker_lib_ubuntu")
 ```
+
 ```python
 # Import rules_pkg
 bazel_dep(name = "rules_pkg", version = "0.10.1")
 ```
 
-To make tarball, execute:
+To load the image, execute:
+
 ```bash
-bazel run //:image_tarball
+bazel run //:image_load
 ```
 
 Then to run the program with runtime, e.g., Docker:
+
 ```bash
 docker run --rm example:latest
 ```

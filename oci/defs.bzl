@@ -14,8 +14,8 @@ load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
 load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
+load("//oci/private:load.bzl", _oci_tarball = "oci_load")
 load("//oci/private:push.bzl", _oci_push = "oci_push")
-load("//oci/private:tarball.bzl", _oci_tarball = "oci_tarball")
 
 oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
@@ -190,7 +190,7 @@ def oci_push(name, remote_tags = None, **kwargs):
         **kwargs
     )
 
-def oci_tarball(name, repo_tags = None, **kwargs):
+def oci_load(name, repo_tags = None, **kwargs):
     """Macro wrapper around [oci_tarball_rule](#oci_tarball_rule).
 
     Allows the repo_tags attribute to be a list of strings in addition to a text file.
