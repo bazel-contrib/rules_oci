@@ -83,9 +83,9 @@ attrs = {
         default = Label("//oci/private:load.sh.tpl"),
         doc = """ \
               The template used to load the container when using `bazel run` on this target.
-              
+
               See the `loader` attribute to replace the tool which is called.
-              Please reference the default template to see available substitutions. 
+              Please reference the default template to see available substitutions.
         """,
         allow_single_file = True,
     ),
@@ -96,6 +96,7 @@ attrs = {
 
 def _load_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
     bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
 
     image = ctx.file.image
@@ -109,6 +110,7 @@ def _load_impl(ctx):
     substitutions = {
         "{{format}}": ctx.attr.format,
         "{{jq_path}}": jq.jqinfo.bin.path,
+        "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
         "{{tar}}": bsdtar.tarinfo.binary.path,
         "{{image_dir}}": image.path,
         "{{output}}": mtree_spec.path,
@@ -134,7 +136,10 @@ def _load_impl(ctx):
         executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
         inputs = mtree_inputs,
         outputs = mtree_outputs,
-        tools = [jq.jqinfo.bin],
+        tools = [
+            jq.jqinfo.bin,
+            coreutils.coreutils_info.bin,
+        ],
         mnemonic = "OCITarballManifest",
     )
 
@@ -194,6 +199,7 @@ oci_load = rule(
     doc = doc,
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
+        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
         "@aspect_bazel_lib//lib:tar_toolchain_type",
     ],
