@@ -345,7 +345,7 @@ def _oci_alias_impl(rctx):
     available_platforms = []
 
     manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
-    rctx.file("digest.txt", digest + "\n")
+    rctx.file("digest.txt", digest)
 
     if rctx.attr.platforms:
         if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
