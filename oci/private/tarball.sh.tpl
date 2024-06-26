@@ -5,9 +5,10 @@ set -o pipefail -o errexit -o nounset
 
 readonly FORMAT="{{format}}"
 readonly JQ="{{jq_path}}"
+readonly COREUTILS="{{coreutils_path}}"
 readonly TAR="{{tar}}"
 readonly IMAGE_DIR="{{image_dir}}"
-readonly REPOTAGS=($(cat "{{tags}}"))
+readonly REPOTAGS=($("${COREUTILS}" cat "{{tags}}"))
 readonly INDEX_FILE="${IMAGE_DIR}/index.json"
 
 readonly OUTPUT="{{output}}"
@@ -20,7 +21,7 @@ function add_to_tar() {
     echo >>"${OUTPUT}" "${tar_path} uid=0 gid=0 mode=0755 time=1672560000 type=file content=${content}"
 }
 
-MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
+MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
 
 MANIFESTS_LENGTH=$("${JQ}" -r '.manifests | length' "${INDEX_FILE}")
 if [[ "${MANIFESTS_LENGTH}" != 1 ]]; then
@@ -51,7 +52,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
 
   add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
 
-  INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | tr  -d '"')
+  INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
   INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"
 
   add_to_tar "${INDEX_FILE_MANIFEST_BLOB_PATH}" "blobs/${INDEX_FILE_MANIFEST_DIGEST}"
@@ -83,7 +84,7 @@ if [[ "${FORMAT}" == "oci" ]]; then
   exit 0
 fi
 
-MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json" | tr  -d '"')
+MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json" | "${COREUTILS}" tr  -d '"')
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
 
 CONFIG_DIGEST=$(${JQ} -r '.config.digest  | sub(":"; "/")' ${MANIFEST_BLOB_PATH})
@@ -93,7 +94,7 @@ LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH
 
 add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
-for LAYER in $(${JQ} -r ".[]" <<< $LAYERS); do 
+for LAYER in $(${JQ} -r ".[]" <<< $LAYERS); do
   add_to_tar "${IMAGE_DIR}/blobs/${LAYER}" "blobs/${LAYER}.tar.gz"
 done
 
