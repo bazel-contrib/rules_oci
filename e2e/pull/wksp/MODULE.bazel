@@ -2,6 +2,8 @@
 
 bazel_dep(name = "rules_oci", version = "0.0.0", dev_dependency = True)
 bazel_dep(name = "platforms", version = "0.0.7")
+bazel_dep(name = "bazel_skylib", version = "1.5.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.1.0")
 
 local_path_override(
     module_name = "rules_oci",

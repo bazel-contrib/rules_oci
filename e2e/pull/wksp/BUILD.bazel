@@ -1,4 +1,6 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_push")
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 oci_image(
     name = "empty",
@@ -11,4 +13,18 @@ oci_push(
     image = ":empty",
     remote_tags = ["latest"],
     repository = "localhost/empty_image",
+)
+
+write_file(
+    name = "want_digest_contents",
+    out = "want_image_digest.json",
+    content = [
+        "sha256:2d4595bbc0fabeb1489b1071f56c26f44a2f495afaa9386ad7d24e7b3d8dfd3e",
+    ],
+)
+
+diff_test(
+    name = "check_they_match",
+    file1 = "want_digest_contents",
+    file2 = "@empty_image//:digest",
 )
