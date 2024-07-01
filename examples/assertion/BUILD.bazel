@@ -348,6 +348,27 @@ sh_test(
     data = [":case11_tarball"],
 )
 
+# case 12: an oci_load run as part of an sh_binary
+oci_image(
+    name = "case12",
+    architecture = "arm64",
+    os = "linux",
+)
+
+oci_load(
+    name = "case12_tarball",
+    image = ":case12",
+    repo_tags = ["case12:example"],
+)
+
+sh_binary(
+    name = "case12_run",
+    srcs = ["case12.sh"],
+    data = [
+        ":case12_tarball",
+    ],
+)
+
 # build them as test.
 build_test(
     name = "test",
