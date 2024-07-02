@@ -1,7 +1,13 @@
+load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+
+tar(
+    name = "my_layer",
+    srcs = ["test.yaml"],
+)
 
 oci_image(
     name = "image",
@@ -14,6 +20,7 @@ oci_image(
     env = {
         "ENV": "/test",
     },
+    tars = ["my_layer"],
 )
 
 tags = [
@@ -24,6 +31,7 @@ tags = [
 oci_load(
     name = "load",
     image = ":image",
+    format = "docker",
     repo_tags = tags,
 )
 
