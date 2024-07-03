@@ -100,7 +100,7 @@ oci_push(
 
 # Helper rule for ensuring that the crane and yq toolchains are actually
 # resolved for the architecture we are targeting.
-def _transition_to_target_impl(settings, attr):
+def _transition_to_target_impl(settings, _attr):
     return {
         # String conversion is needed to prevent a crash with Bazel 6.x.
         "//command_line_option:extra_execution_platforms": [
@@ -205,6 +205,7 @@ def _impl(ctx):
     )
     runfiles = ctx.runfiles(files = files)
     runfiles = runfiles.merge(jq.default.default_runfiles)
+    runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
 
     return DefaultInfo(executable = util.maybe_wrap_launcher_for_windows(ctx, executable), runfiles = runfiles)

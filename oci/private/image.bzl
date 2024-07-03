@@ -171,7 +171,7 @@ def _oci_image_impl(ctx):
         args.add(ctx.file.base.path, format = "--from=%s")
         inputs.append(ctx.file.base)
         if use_symlinks:
-            transitive_inputs.append(ctx.file.base)
+            transitive_inputs += [ctx.file.base] + ctx.attr.base[DefaultInfo].default_runfiles.files.to_list()
     else:
         # create a scratch base image with given os/arch[/variant]
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
@@ -234,7 +234,7 @@ def _oci_image_impl(ctx):
         action_env["MSYS_NO_PATHCONV"] = "1"
 
     ctx.actions.run(
-        inputs = inputs,
+        inputs = inputs + transitive_inputs,
         arguments = [args],
         outputs = [output],
         env = action_env,

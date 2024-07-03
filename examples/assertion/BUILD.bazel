@@ -348,6 +348,43 @@ sh_test(
     data = [":case11_tarball"],
 )
 
+# Case 12: oci_push an image that has transitive deps
+tar(
+    name = "case12_empty_dir",
+    mtree = [
+        "./empty type=dir",
+    ],
+)
+
+oci_image(
+    name = "case12_base",
+    architecture = "arm64",
+    os = "linux",
+    tars = [":case12_empty_dir"],
+)
+
+tar(
+    name = "case12_empty_dir2",
+    mtree = [
+        "./empty2 type=dir",
+    ],
+)
+
+oci_image(
+    name = "case12",
+    base = ":case12_base",
+    tars = [":case12_empty_dir2"],
+)
+
+sh_test(
+    name = "case12_test",
+    srcs = ["assert_push_transitive_deps.sh"],
+    args = [
+        "$(location :case12)",
+    ],
+    data = [":case12"],
+)
+
 # build them as test.
 build_test(
     name = "test",
