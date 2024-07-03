@@ -171,14 +171,16 @@ def _oci_image_impl(ctx):
         args.add(ctx.file.base.path, format = "--from=%s")
         inputs.append(ctx.file.base)
         if use_symlinks:
-            transitive_inputs.append(ctx.file.base)
+            base_default_info = ctx.attr.base[DefaultInfo]
+            transitive_inputs.append(base_default_info.default_runfiles.files)
+            transitive_inputs.append(base_default_info.files)
     else:
         # create a scratch base image with given os/arch[/variant]
         args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
 
     # If tree artifact symlinks are supported also add tars into runfiles.
     if use_symlinks:
-        transitive_inputs = transitive_inputs + ctx.files.tars
+        transitive_inputs.append(depset(ctx.files.tars))
 
     # add layers
     for (i, layer) in enumerate(ctx.files.tars):
@@ -234,7 +236,7 @@ def _oci_image_impl(ctx):
         action_env["MSYS_NO_PATHCONV"] = "1"
 
     ctx.actions.run(
-        inputs = inputs,
+        inputs = depset(inputs, transitive = transitive_inputs),
         arguments = [args],
         outputs = [output],
         env = action_env,
@@ -252,7 +254,7 @@ def _oci_image_impl(ctx):
     return [
         DefaultInfo(
             files = depset([output]),
-            runfiles = ctx.runfiles(transitive_inputs),
+            runfiles = ctx.runfiles(transitive_files = depset(transitive = transitive_inputs)),
         ),
     ]
 

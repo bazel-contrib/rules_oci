@@ -63,6 +63,7 @@ def _cosign_sign_impl(ctx):
     )
 
     runfiles = ctx.runfiles(files = [ctx.file.image])
+    runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
 
