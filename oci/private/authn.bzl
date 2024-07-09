@@ -285,7 +285,7 @@ def _get_token(rctx, state, registry, repository):
                 return state["token"][url]
 
             auth = None
-            if pattern["login"] == "<token>":
+            if pattern.get("login", None) == "<token>":
                 if not rctx.os.environ.get("OCI_ENABLE_OAUTH2_SUPPORT"):
                     fail(IDENTITY_TOKEN_WARNING)
 
