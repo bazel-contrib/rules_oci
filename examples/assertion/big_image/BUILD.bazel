@@ -85,6 +85,8 @@ N_LAYERS = 5
 oci_image(
     name = "extended",
     base = ":base",
+    # Tell Bazel to reserve more than the default 250MB of RAM for the OCIImage action
+    resource_set = "mem_8g",
     tags = ["manual"],
     tars = [":layer_%s" % i for i in range(N_LAYERS)],
 )
