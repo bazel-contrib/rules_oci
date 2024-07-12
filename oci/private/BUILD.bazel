@@ -27,7 +27,10 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
-    deps = [":util"],
+    deps = [
+        ":resource_sets",
+        ":util",
+    ],
 )
 
 bzl_library(
@@ -107,4 +110,10 @@ bzl_library(
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:versions",
     ],
+)
+
+bzl_library(
+    name = "resource_sets",
+    srcs = ["resource_sets.bzl"],
+    visibility = ["//oci:__subpackages__"],
 )

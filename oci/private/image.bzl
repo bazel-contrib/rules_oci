@@ -1,6 +1,7 @@
 "Implementation details for image rule"
 
-load("//oci/private:util.bzl", "util")
+load("resource_sets.bzl", "resource_set", "resource_set_attr")
+load("util.bzl", "util")
 
 _DOC = """Build an OCI compatible container image.
 
@@ -189,6 +190,7 @@ def _oci_image_impl(ctx):
         tools = [crane.crane_info.binary, registry.registry_info.launcher, registry.registry_info.registry, jq.jqinfo.bin],
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
+        resource_set = resource_set(ctx.attr),
     )
 
     return [
@@ -199,7 +201,7 @@ def _oci_image_impl(ctx):
 
 oci_image = rule(
     implementation = _oci_image_impl,
-    attrs = _attrs,
+    attrs = dict(_attrs, **resource_set_attr),
     doc = _DOC,
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
