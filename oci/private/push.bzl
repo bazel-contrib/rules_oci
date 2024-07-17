@@ -106,12 +106,12 @@ def _transition_to_target_impl(settings, attr):
         "//command_line_option:extra_execution_platforms": [
             str(platform)
             for platform in settings["//command_line_option:platforms"]
-        ],
+        ] if not attr.run_on_host else [settings["//command_line_option:host_platform"]],
     }
 
 _transition_to_target = transition(
     implementation = _transition_to_target_impl,
-    inputs = ["//command_line_option:platforms"],
+    inputs = ["//command_line_option:host_platform", "//command_line_option:platforms"],
     outputs = ["//command_line_option:extra_execution_platforms"],
 )
 
@@ -140,6 +140,10 @@ _attrs = {
         https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)
         """,
         allow_single_file = [".txt"],
+    ),
+    "run_on_host": attr.bool(
+        doc = "Runs push script on the host instead of the target platform if `True`.",
+        default = False,
     ),
     "_allowlist_function_transition": attr.label(
         default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
