@@ -126,14 +126,86 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
 
     response = json.decode(result.stdout)
 
-    if response["Username"] == "<token>":
-        fail("Identity tokens are not supported at the moment. See: https://github.com/bazel-contrib/rules_oci/issues/129")
-
     return {
         "type": "basic",
         "login": response["Username"],
         "password": response["Secret"],
     }
+
+OAUTH_2_SCRIPT_POWERSHELL = """\
+param (
+    [string]$url,
+    [string]$service,
+    [string]$scope,
+    [string]$refresh_token
+)
+
+try {
+    $response = Invoke-RestMethod -Uri $url -Method Post -Body @{
+        grant_type = "refresh_token"
+        service = $service
+        scope = $scope
+        refresh_token = $refresh_token
+    } -ErrorAction Stop
+
+    $jsonResponse = $response | ConvertTo-Json
+    echo $jsonResponse
+} catch {
+    $ErrorMessage = $_.Exception.Message
+    Write-Error "oauth2 failed: PowerShell request failed with error: $ErrorMessage"
+    exit 1
+}
+"""
+
+OAUTH_2_SCRIPT_CURL = """\
+url=$1
+service=$2
+scope=$3
+refresh_token=$4
+
+response=$(curl --silent --show-error --fail --request POST --data "grant_type=refresh_token&service=$service&scope=$scope&refresh_token=$refresh_token" $url)
+
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+echo "$response"
+"""
+
+OAUTH_2_SCRIPT_WGET = """\
+url=$1
+service=$2
+scope=$3
+refresh_token=$4
+
+response=$(wget --quiet --output-document=- --post-data "grant_type=refresh_token&service=$service&scope=$scope&refresh_token=$refresh_token" $url)
+
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+echo "$response"
+"""
+
+def _oauth2(rctx, realm, scope, service, secret):
+    if rctx.os.name.startswith("windows") and rctx.which("powershell"):
+        executable = "oauth2.ps1"
+        rctx.file(executable, content = OAUTH_2_SCRIPT_POWERSHELL)
+        result = rctx.execute(["powershell", "-File", rctx.path(executable), realm, service, scope, secret])
+    elif rctx.which("curl"):
+        executable = "oauth2.sh"
+        rctx.file(executable, content = OAUTH_2_SCRIPT_CURL)
+        result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
+    elif rctx.which("wget"):
+        executable = "oauth2.sh"
+        rctx.file(executable, content = OAUTH_2_SCRIPT_WGET)
+        result = rctx.execute(["bash", rctx.path(executable), realm, service, scope, secret])
+    else:
+        fail("oauth2 failed, could not find either of: curl, wget, powershell")
+
+    if result.return_code:
+        fail("oauth2 failed:\nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+    return result.stdout
 
 def _get_auth(rctx, state, registry):
     # if we have a cached auth for this registry then just return it.
@@ -169,6 +241,8 @@ def _get_auth(rctx, state, registry):
                     login, sep, password = base64.decode(raw_auth).partition(":")
                     if not sep:
                         fail("auth string must be in form username:password")
+                    if not password and "identitytoken" in auth_val:
+                        password = auth_val["identitytoken"]
                     pattern = {
                         "type": "basic",
                         "login": login,
@@ -192,6 +266,14 @@ def _get_auth(rctx, state, registry):
 
     return pattern
 
+IDENTITY_TOKEN_WARNING = """\
+OAuth2 support for oci_pull is highly experimental and is not enabled by default.
+
+We may change or abandon it without a notice. Use it at your own peril!
+
+To enable this feature, add `common --repo_env=OCI_ENABLE_OAUTH2_SUPPORT=1` to the `.bazelrc` file.
+"""
+
 def _get_token(rctx, state, registry, repository):
     pattern = _get_auth(rctx, state, registry)
 
@@ -208,15 +290,36 @@ def _get_token(rctx, state, registry, repository):
             if url in state["token"]:
                 return state["token"][url]
 
-            rctx.download(
-                url = [url],
-                output = "www-authenticate.json",
-                # optionally, sending the credentials to authenticate using the credentials.
-                # this is for fetching from private repositories that require WWW-Authenticate
-                auth = {url: pattern},
-            )
+            auth = None
+            if pattern.get("login", None) == "<token>":
+                if not rctx.os.environ.get("OCI_ENABLE_OAUTH2_SUPPORT"):
+                    fail(IDENTITY_TOKEN_WARNING)
+
+                response = _oauth2(
+                    rctx = rctx,
+                    realm = "https://" + www_authenticate["realm"].format(registry = registry),
+                    scope = www_authenticate["scope"].format(repository = repository),
+                    service = www_authenticate["service"].format(registry = registry),
+                    secret = pattern["password"],
+                )
+
+                rctx.file(
+                    "www-authenticate.json",
+                    content = response,
+                    executable = False,
+                )
+            else:
+                rctx.download(
+                    url = [url],
+                    output = "www-authenticate.json",
+                    # optionally, sending the credentials to authenticate using the credentials.
+                    # this is for fetching from private repositories that require WWW-Authenticate
+                    auth = {url: pattern},
+                )
+
             auth_raw = rctx.read("www-authenticate.json")
             auth = json.decode(auth_raw)
+
             token = ""
             if "token" in auth:
                 token = auth["token"]
@@ -268,5 +371,6 @@ authn = struct(
         "REGISTRY_AUTH_FILE",
         "XDG_RUNTIME_DIR",
         "HOME",
+        "OCI_ENABLE_OAUTH2_SUPPORT",
     ],
 )
