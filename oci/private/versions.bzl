@@ -18,13 +18,13 @@ CRANE_VERSIONS = {
 }
 
 REGCTL_VERSIONS = {
-    "v0.6.0": {
-        "darwin-amd64": "sha256-jH9+I397Jjp5Catott8GAVy4Lq9ZE5sA3h7srrE8uUU=",
-        "darwin-arm64": "sha256-JRBv8uYOEKJ7AvNGu+aKkXKu44uy4g35zuGBLg6vS2o=",
-        "linux-amd64": "sha256-RCFsCrO9Qa4wsHOS1s2raXH0irP3JADmF/Xw3tTXB0I=",
-        "linux-arm64": "sha256-DFMgbsSpUHQvob0LZcY8AL+8YDGlKqZUp3QpTjDBLz8=",
-        "linux-ppc64le": "sha256-5sBcJpl6wK+XRjdSUg8rB5Nd+HOEsMSznW2oRCV0F2U=",
-        "linux-s390x": "sha256-HHz7RCyLivPZsx/YX+vvHDxA07sZzmrNxoiq2Zi5BX8=",
-        "windows-amd64": "sha256-KZDxscGWkz+TGfqiodSe+Uy4p9joPvOu3sZHfptzg8Y=",
+    "v0.7.0": {
+        "darwin-amd64": "sha256-QH7AeVJi/Ehn09yCVDq1qWvO6VBwquAFV6uPQyX5DDQ=",
+        "darwin-arm64": "sha256-QTr9nUPdjknzYTnOgfKG32C2id3aPngG82V7zLOWQL8=",
+        "linux-amd64": "sha256-bOqTeXl+IM7PWeRlaidxkoWSzAzsWMlnzc/aS1qbOK4=",
+        "linux-arm64": "sha256-L8DiP9/dEhNYD8n8sT0iY/HfvEoRGQsTbbExr9Ah3nk=",
+        "linux-ppc64le": "sha256-wb0nfYNge8esvD4td9HSqCWkyrDlo7vTyBljx0y4/14=",
+        "linux-s390x": "sha256-Izfw4uXgOPr6hatQl9wBLD/+Ocv9oXOWhLunvdeWIcA=",
+        "windows-amd64": "sha256-2JumZSB40AdocaCccOP5yZudxPIDadDDsKlZCfw8/ko=",
     },
 }

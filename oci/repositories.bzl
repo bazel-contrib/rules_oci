@@ -60,7 +60,7 @@ regctl_toolchain(
     regctl = "regctl{ext}",
 )
 """
-REGCTL_VERSION = "v0.6.0"
+REGCTL_VERSION = "v0.7.0"
 
 def _regctl_repo_impl(rctx):
     platform = rctx.attr.platform.replace("_", "-")
