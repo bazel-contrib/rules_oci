@@ -385,6 +385,55 @@ sh_test(
     data = [":case12"],
 )
 
+# Case 15: Setting entrypoint resets cmd
+oci_image(
+    name = "case15_base",
+    architecture = "arm64",
+    cmd = [
+        "-c",
+        "test",
+    ],
+    os = "linux",
+)
+
+assert_oci_config(
+    name = "test_case15_base",
+    cmd_eq = [
+        "-c",
+        "test",
+    ],
+    image = ":case15_base",
+)
+
+oci_image(
+    name = "case15",
+    base = ":case15_base",
+    entrypoint = ["/custom_bin"],
+)
+
+assert_oci_config(
+    name = "test_case15",
+    cmd_eq = None,  # cmd should not exist
+    entrypoint_eq = [
+        "/custom_bin",
+    ],
+    image = ":case15",
+)
+
+oci_image(
+    name = "case15_cmd",
+    base = ":case15_base",
+    cmd = ["--arg"],
+    entrypoint = ["/custom_bin"],
+)
+
+assert_oci_config(
+    name = "test_case15_cmd",
+    cmd_eq = ["--arg"],
+    entrypoint_eq = ["/custom_bin"],
+    image = ":case15_cmd",
+)
+
 # build them as test.
 build_test(
     name = "test",

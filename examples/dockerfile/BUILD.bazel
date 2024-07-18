@@ -40,7 +40,7 @@ oci_image(
 assert_oci_config(
     name = "assert_metadata",
     cmd_eq = ["/app/say.py"],
-    entrypoint_eq = [],
+    entrypoint_eq = None,
     image = ":image",
 )
 
@@ -50,8 +50,8 @@ assert_oci_image_command(
         "jq",
         "--version",
     ],
-    image = ":image",
     exit_code_eq = 0,
+    image = ":image",
     output_eq = "jq-1.6\n",
 )
 
@@ -61,8 +61,8 @@ assert_oci_image_command(
         "file",
         "/var/lib/apt/lists",
     ],
-    image = ":image",
     exit_code_eq = 0,
+    image = ":image",
     output_eq = "/var/lib/apt/lists: directory\n",
 )
 
@@ -72,8 +72,8 @@ assert_oci_image_command(
         "python",
         "/app/say.py",
     ],
-    image = ":image",
     exit_code_eq = 0,
+    image = ":image",
     output_eq = """\
   ____
 | moo! |
