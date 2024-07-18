@@ -385,6 +385,19 @@ sh_test(
     data = [":case12"],
 )
 
+# Case 14: created property should be epoch start
+oci_image(
+    name = "case14",
+    architecture = "arm64",
+    os = "linux",
+)
+
+assert_oci_config(
+    name = "test_case14",
+    created_eq = "1970-01-01T00:00:00Z",
+    image = ":case14",
+)
+
 # Case 15: Setting entrypoint resets cmd
 oci_image(
     name = "case15_base",
