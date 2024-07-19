@@ -149,7 +149,10 @@ for ARG in "$@"; do
     CONFIG=$(jq --rawfile cmd "${ARG#--cmd=}" '.config.Cmd = ($cmd | split(",|\n"; "") | map(select(. | length > 0)))' <<<"$CONFIG")
     ;;
   --entrypoint=*)
-    CONFIG=$(jq --rawfile entrypoint "${ARG#--entrypoint=}" '.config.Entrypoint = ($entrypoint | split(",|\n"; "") | map(select(. | length > 0)))' <<<"$CONFIG")
+    # NOTE: setting entrypoint deletes `.config.Cmd` which is consistent with crane and Dockerfile behavior.
+    # See: https://github.com/bazel-contrib/rules_oci/issues/649
+    # See: https://github.com/google/go-containerregistry/blob/c3d1dcc932076c15b65b8b9acfff1d47ded2ebf9/cmd/crane/cmd/mutate.go#L107
+    CONFIG=$(jq --rawfile entrypoint "${ARG#--entrypoint=}" '.config.Cmd = null | .config.Entrypoint = ($entrypoint | split(",|\n"; "") | map(select(. | length > 0)))' <<<"$CONFIG")
     ;;
   --exposed-ports=*)
     CONFIG=$(jq --rawfile ep "${ARG#--exposed-ports=}" '.config.ExposedPorts = ($ep | split(",") | map({key: ., value: {}}) | from_entries)' <<<"$CONFIG")
@@ -179,6 +182,6 @@ for ARG in "$@"; do
   esac
 done
 
-get_config | jq --argjson config "$CONFIG" '. *= $config' | update_config >/dev/null
+get_config | jq --argjson config "$CONFIG" '. *= $config | del(.config.Cmd|nulls)' | update_config >/dev/null
 ## TODO: container structure is broken
 (JSON="$(coreutils cat "$OUTPUT/index.json")" && jq "del(.manifests[].annotations)" >"$OUTPUT/index.json" <<<"$JSON")

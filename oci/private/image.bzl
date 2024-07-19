@@ -69,7 +69,7 @@ _attrs = {
         The authors recommend [dive](https://github.com/wagoodman/dive) to explore the layering of the resulting image.
     """),
     # See: https://github.com/opencontainers/image-spec/blob/main/config.md#properties
-    "entrypoint": attr.label(doc = "A file containing a comma separated list to be used as the `entrypoint` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container.", allow_single_file = True),
+    "entrypoint": attr.label(doc = "A file containing a comma separated list to be used as the `entrypoint` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container. NOTE: Setting this attribute will reset the `cmd` attribute", allow_single_file = True),
     "cmd": attr.label(doc = "A file containing a comma separated list to be used as the `command & args` of the container. These values act as defaults and may be replaced by any specified when creating a container.", allow_single_file = True),
     "env": attr.label(doc = """\
 A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys.
@@ -191,9 +191,16 @@ def _oci_image_impl(ctx):
         # tars are already added as input above.
         args.add_joined([layer, descriptor], join_with = "=", format_joined = "--layer=%s")
 
+    # WARNING: entrypoint should always be added before the cmd argument.
+    # This due to implicit behavior which setting entrypoint deletes `cmd`.
+    # See: https://github.com/bazel-contrib/rules_oci/issues/649
     if ctx.attr.entrypoint:
         args.add(ctx.file.entrypoint.path, format = "--entrypoint=%s")
         inputs.append(ctx.file.entrypoint)
+
+    if ctx.attr.cmd:
+        args.add(ctx.file.cmd.path, format = "--cmd=%s")
+        inputs.append(ctx.file.cmd)
 
     if ctx.attr.exposed_ports:
         args.add(ctx.file.exposed_ports.path, format = "--exposed-ports=%s")
@@ -202,10 +209,6 @@ def _oci_image_impl(ctx):
     if ctx.attr.volumes:
         args.add(ctx.file.volumes.path, format = "--volumes=%s")
         inputs.append(ctx.file.volumes)
-
-    if ctx.attr.cmd:
-        args.add(ctx.file.cmd.path, format = "--cmd=%s")
-        inputs.append(ctx.file.cmd)
 
     if ctx.attr.env:
         args.add(ctx.file.env.path, format = "--env=%s")

@@ -16,12 +16,14 @@ config_digest=$$($(JQ_BIN) -r '.config.digest | sub(":"; "/")' $$image_path/blob
 $(JQ_BIN) 'def pick(p): . as $$v | reduce path(p) as $$p ({{}}; setpath($$p; $$v | getpath($$p))); pick({keys})' "$$image_path/blobs/$$config_digest" > $@
 """
 
+_DEFAULT_ = {"____I_WILL_NOT_MATCH_ANYTHING__": True}
+
 # buildifier: disable=function-docstring-args
 def assert_oci_config(
         name,
         image,
-        entrypoint_eq = None,
-        cmd_eq = None,
+        entrypoint_eq = _DEFAULT_,
+        cmd_eq = _DEFAULT_,
         env_eq = None,
         exposed_ports_eq = None,
         volumes_eq = None,
@@ -37,9 +39,9 @@ def assert_oci_config(
     config = {}
 
     # .config
-    if entrypoint_eq:
+    if entrypoint_eq != _DEFAULT_:
         config["Entrypoint"] = entrypoint_eq
-    if cmd_eq:
+    if cmd_eq != _DEFAULT_:
         config["Cmd"] = cmd_eq
     if env_eq:
         config["Env"] = ["=".join(e) for e in env_eq.items()]
