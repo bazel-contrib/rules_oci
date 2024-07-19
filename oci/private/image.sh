@@ -27,7 +27,7 @@ function base_from_scratch() {
     layers: []
   }' | update_manifest
   # Create the image config when there is annotations
-  jq -n --argjson platform "$platform" '{config:{}, rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
+  jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
 }
 
 function base_from() {
