@@ -27,7 +27,7 @@ function base_from_scratch() {
     layers: []
   }' | update_manifest
   # Create the image config when there is annotations
-  jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
+  jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
 }
 
 function base_from() {
@@ -91,7 +91,7 @@ function add_layer() {
   desc="$(jq --arg comp_ext "${comp_ext}" '.compression |= (if . != "" then "\($comp_ext)\(.)" end)' <<< "$desc")"
 
   new_config_digest=$(
-    get_config | jq --argjson desc "$desc" '.rootfs.diff_ids += [$desc.diffid]' | update_config
+    get_config | jq --argjson desc "$desc" '.rootfs.diff_ids += [$desc.diffid] | .history += [$desc.history]' | update_config
   )
 
   get_manifest |

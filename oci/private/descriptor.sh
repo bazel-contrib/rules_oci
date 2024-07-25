@@ -14,6 +14,7 @@ set -o pipefail -o errexit -o nounset
 PATH="$HPATH:$PATH"
 archive="$1"
 output="$2"
+label="$3"
 
 digest="$(regctl digest <"$archive")"
 diffid="$digest"
@@ -28,5 +29,19 @@ elif zstd -t <"$archive" 2>/dev/null; then
     diffid=$(zstd --decompress --format=zstd <"$archive" | regctl digest)
 fi
 
-jq -n --arg compression "$compression" --arg diffid "$diffid" --arg digest "$digest" --argjson size "$size" \
-    '{digest: $digest, diffid: $diffid, compression: $compression, size: $size }' >"$output"
+jq -n \
+    --arg compression "$compression" \
+    --arg diffid "$diffid" \
+    --arg digest "$digest" \
+    --argjson size "$size" \
+    --arg label "$label" \
+'{
+    digest: $digest, 
+    diffid: $diffid, 
+    compression: $compression, 
+    size: $size,
+    history: {
+        created: "1970-01-01T00:00:00Z",
+        created_by: "bazel build \($label)"
+    }
+}' >"$output"

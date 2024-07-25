@@ -33,7 +33,8 @@ def assert_oci_config(
         os_eq = None,
         variant_eq = None,
         labels_eq = None,
-        created_eq = None):
+        created_eq = None,
+        history_eq = None):
     "assert that an oci_image has specified config metadata according to https://github.com/opencontainers/image-spec/blob/main/config.md"
     pick = []
 
@@ -71,6 +72,8 @@ def assert_oci_config(
 
     if created_eq:
         config_json["created"] = created_eq
+    if history_eq:
+        config_json["history"] = history_eq
 
     pick += ["." + k for k in config_json.keys()]
 

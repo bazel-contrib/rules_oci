@@ -105,6 +105,7 @@ def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
+    args.add(layer.owner)
     ctx.actions.run(
         executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh),
         inputs = [layer],
