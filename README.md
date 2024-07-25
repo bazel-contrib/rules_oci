@@ -96,3 +96,8 @@ Note that these examples rely on the setup code in the `/WORKSPACE` file in the 
 
 - [cosign_sign](https://github.com/bazel-contrib/rules_oci/blob/main/cosign/private/sign.bzl): Sign an `oci_image` using `cosign` binary at a remote registry.
 - [cosign_attest](https://github.com/bazel-contrib/rules_oci/blob/main/cosign/private/attest.bzl) Add an attachment to an `oci_image` at a remote registry using `cosign`.
+- 
+
+### 3rd Party Extensions/Tools
+
+- [ociupdate](https://github.com/theoremlp/ociupdate): CLI and basic module extension to help with automating updates to image digests for ECR-based images with immutable tags.
