@@ -9,7 +9,7 @@ readonly TAR="$(rlocation "{{tar}}")"
 readonly MTREE="$(rlocation "{{mtree_path}}")"
 readonly LOADER="$(rlocation "{{loader}}")"
 
-if [ -e "$LOADER}" ]; then
+if [ -f "$LOADER" ]; then
     CONTAINER_CLI="$LOADER"
 elif command -v docker &> /dev/null; then
     CONTAINER_CLI="docker"
