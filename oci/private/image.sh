@@ -146,13 +146,13 @@ for ARG in "$@"; do
     CONFIG=$(jq --argjson envs "${env}" '.config.Env = ($envs | map("\(.key)=\(.value)"))' <<<"$CONFIG")
     ;;
   --cmd=*)
-    CONFIG=$(jq --rawfile cmd "${ARG#--cmd=}" '.config.Cmd = ($cmd | split(",|\n"; "") | map(select(. | length > 0)))' <<<"$CONFIG")
+    CONFIG=$(jq --rawfile cmd "${ARG#--cmd=}" '.config.Cmd = ($cmd | split("\n") | map(select(. | length > 0)) | map(. | sub("%5Cn"; "\n"; "g")))' <<<"$CONFIG")
     ;;
   --entrypoint=*)
     # NOTE: setting entrypoint deletes `.config.Cmd` which is consistent with crane and Dockerfile behavior.
     # See: https://github.com/bazel-contrib/rules_oci/issues/649
     # See: https://github.com/google/go-containerregistry/blob/c3d1dcc932076c15b65b8b9acfff1d47ded2ebf9/cmd/crane/cmd/mutate.go#L107
-    CONFIG=$(jq --rawfile entrypoint "${ARG#--entrypoint=}" '.config.Cmd = null | .config.Entrypoint = ($entrypoint | split(",|\n"; "") | map(select(. | length > 0)))' <<<"$CONFIG")
+    CONFIG=$(jq --rawfile entrypoint "${ARG#--entrypoint=}" '.config.Cmd = null | .config.Entrypoint = ($entrypoint | split("\n") | map(select(. | length > 0)) | map(. | sub("%5Cn"; "\n"; "g")))' <<<"$CONFIG")
     ;;
   --exposed-ports=*)
     CONFIG=$(jq --rawfile ep "${ARG#--exposed-ports=}" '.config.ExposedPorts = ($ep | split(",") | map({key: ., value: {}}) | from_entries)' <<<"$CONFIG")

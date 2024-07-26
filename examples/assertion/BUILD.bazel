@@ -519,6 +519,94 @@ assert_oci_config(
     image = ":case16",
 )
 
+# Case 17: an entrypoint and cmd with , in it
+oci_image(
+    name = "case17",
+    architecture = "arm64",
+    cmd = [
+        '--permitted-system-keys="MY_HOST_V1,MY_HOST_V2"',
+    ],
+    entrypoint = [
+        "/docker-entrypoint.sh",
+        '--permitted-system-keys="MY_HOST_V1,MY_HOST_V2"',
+    ],
+    os = "linux",
+)
+
+assert_oci_config(
+    name = "test_case17",
+    cmd_eq = [
+        '--permitted-system-keys="MY_HOST_V1,MY_HOST_V2"',
+    ],
+    entrypoint_eq = [
+        "/docker-entrypoint.sh",
+        '--permitted-system-keys="MY_HOST_V1,MY_HOST_V2"',
+    ],
+    image = ":case17",
+)
+
+# Case 18: an entrypoint and with \n in it
+oci_image(
+    name = "case18",
+    architecture = "arm64",
+    cmd = ['--permitted-system-keys="MY_HOST_V1\nMY_HOST_V2"'],
+    entrypoint = ["/docker-entrypoint.sh"],
+    os = "linux",
+)
+
+assert_oci_config(
+    name = "test_case18",
+    cmd_eq = ['--permitted-system-keys="MY_HOST_V1\nMY_HOST_V2"'],
+    entrypoint_eq = ["/docker-entrypoint.sh"],
+    image = ":case18",
+)
+
+# Case 19: an entrypoint with escaped \n in it
+oci_image(
+    name = "case19",
+    architecture = "arm64",
+    entrypoint = [
+        "/docker-entrypoint.sh",
+        '--permitted-system-keys="MY_HOST_V1\\nMY_HOST_V2"',
+    ],
+    os = "linux",
+)
+
+assert_oci_config(
+    name = "test_case19",
+    entrypoint_eq = [
+        "/docker-entrypoint.sh",
+        '--permitted-system-keys="MY_HOST_V1\\nMY_HOST_V2"',
+    ],
+    image = ":case19",
+)
+
+# Case 20: an entrypoint with \t and \n in it
+case20_shell = '''
+#!/usr/bin/env bash
+set -o pipefail -o errexit -o nounset
+string="\t\t\n\n\\n"
+'''
+
+oci_image(
+    name = "case20",
+    architecture = "arm64",
+    entrypoint = [
+        "bash",
+        case20_shell,
+    ],
+    os = "linux",
+)
+
+assert_oci_config(
+    name = "test_case20",
+    entrypoint_eq = [
+        "bash",
+        case20_shell,
+    ],
+    image = ":case20",
+)
+
 # build them as test.
 build_test(
     name = "test",
