@@ -28,11 +28,6 @@ _IMAGE_REFERENCE_ATTRS = {
         doc = "Label to a .docker/config.json file",
         allow_single_file = True,
     ),
-    "config_path": attr.label(
-        # TODO(2.0): remove
-        doc = "Deprecated. Use DOCKER_CONFIG environment variable or config attribute instead. TODO(2.0): remove",
-        allow_single_file = True,
-    ),
 }
 
 SCHEMA1_ERROR = """\
@@ -72,11 +67,7 @@ _DOWNLOAD_HEADERS = {
 def _config_path(rctx):
     if rctx.attr.config:
         return rctx.path(rctx.attr.config)
-    elif rctx.attr.config_path:
-        util.warning(rctx, "attribute config_path is deprecated and will be removed in 2.0. use DOCKER_CONFIG environment variable or config attribute instead.")
-        return rctx.path(rctx.attr.config_path)
-    else:
-        return None
+    return None
 
 def _is_tag(str):
     return str.find(":") == -1

@@ -103,7 +103,7 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, config_path = None, bazel_tags = []):
+def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, bazel_tags = []):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -136,7 +136,6 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             Since tags are mutable, this is not reproducible, so a warning is printed.
         reproducible: Set to False to silence the warning about reproducibility when using `tag`.
         config: Label to a `.docker/config.json` file.
-        config_path: Deprecated. use `config` attribute or DOCKER_CONFIG environment variable.
         is_bzlmod: whether the oci_pull is being called from a module extension
         bazel_tags: Bazel tags to be propagated to generated rules.
     """
@@ -183,8 +182,6 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
                 platform = plat,
                 target_name = plat_name,
                 config = config,
-                # TODO(2.0): remove
-                config_path = config_path,
                 bazel_tags = bazel_tags,
             )
 
@@ -208,8 +205,6 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             identifier = digest or tag,
             target_name = single_platform,
             config = config,
-            # TODO(2.0): remove
-            config_path = config_path,
             bazel_tags = bazel_tags,
         )
 
@@ -227,6 +222,4 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         bzlmod_repository = name if is_bzlmod else None,
         reproducible = reproducible,
         config = config,
-        # TODO(2.0): remove
-        config_path = config_path,
     )
