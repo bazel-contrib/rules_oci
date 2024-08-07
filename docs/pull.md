@@ -94,7 +94,7 @@ See the [examples/credential_helper](/examples/credential_helper/auth.sh) direct
 
 <pre>
 oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-repository">repository</a>, <a href="#oci_pull-registry">registry</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>, <a href="#oci_pull-reproducible">reproducible</a>, <a href="#oci_pull-is_bzlmod">is_bzlmod</a>, <a href="#oci_pull-config">config</a>,
-         <a href="#oci_pull-config_path">config_path</a>, <a href="#oci_pull-bazel_tags">bazel_tags</a>)
+         <a href="#oci_pull-bazel_tags">bazel_tags</a>)
 </pre>
 
 Repository macro to fetch image manifest data from a remote docker registry.
@@ -122,7 +122,6 @@ in rules like `oci_image`.
 | <a id="oci_pull-reproducible"></a>reproducible |  Set to False to silence the warning about reproducibility when using <code>tag</code>.   |  <code>True</code> |
 | <a id="oci_pull-is_bzlmod"></a>is_bzlmod |  whether the oci_pull is being called from a module extension   |  <code>False</code> |
 | <a id="oci_pull-config"></a>config |  Label to a <code>.docker/config.json</code> file.   |  <code>None</code> |
-| <a id="oci_pull-config_path"></a>config_path |  Deprecated. use <code>config</code> attribute or DOCKER_CONFIG environment variable.   |  <code>None</code> |
 | <a id="oci_pull-bazel_tags"></a>bazel_tags |  Bazel tags to be propagated to generated rules.   |  <code>[]</code> |
 
 
