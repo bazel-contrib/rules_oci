@@ -38,6 +38,7 @@ BUILDER_NAME = "%s"
 
 configure_buildx = repository_rule(
     implementation = _impl_configure_buildx,
+    local = True,
 )
 
 def fetch_buildx():
