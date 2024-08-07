@@ -22,6 +22,17 @@ oci_image_rule = _oci_image
 oci_image_index = _oci_image_index
 oci_push_rule = _oci_push
 
+def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
+    label = "_{}_write_{}".format(name, kind)
+    write_file(
+        name = label,
+        out = "_{}.{}.txt".format(name, kind),
+        # %5Cn is the uri escaped newline
+        content = [elem.replace("\n", "%5Cn") for elem in elems],
+        **forwarded_kwargs
+    )
+    return label
+
 def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, volumes = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
@@ -81,24 +92,20 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env = env_label
 
     if types.is_list(cmd):
-        cmd_label = "_{}_write_cmd".format(name)
-        write_file(
-            name = cmd_label,
-            out = "_{}.cmd.txt".format(name),
-            content = [",".join(cmd)],
-            **forwarded_kwargs
+        cmd = _write_nl_seperated_file(
+            name = name,
+            kind = "cmd",
+            elems = cmd,
+            forwarded_kwargs = forwarded_kwargs,
         )
-        cmd = cmd_label
 
     if types.is_list(entrypoint):
-        entrypoint_label = "_{}_write_entrypoint".format(name)
-        write_file(
-            name = entrypoint_label,
-            out = "_{}.entrypoint.txt".format(name),
-            content = [",".join(entrypoint)],
-            **forwarded_kwargs
+        entrypoint = _write_nl_seperated_file(
+            name = name,
+            kind = "entrypoint",
+            elems = entrypoint,
+            forwarded_kwargs = forwarded_kwargs,
         )
-        entrypoint = entrypoint_label
 
     if types.is_list(exposed_ports):
         exposed_ports_label = "_{}_write_exposed_ports".format(name)
