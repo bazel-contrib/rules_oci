@@ -101,7 +101,7 @@ def _get_auth_file_path(rctx):
 
     return None
 
-def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name):
+def _fetch_auth_via_creds_helper(rctx, raw_host, helper_name, allow_fail = False):
     if rctx.os.name.startswith("windows"):
         executable = "{}.bat".format(helper_name)
         rctx.file(
@@ -120,7 +120,10 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         )
     result = rctx.execute([rctx.path(executable), raw_host])
     if result.return_code:
-        fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+        if not allow_fail:
+            fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
+        else:
+            return {}
 
     response = json.decode(result.stdout)
 
@@ -257,7 +260,7 @@ def _get_auth(rctx, state, registry):
 
     # look for generic credentials-store all lookups for host-specific auth fails
     if "credsStore" in config and len(pattern.keys()) == 0:
-        pattern = _fetch_auth_via_creds_helper(rctx, registry, config["credsStore"])
+        pattern = _fetch_auth_via_creds_helper(rctx, registry, config["credsStore"], allow_fail = True)
 
     # cache the result so that we don't do this again unnecessarily.
     state["auth"][registry] = pattern
