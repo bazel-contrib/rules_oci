@@ -25,15 +25,55 @@ oci_pull(
         "linux/arm64",
     ],
 )
+
+# A multi-arch base image with variants, note that it won't work with just "linux/arm64"
+oci_pull(
+    name = "distroless_base_nossl_debian12",
+    digest = "sha256:73c3d3f3030516665c916ebc9baa80f89c1a90e438dc02f1fed525ed246c0c2a",
+    image = "gcr.io/distroless/base-nossl-debian12",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
+)
+```
+
+Typical usage in `MODULE.bazel`:
+
+```starlark
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+# A multi-arch base image with variants, note that it won't work with just "linux/arm64"
+oci.pull(
+    name = "distroless_base_nossl_debian12",
+    digest = "sha256:73c3d3f3030516665c916ebc9baa80f89c1a90e438dc02f1fed525ed246c0c2a",
+    image = "gcr.io/distroless/base-nossl-debian12",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64/v8",
+    ],
+)
+use_repo(
+    oci,
+    "distroless_base_nossl_debian12",
+    "distroless_base_nossl_debian12_linux_amd64",
+    "distroless_base_nossl_debian12_linux_arm64_v8",
+)
 ```
 
 Now you can refer to these as a base layer in `BUILD.bazel`.
 The target is named the same as the external repo, so you can use a short label syntax:
 
-```
+```starlark
 oci_image(
     name = "app",
     base = "@distroless_static",
+    ...
+)
+
+oci_image(
+    name = "app_arm64_v8",
+    base = "@distroless_base_nossl_debian12_linux_arm64_v8",
     ...
 )
 ```
