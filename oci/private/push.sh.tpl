@@ -8,6 +8,8 @@ readonly TAGS_FILE="{{tags}}"
 readonly FIXED_ARGS=({{fixed_args}})
 readonly REPOSITORY_FILE="{{repository_file}}"
 
+VERBOSE=""
+
 REPOSITORY=""
 if [ -f $REPOSITORY_FILE ] ; then
   REPOSITORY=$(tr -d '\n' < "$REPOSITORY_FILE")
@@ -24,6 +26,9 @@ ARGS=()
 
 while (( $# > 0 )); do
   case $1 in
+    (-v|--verbose)
+      VERBOSE="--verbose"
+      shift;;
     (-t|--tag)
       TAGS+=( "$2" )
       shift
@@ -47,13 +52,13 @@ done
 DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 REFS=$(mktemp)
-"${CRANE}" push "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
+"${CRANE}" push ${VERBOSE} "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
 
 for tag in "${TAGS[@]+"${TAGS[@]}"}"
 do
-  "${CRANE}" tag $(cat "${REFS}") "${tag}"
+  "${CRANE}" tag ${VERBOSE} $(cat "${REFS}") "${tag}"
 done
 
 if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs -n1 "${CRANE}" tag $(cat "${REFS}")
+  cat "${TAGS_FILE}" | xargs -rn1 "${CRANE}" tag ${VERBOSE} $(cat "${REFS}")
 fi
