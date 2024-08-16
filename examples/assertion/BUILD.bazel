@@ -190,7 +190,7 @@ oci_image(
     volumes = ["/srv/data"],
     # user & workdir
     user = "root",
-    workdir = "/root",
+    workdir = ["/root"],
     # labels & annotations
     labels = {
         "org.opencontainers.image.version": "0.0.0",
@@ -618,4 +618,23 @@ build_test(
         ":case5_tar",
         ":case10_run",
     ],
+)
+
+# Case 21: accept workdir param as a target (list input tested in case8)
+genrule(
+    name = "case21_workdir_target",
+    outs = ["case21_workdir_target.txt"],
+    cmd = "echo -n /workdir > $@",
+)
+
+oci_image(
+    name = "case21",
+    base = ":case8",
+    workdir = ":case21_workdir_target",
+)
+
+assert_oci_config(
+    name = "test_case21",
+    image = ":case21",
+    workdir_eq = "/workdir",
 )
