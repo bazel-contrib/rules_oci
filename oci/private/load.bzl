@@ -218,7 +218,6 @@ def _load_impl(ctx):
 
     return [
         DefaultInfo(
-            files = depset([mtree_spec]),
             runfiles = runfiles,
             executable = runnable_loader,
         ),
