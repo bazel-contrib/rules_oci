@@ -111,6 +111,45 @@ oci_push(
 )
 ```
 
+To push to more than one registry, or using multiple remote tags,
+use [rules_multirun] to group multiple oci_push targets into one executable target.
+
+For example:
+
+```starlark
+load("@rules_multirun//:defs.bzl", "command", "multirun")
+
+REPOS = {
+    "index": "index.docker.io/&lt;ORG&gt;/image",
+    "ECR": "aws_account_id.dkr.ecr.us-west-2.amazonaws.com",
+}
+
+[
+    oci_push(
+        name = "push_image_" + k,
+        image = ":image_index",
+        remote_tags = ":stamped",
+        repository = v,
+    )
+    for (k, v) in REPOS.items()
+]
+
+[
+    command(
+        name = k,
+        command = "push_image_" + k,
+    )
+    for k in REPOS.keys()
+]
+
+multirun(
+    name = "push_all",
+    commands = REPOS.keys(),
+)
+```
+
+[rules_multirun]: https://github.com/keith/rules_multirun
+
 
 **ATTRIBUTES**
 

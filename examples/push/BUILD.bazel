@@ -1,4 +1,5 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
+load("@rules_multirun//:defs.bzl", "command", "multirun")
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_push")
 
 oci_image(
@@ -47,11 +48,34 @@ expand_template(
     ],
 )
 
-oci_push(
-    name = "push_image_index",
-    image = ":image_index",
-    remote_tags = ":stamped",
-    repository = "index.docker.io/<ORG>/image",
+######
+# Demonstration of how to push to more than one repository
+REPOS = {
+    "index": "index.docker.io/<ORG>/image",
+    "ECR": "aws_account_id.dkr.ecr.us-west-2.amazonaws.com",
+}
+
+[
+    oci_push(
+        name = "push_image_" + k,
+        image = ":image_index",
+        remote_tags = ":stamped",
+        repository = v,
+    )
+    for (k, v) in REPOS.items()
+]
+
+[
+    command(
+        name = k,
+        command = "push_image_" + k,
+    )
+    for k in REPOS.keys()
+]
+
+multirun(
+    name = "push_all",
+    commands = REPOS.keys(),
 )
 
 sh_test(
