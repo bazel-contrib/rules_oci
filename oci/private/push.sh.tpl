@@ -60,5 +60,5 @@ do
 done
 
 if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs --no-run-if-empty -n1 "${CRANE}" tag ${VERBOSE} $(cat "${REFS}")
+  cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag ${VERBOSE} $(cat "${REFS}")
 fi
