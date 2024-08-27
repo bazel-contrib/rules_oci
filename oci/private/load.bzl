@@ -49,6 +49,37 @@ filegroup(
     output_group = "tarball",
 )
 ```
+
+### Multiple images
+
+To load more than one image into the daemon,
+use [rules_multirun] to group multiple oci_load targets into one executable target.
+
+This might be useful with a docker-compose workflow, for example.
+
+```starlark
+load("@rules_multirun//:defs.bzl", "command", "multirun")
+
+IMAGES = {
+    "webservice": "//path/to/web-service:image.load",
+    "backend": "//path/to/backend-service:image.load",
+}
+
+[
+    command(
+        name = k,
+        command = v,
+    )
+    for (k, v) in IMAGES.items()
+]
+
+multirun(
+    name = "load_all",
+    commands = IMAGES.keys(),
+)
+```
+
+[rules_multirun]: https://github.com/keith/rules_multirun
 """
 
 attrs = {

@@ -21,6 +21,11 @@ load("//oci:repositories.bzl", "oci_register_toolchains")
 
 oci_register_toolchains(name = "oci")
 
+# Transitive dep for rules_multirun
+load("@rules_python//python:repositories.bzl", "py_repositories")
+
+py_repositories()
+
 ## Setup bazel-lib
 load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
 
