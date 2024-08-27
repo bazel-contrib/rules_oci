@@ -127,6 +127,8 @@ jobs:
           wait: true
           token: ${{ secrets.TC_CLOUD_TOKEN }}
 
+      - run: man xargs
+
       - name: Configure Remote Docker Host
         if: ${{ matrix.os == 'macos-13' }}
         run: |
