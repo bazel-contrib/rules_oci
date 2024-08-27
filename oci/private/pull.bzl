@@ -37,12 +37,18 @@ See: https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md#authentic
 """
 
 OCI_MEDIA_TYPE_OR_AUTHN_ERROR = """\
-Unable to retrieve the image manifest. This could be due to authentication problems or an attempt to fetch an image with OCI image media types.
-See: https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md#authentication-using-credential-helpers
+Unable to retrieve the image manifest. This could be due to
+*) Authentication problems. Check if `docker pull` command succeeds with same parameters.
+*) Fetching an image with OCI image media types.
+*) If there is a configured URL Rewriter, check that it does not block the request.
+
+See for more: https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md#authentication-using-credential-helpers
 """
 
 OCI_MEDIA_TYPE_OR_AUTHN_ERROR_BAZEL7 = """\
-Unable to retrieve the image manifest. This could be due to authentication problems.
+Unable to retrieve the image manifest. This could be due to
+*) Authentication problems. Check if `docker pull` command succeeds with same parameters.
+*) If there is a configured URL Rewriter, check that it does not block the request.
 """
 
 # Supported media types
