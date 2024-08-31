@@ -16,6 +16,7 @@ pull = tag_class(attrs = {
             Since tags are mutable, this is not reproducible, so a warning is printed."""),
     "reproducible": attr.bool(doc = """Set to False to silence the warning about reproducibility when using `tag`.""", default = True),
     "config": attr.label(doc = "Label to a .docker/config.json file"),
+    "bazel_tags": attr.string_list(doc = """Bazel tags to be propagated to generated rules.""")
 })
 
 toolchains = tag_class(attrs = {
@@ -38,6 +39,7 @@ def _oci_extension(module_ctx):
                 tag = pull.tag,
                 reproducible = pull.reproducible,
                 config = pull.config,
+                bazel_tags = pull.bazel_tags,
                 is_bzlmod = True,
             )
 
