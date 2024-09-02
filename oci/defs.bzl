@@ -33,6 +33,38 @@ def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
     )
     return label
 
+
+# There's no "is this a label or just a string?" check in macro land, so
+# approximate it with some silly string heuristics. See
+# https://bazel.build/concepts/labels for label name rules
+def _is_a_workdir_label(input):
+    if input[0] in (":", "@") or input[:2] in ("@@", "//") or '/' not in input:
+        return True
+    return False
+
+
+def test_is_a_workdir_label():
+    testdata = {
+        # Corner case: "foo" could be either a string or a target. This
+        # implementation chooses target. If you want a relative workdir "foo"
+        # use "./foo"
+        "foo": True,
+        "//foo": True,
+        "@@foo//bar": True,
+        ":foo": True,
+        # These are all not labels
+        "/foo": False,
+        "./foo": False,
+        "foo/bar": False,
+        "../foo": False,
+    }
+
+    for input, expected in testdata.items():
+        value = _is_a_workdir_label(input)
+        if value != expected:
+            fail("_is_a_workdir_label(%s) returned %s, expected %s" % (input, value, expected))
+
+
 def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, workdir = None, exposed_ports = None, volumes = None, **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
@@ -50,9 +82,13 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
     deterministic) information when running with `--stamp` flag.  See the example in
     [/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
 
-    **LIST_OR_LABEL**: `cmd`, `entrypoint`, `workdir`, `exposed_ports`, `volumes`
+    **LIST_OR_LABEL**: `cmd`, `entrypoint`, `exposed_ports`, `volumes`
 
     Can be a list of strings, or a file with newlines separating entries.
+
+    **STRING_OR_LABEL**: `workdir`
+
+    A string, or a target text file whose output contains a single line
 
     Args:
         name: name of resulting oci_image_rule
@@ -61,7 +97,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
         env: `DICT_OR_LABEL` Environment variables provisioned by default to the running container.
         cmd: `LIST_OR_LABEL` Command & argument configured by default in the running container.
         entrypoint: `LIST_OR_LABEL` Entrypoint configured by default in the running container.
-        workdir: `LIST_OR_LABEL` Workdir configured by default in the running container. Only 1 list entry allowed.
+        workdir: `STRING_OR_LABEL` Workdir configured by default in the running container.
         exposed_ports: `LIST_OR_LABEL` Exposed ports in the running container.
         volumes: `LIST_OR_LABEL` Volumes for the container.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
@@ -115,15 +151,13 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
             forwarded_kwargs = forwarded_kwargs,
         )
 
-    if types.is_list(workdir):
-        if len(workdir) > 1:
-            fail("workdir MUST only include 1 list element")
-
+    # Support a string for convenience. Create a label on the fly.
+    if workdir != None and not _is_a_workdir_label(workdir):
         workdir_label = "_{}_write_workdir".format(name)
         write_file(
             name = workdir_label,
             out = "_{}.workdir.txt".format(name),
-            content = workdir,
+            content = [workdir],
             **forwarded_kwargs
         )
         workdir = workdir_label

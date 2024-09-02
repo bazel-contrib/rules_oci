@@ -112,9 +112,13 @@ Can by configured using either dict(key-&gt;value) or a file that contains key=v
 deterministic) information when running with `--stamp` flag.  See the example in
 [/examples/labels/BUILD.bazel](https://github.com/bazel-contrib/rules_oci/blob/main/examples/labels/BUILD.bazel).
 
-**LIST_OR_LABEL**: `cmd`, `entrypoint`, `workdir`, `exposed_ports`, `volumes`
+**LIST_OR_LABEL**: `cmd`, `entrypoint`, `exposed_ports`, `volumes`
 
 Can be a list of strings, or a file with newlines separating entries.
+
+**STRING_OR_LABEL**: `workdir`
+
+A string, or a target text file whose output contains a single line
 
 
 **PARAMETERS**
@@ -128,7 +132,7 @@ Can be a list of strings, or a file with newlines separating entries.
 | <a id="oci_image-env"></a>env |  <code>DICT_OR_LABEL</code> Environment variables provisioned by default to the running container.   |  <code>None</code> |
 | <a id="oci_image-cmd"></a>cmd |  <code>LIST_OR_LABEL</code> Command & argument configured by default in the running container.   |  <code>None</code> |
 | <a id="oci_image-entrypoint"></a>entrypoint |  <code>LIST_OR_LABEL</code> Entrypoint configured by default in the running container.   |  <code>None</code> |
-| <a id="oci_image-workdir"></a>workdir |  <code>LIST_OR_LABEL</code> Workdir configured by default in the running container. Only 1 list entry allowed.   |  <code>None</code> |
+| <a id="oci_image-workdir"></a>workdir |  <code>STRING_OR_LABEL</code> Workdir configured by default in the running container.   |  <code>None</code> |
 | <a id="oci_image-exposed_ports"></a>exposed_ports |  <code>LIST_OR_LABEL</code> Exposed ports in the running container.   |  <code>None</code> |
 | <a id="oci_image-volumes"></a>volumes |  <code>LIST_OR_LABEL</code> Volumes for the container.   |  <code>None</code> |
 | <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule) and [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
