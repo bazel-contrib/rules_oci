@@ -62,6 +62,12 @@ regctl_toolchain(
 """
 REGCTL_VERSION = "v0.7.0"
 
+REGCTL_PLATFORMS = {
+    name: platform
+    for name, platform in PLATFORMS.items()
+    if name.replace("_", "-") in REGCTL_VERSIONS[REGCTL_VERSION].keys()
+}
+
 def _regctl_repo_impl(rctx):
     platform = rctx.attr.platform.replace("_", "-")
     ext = ".exe" if platform.startswith("windows") else ""
@@ -83,7 +89,7 @@ regctl_repositories = repository_rule(
     _regctl_repo_impl,
     doc = "Fetch external tools needed for regctl toolchain",
     attrs = {
-        "platform": attr.string(mandatory = True, values = PLATFORMS.keys()),
+        "platform": attr.string(mandatory = True, values = REGCTL_PLATFORMS.keys()),
     },
 )
 
@@ -107,9 +113,11 @@ def oci_register_toolchains(name, register = True):
     register_coreutils_toolchains(register = register)
     register_copy_to_directory_toolchains(register = register)
     register_zstd_toolchains(register = register)
+    register_crane_toolchains(name, register = register)
+    register_regctl_toolchains(name, register = register)
 
+def register_crane_toolchains(name, register = True):
     crane_toolchain_name = "{name}_crane_toolchains".format(name = name)
-    regctl_toolchain_name = "{name}_regctl_toolchains".format(name = name)
 
     for platform in PLATFORMS.keys():
         crane_repositories(
@@ -118,14 +126,8 @@ def oci_register_toolchains(name, register = True):
             crane_version = CRANE_VERSIONS.keys()[0],
         )
 
-        regctl_repositories(
-            name = "{name}_regctl_{platform}".format(name = name, platform = platform),
-            platform = platform,
-        )
-
         if register:
             native.register_toolchains("@{}//:{}_toolchain".format(crane_toolchain_name, platform))
-            native.register_toolchains("@{}//:{}_toolchain".format(regctl_toolchain_name, platform))
 
     toolchains_repo(
         name = crane_toolchain_name,
@@ -133,6 +135,18 @@ def oci_register_toolchains(name, register = True):
         # avoiding use of .format since {platform} is formatted by toolchains_repo for each platform.
         toolchain = "@%s_crane_{platform}//:crane_toolchain" % name,
     )
+
+def register_regctl_toolchains(name, register = True):
+    regctl_toolchain_name = "{name}_regctl_toolchains".format(name = name)
+
+    for platform in REGCTL_PLATFORMS.keys():
+        regctl_repositories(
+            name = "{name}_regctl_{platform}".format(name = name, platform = platform),
+            platform = platform,
+        )
+
+        if register:
+            native.register_toolchains("@{}//:{}_toolchain".format(regctl_toolchain_name, platform))
 
     toolchains_repo(
         name = regctl_toolchain_name,
