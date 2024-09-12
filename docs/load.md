@@ -61,7 +61,7 @@ filegroup(
 
 When using format = oci, containerd image store needs to be enabled in order for the oci style tarballs to work. 
 
-On docker desktop this can be enabled by visiting "Settings (cog icon) -&gt; Features in development -&gt; Use containerd for pulling and storing images"
+On docker desktop this can be enabled by visiting `Settings (cog icon) -&gt; Features in development -&gt; Use containerd for pulling and storing images`
 
 For more information, see https://docs.docker.com/desktop/containerd/
 
