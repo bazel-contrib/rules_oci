@@ -1,0 +1,95 @@
+load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@configure_buildx//:defs.bzl", "BUILDER_NAME", "TARGET_COMPATIBLE_WITH")
+load("@rules_oci//oci:defs.bzl", "oci_image")
+load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
+load("@rules_pkg//:mappings.bzl", "strip_prefix")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+
+native_binary(
+    name = "buildx",
+    src = select({
+        "@bazel_tools//src/conditions:linux_x86_64": "@buildx_linux_amd64//file",
+        "@bazel_tools//src/conditions:darwin_arm64": "@buildx_darwin_arm64//file",
+        "@bazel_tools//src/conditions:darwin_x86_64": "@buildx_darwin_amd64//file",
+    }),
+    out = "buildx",
+)
+
+# This tar can be arranged in arbitrary ways.
+# For example, one could grab pkg_files from elsewhere in the workspace.
+# Anything in the tar can be used by a Dockerfile ADD or COPY.
+pkg_tar(
+  name = "buildx_context",
+  srcs = [
+    "Dockerfile",
+    "requirements.txt",
+  ] + glob([
+    "src/*",
+  ]),
+  strip_prefix = strip_prefix.from_pkg("."),
+  package_dir = "/app",
+)
+
+# In order to use a local tar as a context, we must pipe the tar into the BuildX binary
+# This is a bash operation, so we must wrap the BuildX tool in an sh_binary that does this for us
+sh_binary(
+    name = "buildx_wrapper",
+    srcs = [
+        "buildx_wrapper.sh",
+    ],
+)
+
+run_binary(
+    name = "base",
+    tool = ":buildx_wrapper",
+    out_dirs = [ "base" ],
+    srcs = [
+        ":buildx_context",
+        ":buildx",
+    ],
+    env = {
+        "BUILDX": "$(location :buildx)",
+        "BUILDER_NAME": BUILDER_NAME,
+        "OUTPUT_DIR": "$@",
+        "BUILDX_CONTEXT": "$(location :buildx_context)",
+        "DOCKER_FILE": "/app/Dockerfile",
+        "PLATFORM": "linux/amd64",
+    },
+    execution_requirements = { "local": "1" },
+    target_compatible_with = TARGET_COMPATIBLE_WITH,
+)
+
+oci_image(
+    name = "image",
+    base = ":base",
+)
+
+assert_oci_config(
+    name = "assert_metadata",
+    cmd_eq = ["/app/say.py"],
+    entrypoint_eq = None,
+    image = ":image",
+)
+
+assert_oci_image_command(
+    name = "assert_cow_says_moo",
+    args = [
+        "python",
+        "/app/src/say.py",
+    ],
+    exit_code_eq = 0,
+    image = ":image",
+    output_eq = """\
+  ____
+| moo! |
+  ====
+    \\
+     \\
+       ^__^
+       (oo)\\_______
+       (__)\\       )\\/\\
+           ||----w |
+           ||     ||
+""",
+)
