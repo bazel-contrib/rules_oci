@@ -49,13 +49,20 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
 
     Args:
         name: name of resulting oci_image_rule
-        labels: Labels for the image config. See documentation above.
-        annotations: Annotations for the image config. See documentation above.
-        env: Environment variables provisioned by default to the running container. See documentation above.
-        cmd: Command & argument configured by default in the running container. See documentation above.
-        entrypoint: Entrypoint configured by default in the running container. See documentation above.
-        exposed_ports: Exposed ports in the running container. See documentation above.
-        volumes: Volumes for the container. See documentation above.
+        labels: Labels for the image config.
+            May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.
+        annotations: Annotations for the image config.
+            May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.
+        env: Environment variables provisioned by default to the running container.
+            May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.
+        cmd: Command & argument configured by default in the running container.
+            May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.
+        entrypoint: Entrypoint configured by default in the running container.
+            May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.
+        exposed_ports: Exposed ports in the running container.
+            May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.
+        volumes: Volumes for the container.
+            May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.
         **kwargs: other named arguments to [oci_image_rule](#oci_image_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
