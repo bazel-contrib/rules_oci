@@ -34,7 +34,6 @@ oci_image_index(
 )
 ```
 
-
 **ATTRIBUTES**
 
 
