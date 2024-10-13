@@ -81,7 +81,7 @@ oci_image(
 ## Configuration
 
 Docker specifies a standard location where registry credentials are stored:
-&lt;https://docs.docker.com/engine/reference/commandline/cli/#configuration-files&gt;
+<https://docs.docker.com/engine/reference/commandline/cli/#configuration-files>
 
 We search for this file in several locations, following the logic at
 https://github.com/google/go-containerregistry/tree/main/pkg/authn#tldr-for-consumers-of-this-package.
@@ -115,7 +115,7 @@ common --credential_helper=public.ecr.aws=%workspace%/tools/auth.sh
 tools/auth.sh
 ```bash
 input=$(cat)
-uri=$(jq -r ".uri" &lt;&lt;&lt; $input)
+uri=$(jq -r ".uri" <<< $input)
 host="$(echo $uri | awk -F[/:] '{print $4}')"
 curl -fsSL https://$host/token | jq '{headers:{"Authorization": [("Bearer " + .token)]}}'
 ```
@@ -126,7 +126,6 @@ printed to `stdout` by the external program.
 For more information about the credential helpers checkout the [documentation](https://github.com/bazelbuild/proposals/blob/main/designs/2022-06-07-bazel-credential-helpers.md).
 
 See the [examples/credential_helper](/examples/credential_helper/auth.sh) directory for an example of how this work.
-
 
 <a id="oci_pull"></a>
 
@@ -143,8 +142,8 @@ To use the resulting image, you can use the `@wkspc` shorthand label, for exampl
 if `name = "distroless_base"`, then you can just use `base = "@distroless_base"`
 in rules like `oci_image`.
 
-&gt; This shorthand syntax is broken on the command-line prior to Bazel 6.2.
-&gt; See https://github.com/bazelbuild/bazel/issues/4385
+> This shorthand syntax is broken on the command-line prior to Bazel 6.2.
+> See https://github.com/bazelbuild/bazel/issues/4385
 
 
 **PARAMETERS**
@@ -153,15 +152,15 @@ in rules like `oci_image`.
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_pull-name"></a>name |  repository with this name is created   |  none |
-| <a id="oci_pull-image"></a>image |  the remote image, such as <code>gcr.io/bazel-public/bazel</code>. A tag can be suffixed with a colon, like <code>debian:latest</code>, and a digest can be suffixed with an at-sign, like <code>debian@sha256:e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028</code>.<br><br>Exactly one of image or {registry,repository} should be set.   |  <code>None</code> |
-| <a id="oci_pull-repository"></a>repository |  the image path beneath the registry, such as <code>distroless/static</code>. When set, registry must be set as well.   |  <code>None</code> |
-| <a id="oci_pull-registry"></a>registry |  the remote registry domain, such as <code>gcr.io</code> or <code>docker.io</code>. When set, repository must be set as well.   |  <code>None</code> |
-| <a id="oci_pull-platforms"></a>platforms |  a list of the platforms the image supports. Mandatory for multi-architecture images. Optional for single-architecture images, which expect a one-element list. This creates a separate external repository for each platform, avoiding fetching layers, and an alias that validates the presence of an image matching the target platform's cpu.   |  <code>None</code> |
-| <a id="oci_pull-digest"></a>digest |  the digest string, starting with "sha256:", "sha512:", etc. If omitted, instructions for pinning are provided.   |  <code>None</code> |
-| <a id="oci_pull-tag"></a>tag |  a tag to choose an image from the registry. Exactly one of <code>tag</code> and <code>digest</code> must be set. Since tags are mutable, this is not reproducible, so a warning is printed.   |  <code>None</code> |
-| <a id="oci_pull-reproducible"></a>reproducible |  Set to False to silence the warning about reproducibility when using <code>tag</code>.   |  <code>True</code> |
-| <a id="oci_pull-is_bzlmod"></a>is_bzlmod |  whether the oci_pull is being called from a module extension   |  <code>False</code> |
-| <a id="oci_pull-config"></a>config |  Label to a <code>.docker/config.json</code> file.   |  <code>None</code> |
-| <a id="oci_pull-bazel_tags"></a>bazel_tags |  Bazel tags to be propagated to generated rules.   |  <code>[]</code> |
+| <a id="oci_pull-image"></a>image |  the remote image, such as `gcr.io/bazel-public/bazel`. A tag can be suffixed with a colon, like `debian:latest`, and a digest can be suffixed with an at-sign, like `debian@sha256:e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028`.<br><br>Exactly one of image or {registry,repository} should be set.   |  `None` |
+| <a id="oci_pull-repository"></a>repository |  the image path beneath the registry, such as `distroless/static`. When set, registry must be set as well.   |  `None` |
+| <a id="oci_pull-registry"></a>registry |  the remote registry domain, such as `gcr.io` or `docker.io`. When set, repository must be set as well.   |  `None` |
+| <a id="oci_pull-platforms"></a>platforms |  a list of the platforms the image supports. Mandatory for multi-architecture images. Optional for single-architecture images, which expect a one-element list. This creates a separate external repository for each platform, avoiding fetching layers, and an alias that validates the presence of an image matching the target platform's cpu.   |  `None` |
+| <a id="oci_pull-digest"></a>digest |  the digest string, starting with "sha256:", "sha512:", etc. If omitted, instructions for pinning are provided.   |  `None` |
+| <a id="oci_pull-tag"></a>tag |  a tag to choose an image from the registry. Exactly one of `tag` and `digest` must be set. Since tags are mutable, this is not reproducible, so a warning is printed.   |  `None` |
+| <a id="oci_pull-reproducible"></a>reproducible |  Set to False to silence the warning about reproducibility when using `tag`.   |  `True` |
+| <a id="oci_pull-is_bzlmod"></a>is_bzlmod |  whether the oci_pull is being called from a module extension   |  `False` |
+| <a id="oci_pull-config"></a>config |  Label to a `.docker/config.json` file.   |  `None` |
+| <a id="oci_pull-bazel_tags"></a>bazel_tags |  Bazel tags to be propagated to generated rules.   |  `[]` |
 
 
