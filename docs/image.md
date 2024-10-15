@@ -113,13 +113,13 @@ This is similar to the same-named target created by rules_docker's `container_im
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_image-name"></a>name |  name of resulting oci_image_rule   |  none |
-| <a id="oci_image-labels"></a>labels |  Labels for the image config. See documentation above.   |  `None` |
-| <a id="oci_image-annotations"></a>annotations |  Annotations for the image config. See documentation above.   |  `None` |
-| <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. See documentation above.   |  `None` |
-| <a id="oci_image-cmd"></a>cmd |  Command & argument configured by default in the running container. See documentation above.   |  `None` |
-| <a id="oci_image-entrypoint"></a>entrypoint |  Entrypoint configured by default in the running container. See documentation above.   |  `None` |
-| <a id="oci_image-exposed_ports"></a>exposed_ports |  Exposed ports in the running container. See documentation above.   |  `None` |
-| <a id="oci_image-volumes"></a>volumes |  Volumes for the container. See documentation above.   |  `None` |
+| <a id="oci_image-labels"></a>labels |  Labels for the image config. May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.   |  `None` |
+| <a id="oci_image-annotations"></a>annotations |  Annotations for the image config. May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.   |  `None` |
+| <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.   |  `None` |
+| <a id="oci_image-cmd"></a>cmd |  Command & argument configured by default in the running container. May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.   |  `None` |
+| <a id="oci_image-entrypoint"></a>entrypoint |  Entrypoint configured by default in the running container. May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.   |  `None` |
+| <a id="oci_image-exposed_ports"></a>exposed_ports |  Exposed ports in the running container. May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.   |  `None` |
+| <a id="oci_image-volumes"></a>volumes |  Volumes for the container. May either be specified as a file, as with the documentation above. or a list of strings to specify values inline.   |  `None` |
 | <a id="oci_image-kwargs"></a>kwargs |  other named arguments to [oci_image_rule](#oci_image_rule) and [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).   |  none |
 
 
