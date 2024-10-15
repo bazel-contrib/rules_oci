@@ -40,7 +40,7 @@ so producing it only creates unnecessary load on the action cache.
 
 If needed, the `tarball` output group allows you to depend on the tar output from another rule.
 
-On the command line, `bazel build //path/to:my_tarball --output_groups=tarball`
+On the command line, `bazel build //path/to:my_tarball --output_groups=+tarball`
 
 or in a BUILD file:
 
