@@ -39,6 +39,13 @@ oci_image(
     base = ":base",
 )
 
+assert_oci_config(
+    name = "assert_metadata",
+    cmd_eq = ["/app/say.py"],
+    entrypoint_eq = None,
+    image = ":image",
+)
+
 assert_oci_image_command(
     name = "assert_jq_works",
     args = [
@@ -59,13 +66,6 @@ assert_oci_image_command(
     exit_code_eq = 0,
     image = ":image",
     output_eq = "/var/lib/apt/lists: directory\n",
-)
-
-assert_oci_config(
-    name = "assert_metadata",
-    cmd_eq = ["/app/say.py"],
-    entrypoint_eq = None,
-    image = ":image",
 )
 
 assert_oci_image_command(
