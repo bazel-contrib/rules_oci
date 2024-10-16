@@ -56,13 +56,38 @@ run_binary(
         "DOCKER_FILE": "/app/Dockerfile",
         "PLATFORM": "linux/amd64",
     },
-    execution_requirements = { "local": "1" },
+    execution_requirements = {
+        "local": "1",
+        "requires-network": "1",
+    },
     target_compatible_with = TARGET_COMPATIBLE_WITH,
 )
 
 oci_image(
     name = "image",
     base = ":base",
+)
+
+assert_oci_image_command(
+    name = "assert_jq_works",
+    args = [
+        "jq",
+        "--version",
+    ],
+    exit_code_eq = 0,
+    image = ":image",
+    output_eq = "jq-1.6\n",
+)
+
+assert_oci_image_command(
+    name = "assert_apt_lists_still_exist",
+    args = [
+        "file",
+        "/var/lib/apt/lists",
+    ],
+    exit_code_eq = 0,
+    image = ":image",
+    output_eq = "/var/lib/apt/lists: directory\n",
 )
 
 assert_oci_config(
