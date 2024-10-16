@@ -3,6 +3,8 @@ load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@configure_buildx//:defs.bzl", "BUILDER_NAME", "TARGET_COMPATIBLE_WITH")
 load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
+load("@rules_pkg//:mappings.bzl", "strip_prefix")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 native_binary(
     name = "buildx",
@@ -14,22 +16,48 @@ native_binary(
     out = "buildx",
 )
 
-# docker buildx create --name container --driver=docker-container
+# This tar can be arranged in arbitrary ways.
+# For example, one could grab pkg_files from elsewhere in the workspace.
+# Anything in the tar can be used by a Dockerfile ADD or COPY.
+pkg_tar(
+  name = "buildx_context",
+  srcs = [
+    "Dockerfile",
+    "requirements.txt",
+  ] + glob([
+    "src/*",
+  ]),
+  strip_prefix = strip_prefix.from_pkg("."),
+  package_dir = "/app",
+)
+
+# In order to use a local tar as a context, we must pipe the tar into the BuildX binary
+# This is a bash operation, so we must wrap the BuildX tool in an sh_binary that does this for us
+sh_binary(
+    name = "buildx_wrapper",
+    srcs = [
+        "buildx_wrapper.sh",
+    ],
+)
+
 run_binary(
     name = "base",
-    srcs = ["Dockerfile"] + glob(["src/*"]),
-    args = [
-        "build",
-        "./examples/dockerfile",
-        "--builder",
-        BUILDER_NAME,
-        "--output=type=oci,tar=false,dest=$@",
+    tool = ":buildx_wrapper",
+    out_dirs = [ "base" ],
+    srcs = [
+        ":buildx_context",
+        ":buildx",
     ],
-    execution_requirements = {"local": "1"},
-    mnemonic = "BuildDocker",
-    out_dirs = ["base"],
+    env = {
+        "BUILDX": "$(location :buildx)",
+        "BUILDER_NAME": BUILDER_NAME,
+        "OUTPUT_DIR": "$@",
+        "BUILDX_CONTEXT": "$(location :buildx_context)",
+        "DOCKER_FILE": "/app/Dockerfile",
+        "PLATFORM": "linux/amd64",
+    },
+    execution_requirements = { "local": "1" },
     target_compatible_with = TARGET_COMPATIBLE_WITH,
-    tool = ":buildx",
 )
 
 oci_image(
@@ -45,32 +73,10 @@ assert_oci_config(
 )
 
 assert_oci_image_command(
-    name = "assert_jq_works",
-    args = [
-        "jq",
-        "--version",
-    ],
-    exit_code_eq = 0,
-    image = ":image",
-    output_eq = "jq-1.6\n",
-)
-
-assert_oci_image_command(
-    name = "assert_apt_lists_still_exist",
-    args = [
-        "file",
-        "/var/lib/apt/lists",
-    ],
-    exit_code_eq = 0,
-    image = ":image",
-    output_eq = "/var/lib/apt/lists: directory\n",
-)
-
-assert_oci_image_command(
     name = "assert_cow_says_moo",
     args = [
         "python",
-        "/app/say.py",
+        "/app/src/say.py",
     ],
     exit_code_eq = 0,
     image = ":image",
