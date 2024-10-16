@@ -1,4 +1,4 @@
-# Dockerfile + rules_oci (tar context)
+# Dockerfile + rules_oci
 
 STOP before committing this atrocity. Here's some good reasons why you should not do what we have done here.
 
