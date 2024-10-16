@@ -20,7 +20,6 @@ bazel run :load
 docker run --rm my-repository:latest
 ```
 
-
 <a id="oci_load"></a>
 
 ## oci_load
@@ -41,7 +40,7 @@ so producing it only creates unnecessary load on the action cache.
 
 If needed, the `tarball` output group allows you to depend on the tar output from another rule.
 
-On the command line, `bazel build //path/to:my_tarball --output_groups=tarball`
+On the command line, `bazel build //path/to:my_tarball --output_groups=+tarball`
 
 or in a BUILD file:
 
@@ -59,9 +58,9 @@ filegroup(
 
 ### When using `format = "oci"`
 
-When using format = oci, containerd image store needs to be enabled in order for the oci style tarballs to work. 
+When using format = oci, containerd image store needs to be enabled in order for the oci style tarballs to work.
 
-On docker desktop this can be enabled by visiting `Settings (cog icon) -&gt; Features in development -&gt; Use containerd for pulling and storing images`
+On docker desktop this can be enabled by visiting `Settings (cog icon) -> Features in development -> Use containerd for pulling and storing images`
 
 For more information, see https://docs.docker.com/desktop/containerd/
 
@@ -96,16 +95,15 @@ multirun(
 
 [rules_multirun]: https://github.com/keith/rules_multirun
 
-
 **ATTRIBUTES**
 
 
 | Name  | Description | Type | Mandatory | Default |
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_load-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
-| <a id="oci_load-format"></a>format |  Format of image to generate. Options are: docker, oci. Currently, when the input image is an image_index, only oci is supported, and when the input image is an image, only docker is supported. Conversions between formats may be supported in the future.   | String | optional | <code>"docker"</code> |
-| <a id="oci_load-image"></a>image |  Label of a directory containing an OCI layout, typically <code>oci_image</code>   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
-| <a id="oci_load-loader"></a>loader |  Alternative target for a container cli tool that will be             used to load the image into the local engine when using <code>bazel run</code> on this target.<br><br>            By default, we look for <code>docker</code> or <code>podman</code> on the PATH, and run the <code>load</code> command.<br><br>            See the _run_template attribute for the script that calls this loader tool.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional | <code>None</code> |
+| <a id="oci_load-format"></a>format |  Format of image to generate. Options are: docker, oci. Currently, when the input image is an image_index, only oci is supported, and when the input image is an image, only docker is supported. Conversions between formats may be supported in the future.   | String | optional |  `"docker"`  |
+| <a id="oci_load-image"></a>image |  Label of a directory containing an OCI layout, typically `oci_image`   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="oci_load-loader"></a>loader |  Alternative target for a container cli tool that will be used to load the image into the local engine when using `bazel run` on this target.<br><br>By default, we look for `docker` or `podman` on the PATH, and run the `load` command.<br><br>See the _run_template attribute for the script that calls this loader tool.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_load-repo_tags"></a>repo_tags |  a file containing repo_tags, one per line.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 
 

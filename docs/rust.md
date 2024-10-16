@@ -183,6 +183,7 @@ rust_binary(
 pkg_tar(
     name = "hello_bin_layer",
     srcs = [":hello_bin"],
+    extension = "tar.gz",
 )
 
 # Step 3: Build image and add built layer to it
