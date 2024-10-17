@@ -16,6 +16,8 @@ readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | red
     {parts: [], prev: 0}; 
     {parts: (.parts + [$raw[.prev:$match.offset], ($envs[] | select(.key == $match.captures[0].string)).value ]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
+readonly OPENCONTAINERS_CREATED_KEY="org.opencontainers.image.created"
+readonly DEFAULT_CREATED_DATE="1970-01-01T00:00:00Z"
 
 function base_from_scratch() {
   local platform="$1"
@@ -27,7 +29,11 @@ function base_from_scratch() {
     layers: []
   }' | update_manifest
   # Create the image config when there is annotations
-  jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
+  jq -n \
+    --argjson platform "$platform" \
+    --arg default_created_date "$DEFAULT_CREATED_DATE" \
+    '{created: $default_created_date, config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform' | \
+    update_config >/dev/null
 }
 
 function base_from() {
@@ -174,6 +180,13 @@ for ARG in "$@"; do
       jq --rawfile annotations "${ARG#--annotations=}" \
       '.annotations += ([($annotations | split("\n") | .[] | select(. != ""))] | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' |
       update_manifest
+
+    created_date="$(jq -r -n \
+        --arg created_key "${OPENCONTAINERS_CREATED_KEY}" \
+        --arg default_created_date "${DEFAULT_CREATED_DATE}" \
+        --rawfile annotations "${ARG#--annotations=}" \
+        '([$annotations | split("\n") | .[] | select(. != "") | split("=") | {key: .[0], value: .[1]}]) | map(select(.key==$created_key)) | first | .value // $default_created_date')"
+    get_config | jq --arg created_date "${created_date}" '.created = $created_date' | update_config >/dev/null
     ;;
   *)
     echo "unknown argument ${ARG}"
