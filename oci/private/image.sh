@@ -182,10 +182,10 @@ for ARG in "$@"; do
       update_manifest
 
     created_date="$(jq -r -n \
-        --arg created_key "${OPENCONTAINERS_CREATED_KEY}" \
-        --arg default_created_date "${DEFAULT_CREATED_DATE}" \
-        --rawfile annotations "${ARG#--annotations=}" \
-        '([$annotations | split("\n") | .[] | select(. != "") | split("=") | {key: .[0], value: .[1]}]) | map(select(.key==$created_key)) | first | .value // $default_created_date')"
+      --arg created_key "${OPENCONTAINERS_CREATED_KEY}" \
+      --arg default_created_date "${DEFAULT_CREATED_DATE}" \
+      --rawfile annotations "${ARG#--annotations=}" \
+      '([$annotations | split("\n") | .[] | select(. != "") | split("=") | {key: .[0], value: .[1]}]) | map(select(.key==$created_key)) | first | .value // $default_created_date')"
     get_config | jq --arg created_date "${created_date}" '.created = $created_date' | update_config >/dev/null
     ;;
   *)
