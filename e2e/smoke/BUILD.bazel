@@ -3,10 +3,22 @@ load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
+
+# An example stamping annotations
+# Run this using `bazel run :load --stamp --workspace_status_command=./workspace_status_command.sh`
+# to see the `docker inspect --format='{{.Created}}' my/image:latest` print the image build date.
+expand_template(
+    name = "annotations",
+    out = "annotations.txt",
+    stamp_substitutions = {"1970-01-01T00:00:00Z": "{{BUILD_ISO8601}}"},
+    template = "annotations.txt.template",
+)
 
 # SMOKE TEST: oci_image
 oci_image(
     name = "image",
+    annotations = ":annotations.txt",
     base = "@distroless_base",
     cmd = [
         "--arg1",
