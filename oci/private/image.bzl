@@ -61,6 +61,11 @@ oci_image(
 """
 _attrs = {
     "base": attr.label(allow_single_file = True, doc = "Label to an oci_image target to use as the base."),
+    "created": attr.label(allow_single_file = True, doc = """\
+        The datetime when the image was created. This can be a file containing a string in the format `YYYY-MM-DDTHH:MM:SS.sssZ`
+        Typically, you'd provide a file containing a stamp variable replaced by the datetime of the build
+        when executed with `--stamp`.
+    """),
     "tars": attr.label_list(allow_files = _ACCEPTED_TAR_EXTENSIONS, doc = """\
         List of tar files to add to the image as layers.
         Do not sort this list; the order is preserved in the resulting image.
@@ -191,6 +196,10 @@ def _oci_image_impl(ctx):
 
         # tars are already added as input above.
         args.add_joined([layer, descriptor], join_with = "=", format_joined = "--layer=%s")
+
+    if ctx.attr.created:
+        args.add(ctx.file.created.path, format = "--created=%s")
+        inputs.append(ctx.file.created)
 
     # WARNING: entrypoint should always be added before the cmd argument.
     # This due to implicit behavior which setting entrypoint deletes `cmd`.

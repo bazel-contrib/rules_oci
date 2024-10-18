@@ -1,8 +1,17 @@
+load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@container_structure_test//:defs.bzl", "container_structure_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
+
+expand_template(
+    name = "created",
+    out = "created.txt",
+    stamp_substitutions = {"2000-01-01T01:02:03Z": "{{BUILD_ISO8601}}"},
+    template = ["2000-01-01T01:02:03Z"],
+)
 
 # SMOKE TEST: oci_image
 oci_image(
@@ -12,6 +21,7 @@ oci_image(
         "--arg1",
         "--arg2",
     ],
+    created = ":created",
     entrypoint = ["/custom_bin"],
     env = {
         "ENV": "/test",
@@ -60,6 +70,19 @@ assert_json_matches(
     file1 = ":tar_manifest",
     file2 = ":expected_RepoTags",
     filter1 = ".[0].RepoTags",
+)
+
+genrule(
+    name = "docker_created",
+    srcs = [":tarball.tar"],
+    outs = ["docker_created.txt"],
+    cmd = "docker load -i $(location :tarball.tar) && docker inspect --format='{{{{.Created}}}}' {} > $@".format(tags[0]),
+)
+
+diff_test(
+    name = "test_created",
+    file1 = ":docker_created",
+    file2 = "expected_created.txt",
 )
 
 # SMOKE TEST: oci_image from an external repo

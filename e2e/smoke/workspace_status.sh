@@ -1,0 +1,5 @@
+#!/bin/bash
+
+BUILD_TIMESTAMP=${BUILD_TIMESTAMP:-$(date +%s)}
+BUILD_ISO8601=$(date -u -r "$BUILD_TIMESTAMP" +"%Y-%m-%dT%H:%M:%SZ")
+echo "BUILD_ISO8601 $BUILD_ISO8601"

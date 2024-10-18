@@ -33,7 +33,17 @@ def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
     )
     return label
 
-def oci_image(name, labels = None, annotations = None, env = None, cmd = None, entrypoint = None, exposed_ports = None, volumes = None, **kwargs):
+def oci_image(
+        name,
+        created = None,
+        labels = None,
+        annotations = None,
+        env = None,
+        cmd = None,
+        entrypoint = None,
+        exposed_ports = None,
+        volumes = None,
+        **kwargs):
     """Macro wrapper around [oci_image_rule](#oci_image_rule).
 
     Allows labels and annotations to be provided as a dictionary, in addition to a text file.
@@ -49,6 +59,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
 
     Args:
         name: name of resulting oci_image_rule
+        created: File label to a file containing a single datetime string. See documentation above.
         labels: Labels for the image config. See documentation above.
         annotations: Annotations for the image config. See documentation above.
         env: Environment variables provisioned by default to the running container. See documentation above.
@@ -129,6 +140,7 @@ def oci_image(name, labels = None, annotations = None, env = None, cmd = None, e
 
     oci_image_rule(
         name = name,
+        created = created,
         annotations = annotations,
         labels = labels,
         env = env,
