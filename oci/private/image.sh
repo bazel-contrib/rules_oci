@@ -176,16 +176,19 @@ for ARG in "$@"; do
     CONFIG=$(jq --rawfile labels "${ARG#--labels=}" '.config.Labels += ($labels | split("\n") | map(select(. | length > 0)) | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' <<<"$CONFIG")
     ;;
   --annotations=*)
+    annotation_key_vals=$(jq -n --rawfile annotations "${ARG#--annotations=}" \
+      '([($annotations | split("\n") | .[] | select(. != ""))] | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)')
+
     get_manifest |
-      jq --rawfile annotations "${ARG#--annotations=}" \
-      '.annotations += ([($annotations | split("\n") | .[] | select(. != ""))] | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' |
+      jq --argjson annotations "$annotation_key_vals" '.annotations += $annotations' |
       update_manifest
 
     created_date="$(jq -r -n \
+      --argjson annotations "$annotation_key_vals" \
       --arg created_key "${OPENCONTAINERS_CREATED_KEY}" \
       --arg default_created_date "${DEFAULT_CREATED_DATE}" \
-      --rawfile annotations "${ARG#--annotations=}" \
-      '([$annotations | split("\n") | .[] | select(. != "") | split("=") | {key: .[0], value: .[1]}]) | map(select(.key==$created_key)) | first | .value // $default_created_date')"
+      '$annotations | map(select($created_key)) | first // $default_created_date')"
+
     get_config | jq --arg created_date "${created_date}" '.created = $created_date' | update_config >/dev/null
     ;;
   *)
