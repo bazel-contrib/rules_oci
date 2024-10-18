@@ -19,7 +19,7 @@ expand_template(
 # SMOKE TEST: oci_image
 oci_image(
     name = "image",
-    annotations = ":annotations.txt",
+    annotations = ":annotations",
     base = "@distroless_base",
     cmd = [
         "--arg1",
