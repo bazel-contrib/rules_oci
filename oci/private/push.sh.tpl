@@ -52,13 +52,15 @@ done
 DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 REFS=$(mktemp)
-"${CRANE}" push ${VERBOSE} "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
+"${CRANE}" push ${VERBOSE} "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}" 1>&2
 
 for tag in "${TAGS[@]+"${TAGS[@]}"}"
 do
-  "${CRANE}" tag ${VERBOSE} $(cat "${REFS}") "${tag}"
+  "${CRANE}" tag ${VERBOSE} $(cat "${REFS}") "${tag}" 1>&2
 done
 
 if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag ${VERBOSE} $(cat "${REFS}")
+  cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag ${VERBOSE} $(cat "${REFS}") 1>&2
 fi
+
+echo $DIGEST
