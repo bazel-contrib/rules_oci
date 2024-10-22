@@ -174,11 +174,11 @@ _attrs = {
     ),
     "remote_tags": attr.label(
         doc = """\
-        a .txt file containing tags, one per line.
+        a text file containing tags, one per line.
         These are passed to [`crane tag`](
         https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)
         """,
-        allow_single_file = [".txt"],
+        allow_single_file = True,
     ),
     "_allowlist_function_transition": attr.label(
         default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
