@@ -169,6 +169,9 @@ for ARG in "$@"; do
   --labels=*)
     CONFIG=$(jq --rawfile labels "${ARG#--labels=}" '.config.Labels += ($labels | split("\n") | map(select(. | length > 0)) | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' <<<"$CONFIG")
     ;;
+  --created=*)
+    CONFIG=$(jq --rawfile created "${ARG#--created=}" '.created = $created' <<<"$CONFIG")
+    ;;
   --annotations=*)
     get_manifest |
       jq --rawfile annotations "${ARG#--annotations=}" \
