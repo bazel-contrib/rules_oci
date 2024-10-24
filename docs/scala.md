@@ -157,10 +157,10 @@ oci_image(
 Finally, create a tarball from `oci_image` that can be loaded by a runtime such as docker. We specify `repo_tags` so that the image can be loaded by a registry.
 
 ```python
-load("@rules_oci//oci:defs.bzl", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_load")
 
-oci_tarball(
-    name = "tarball",
+oci_load(
+    name = "load",
     image = ":image",
     repo_tags = ["my-repository:latest"],
 )
@@ -169,7 +169,7 @@ oci_tarball(
 Test if it works:
 
 ```shell
-$ bazel run //:tarball
+$ bazel run //:load
 ...
 $ docker run --rm my-repository:latest
 Hello, world!
