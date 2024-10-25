@@ -11,8 +11,8 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_image_rule
 
 <pre>
-oci_image_rule(<a href="#oci_image_rule-name">name</a>, <a href="#oci_image_rule-annotations">annotations</a>, <a href="#oci_image_rule-architecture">architecture</a>, <a href="#oci_image_rule-base">base</a>, <a href="#oci_image_rule-cmd">cmd</a>, <a href="#oci_image_rule-entrypoint">entrypoint</a>, <a href="#oci_image_rule-env">env</a>, <a href="#oci_image_rule-exposed_ports">exposed_ports</a>, <a href="#oci_image_rule-labels">labels</a>,
-               <a href="#oci_image_rule-os">os</a>, <a href="#oci_image_rule-resource_set">resource_set</a>, <a href="#oci_image_rule-tars">tars</a>, <a href="#oci_image_rule-user">user</a>, <a href="#oci_image_rule-variant">variant</a>, <a href="#oci_image_rule-volumes">volumes</a>, <a href="#oci_image_rule-workdir">workdir</a>)
+oci_image_rule(<a href="#oci_image_rule-name">name</a>, <a href="#oci_image_rule-annotations">annotations</a>, <a href="#oci_image_rule-architecture">architecture</a>, <a href="#oci_image_rule-base">base</a>, <a href="#oci_image_rule-cmd">cmd</a>, <a href="#oci_image_rule-created">created</a>, <a href="#oci_image_rule-entrypoint">entrypoint</a>, <a href="#oci_image_rule-env">env</a>, <a href="#oci_image_rule-exposed_ports">exposed_ports</a>,
+               <a href="#oci_image_rule-labels">labels</a>, <a href="#oci_image_rule-os">os</a>, <a href="#oci_image_rule-resource_set">resource_set</a>, <a href="#oci_image_rule-tars">tars</a>, <a href="#oci_image_rule-user">user</a>, <a href="#oci_image_rule-variant">variant</a>, <a href="#oci_image_rule-volumes">volumes</a>, <a href="#oci_image_rule-workdir">workdir</a>)
 </pre>
 
 Build an OCI compatible container image.
@@ -72,6 +72,7 @@ oci_image(
 | <a id="oci_image_rule-architecture"></a>architecture |  The CPU architecture which the binaries in this image are built to run on. eg: `arm64`, `arm`, `amd64`, `s390x`. See $GOARCH documentation for possible values: https://go.dev/doc/install/source#environment   | String | optional |  `""`  |
 | <a id="oci_image_rule-base"></a>base |  Label to an oci_image target to use as the base.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_image_rule-cmd"></a>cmd |  A file containing a newline separated list to be used as the `command & args` of the container. These values act as defaults and may be replaced by any specified when creating a container.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="oci_image_rule-created"></a>created |  The datetime when the image was created. This can be a file containing a string in the format `YYYY-MM-DDTHH:MM:SS.sssZ` Typically, you'd provide a file containing a stamp variable replaced by the datetime of the build when executed with `--stamp`.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_image_rule-entrypoint"></a>entrypoint |  A file containing a newline separated list to be used as the `entrypoint` to execute when the container starts. These values act as defaults and may be replaced by an entrypoint specified when creating a container. NOTE: Setting this attribute will reset the `cmd` attribute   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_image_rule-env"></a>env |  A file containing the default values for the environment variables of the container. These values act as defaults and are merged with any specified when creating a container. Entries replace the base environment variables if any of the entries has conflicting keys. To merge entries with keys specified in the base, `${KEY}` or `$KEY` syntax may be used.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_image_rule-exposed_ports"></a>exposed_ports |  A file containing a comma separated list of exposed ports. (e.g. 2000/tcp, 3000/udp or 4000. No protocol defaults to tcp).   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
@@ -90,7 +91,7 @@ oci_image(
 ## oci_image
 
 <pre>
-oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-exposed_ports">exposed_ports</a>, <a href="#oci_image-volumes">volumes</a>, <a href="#oci_image-kwargs">kwargs</a>)
+oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-created">created</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-exposed_ports">exposed_ports</a>, <a href="#oci_image-volumes">volumes</a>, <a href="#oci_image-kwargs">kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_image_rule](#oci_image_rule).
@@ -113,6 +114,7 @@ This is similar to the same-named target created by rules_docker's `container_im
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_image-name"></a>name |  name of resulting oci_image_rule   |  none |
+| <a id="oci_image-created"></a>created |  Label to a file containing a single datetime string. The content of that file is used as the value of the `created` field in the image config.   |  `None` |
 | <a id="oci_image-labels"></a>labels |  Labels for the image config. May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.   |  `None` |
 | <a id="oci_image-annotations"></a>annotations |  Annotations for the image config. May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.   |  `None` |
 | <a id="oci_image-env"></a>env |  Environment variables provisioned by default to the running container. May either be specified as a file, as with the documentation above, or a dict of strings to specify values inline.   |  `None` |
