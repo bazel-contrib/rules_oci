@@ -14,6 +14,12 @@ http_archive(
     url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.7.2/bazel-lib-v2.7.2.tar.gz",
 )
 
+load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+
+aspect_bazel_lib_dependencies()
+
+aspect_bazel_lib_register_toolchains()
+
 http_archive(
     name = "container_structure_test",
     sha256 = "4fd1e0d4974fb95e06d0e94e6ceaae126382bf958524062db4e582232590b863",
