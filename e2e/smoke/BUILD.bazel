@@ -9,7 +9,7 @@ load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
 expand_template(
     name = "created",
     out = "created.txt",
-    stamp_substitutions = {"2000-01-01T01:02:03Z": "{{BUILD_ISO8601}}"},
+    stamp_substitutions = {"2000-01-01T01:02:03Z": "{{BUILD_ISO8601}}"}, # BUILD_ISO8601 is an imaginary stamp var
     template = ["2000-01-01T01:02:03Z"],
 )
 
