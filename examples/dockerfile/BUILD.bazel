@@ -1,10 +1,9 @@
+load("@aspect_bazel_lib//lib:tar.bzl", "mtree_mutate", "mtree_spec", "tar")
 load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@configure_buildx//:defs.bzl", "BUILDER_NAME", "TARGET_COMPATIBLE_WITH")
 load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
-load("@rules_pkg//:mappings.bzl", "strip_prefix")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 
 native_binary(
     name = "buildx",
@@ -93,16 +92,26 @@ assert_oci_image_command(
 # This tar can be arranged in arbitrary ways.
 # For example, one could grab pkg_files from elsewhere in the workspace.
 # Anything in the tar can be used by a Dockerfile ADD or COPY.
-pkg_tar(
-  name = "buildx_context",
-  srcs = [
-    "context.Dockerfile",
-    "requirements.txt",
-  ] + glob([
-    "src/*",
-  ]),
-  strip_prefix = strip_prefix.from_pkg("."),
-  package_dir = "/app",
+mtree_spec(
+    name = "buildx_context_tree",
+    srcs = [
+        "context.Dockerfile",
+        "requirements.txt",
+    ] + glob([
+        "src/*",
+    ]),
+)
+
+mtree_mutate(
+    name = "buildx_context_tree_prefixed",
+    mtree = ":buildx_context_tree",
+    strip_prefix = package_name(),
+    package_dir = "/app",
+)
+
+tar(
+    name = "buildx_context",
+    mtree = ":buildx_context_tree_prefixed",
 )
 
 # In order to use a local tar as a context, we must pipe the tar into the BuildX binary
