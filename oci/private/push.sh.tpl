@@ -8,8 +8,6 @@ readonly TAGS_FILE="{{tags}}"
 readonly FIXED_ARGS=({{fixed_args}})
 readonly REPOSITORY_FILE="{{repository_file}}"
 
-VERBOSE=""
-
 REPOSITORY=""
 if [ -f $REPOSITORY_FILE ] ; then
   REPOSITORY=$(tr -d '\n' < "$REPOSITORY_FILE")
@@ -22,12 +20,21 @@ if [[ ${#ALL_ARGS[@]} -gt 0 ]]; then
 fi
 
 TAGS=()
+
+# global crane flags to be passed with every crane invocation
+GLOBAL_FLAGS=()
+
+# this will hold args specific to `crane push``
 ARGS=()
 
 while (( $# > 0 )); do
   case $1 in
-    (-v|--verbose)
-      VERBOSE="--verbose"
+    (--allow-nondistributable-artifacts|--insecure|-v|--verbose)
+      GLOBAL_FLAGS+=( "$1" )
+      shift;;
+    (--platform)
+      GLOBAL_FLAGS+=( "--platform" "$2" )
+      shift
       shift;;
     (-t|--tag)
       TAGS+=( "$2" )
@@ -52,13 +59,13 @@ done
 DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 REFS=$(mktemp)
-"${CRANE}" push ${VERBOSE} "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
+"${CRANE}" push "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
 
 for tag in "${TAGS[@]+"${TAGS[@]}"}"
 do
-  "${CRANE}" tag ${VERBOSE} $(cat "${REFS}") "${tag}"
+  "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}") "${tag}"
 done
 
 if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag ${VERBOSE} $(cat "${REFS}")
+  cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}")
 fi
