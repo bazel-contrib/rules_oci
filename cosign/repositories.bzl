@@ -38,7 +38,7 @@ cosign_repositories = repository_rule(
 )
 
 # Wrapper macro around everything above, this is the primary API
-def cosign_register_toolchains(name):
+def cosign_register_toolchains(name, register = True):
     """Convenience macro for users which does typical setup.
 
     - create a repository for each built-in platform like "cosign_linux_amd64" -
@@ -57,7 +57,8 @@ def cosign_register_toolchains(name):
             platform = platform,
             cosign_version = COSIGN_VERSIONS.keys()[0],
         )
-        native.register_toolchains("@{}//:{}_toolchain".format(toolchain_name, platform))
+        if register:
+            native.register_toolchains("@{}//:{}_toolchain".format(toolchain_name, platform))
 
     toolchains_repo(
         name = toolchain_name,
