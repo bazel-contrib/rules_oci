@@ -106,12 +106,18 @@ mtree_mutate(
     name = "buildx_context_tree_prefixed",
     mtree = ":buildx_context_tree",
     strip_prefix = package_name(),
-    package_dir = "/app",
+    package_dir = "app",
 )
 
 tar(
     name = "buildx_context",
     mtree = ":buildx_context_tree_prefixed",
+    srcs = [
+        "context.Dockerfile",
+        "requirements.txt",
+    ] + glob([
+        "src/*",
+    ]),
 )
 
 # In order to use a local tar as a context, we must pipe the tar into the BuildX binary
