@@ -87,7 +87,7 @@ Note that these examples rely on the setup code in the `/WORKSPACE` file in the 
 
 ### Testing
 
-- We recommend [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test#running-structure-tests-through-bazel) to run tests against an `oci_image` target (with `driver="docker"`) or an `oci_tarball` target (with `driver="tar"`).
+- We recommend [container_structure_test](https://github.com/GoogleContainerTools/container-structure-test#running-structure-tests-through-bazel) to run tests
 
 ### Signing
 
@@ -96,7 +96,6 @@ Note that these examples rely on the setup code in the `/WORKSPACE` file in the 
 
 - [cosign_sign](https://github.com/bazel-contrib/rules_oci/blob/main/cosign/private/sign.bzl): Sign an `oci_image` using `cosign` binary at a remote registry.
 - [cosign_attest](https://github.com/bazel-contrib/rules_oci/blob/main/cosign/private/attest.bzl) Add an attachment to an `oci_image` at a remote registry using `cosign`.
-- 
 
 ### 3rd Party Extensions/Tools
 
