@@ -18,6 +18,15 @@ CRANE_VERSIONS = {
 }
 
 REGCTL_VERSIONS = {
+    "v0.8.0": {
+        "darwin-amd64": "sha256-RHuyX4G1Sk1plj0spLmK476+Jljk/fqh3oOAvCzCwuw=",
+        "darwin-arm64": "sha256-jUzYxiyhtoeh4clFm8kdLfkzmHkk65+YksB/eBJAqJU=",
+        "linux-amd64": "sha256-Inbt7loeXLibtORI5dAjVkrNbYSlQZzJL/Ji2F37jpo=",
+        "linux-arm64": "sha256-6cXL+dpQUoQgkcNiG0k+piHw/+G3KqdrYLa1/haquN4=",
+        "linux-ppc64le": "sha256-0w0qwWCpx97Ew2quFz9IBuHi4ZwoSj41oFLxco2/v3g=",
+        "linux-s390x": "sha256-mtTFWhB0BcWANbF3RSdk12pVcwtkg7RKkC7mwyHyV5U=",
+        "windows-amd64": "sha256-OaMBqF3M/kedW1bVI4GLuwDW3jzjT8Ujn7CtPkT+inc=",
+    },
     "v0.7.0": {
         "darwin-amd64": "sha256-QH7AeVJi/Ehn09yCVDq1qWvO6VBwquAFV6uPQyX5DDQ=",
         "darwin-arm64": "sha256-QTr9nUPdjknzYTnOgfKG32C2id3aPngG82V7zLOWQL8=",
