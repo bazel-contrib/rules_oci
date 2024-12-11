@@ -6,9 +6,6 @@ build --incompatible_strict_action_env
 build --nolegacy_external_runfiles
 common --test_env=DOCKER_HOST --action_env=DOCKER_HOST --repo_env=DOCKER_HOST
 
-# Prepare for Bazel 8
-common --incompatible_use_plus_in_repo_names
-
 # Disable bzlmod lockfile
 common --lockfile_mode=off
 
