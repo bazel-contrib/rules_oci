@@ -33,6 +33,33 @@ def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
     )
     return label
 
+def _digest(name, **kwargs):
+    # `oci_image_rule` and `oci_image_index_rule` produce a directory as default output.
+    # Label for the [name]/index.json file
+    directory_path(
+        name = "_{}_index_json".format(name),
+        directory = name,
+        path = "index.json",
+        **kwargs
+    )
+
+    copy_file(
+        name = "_{}_index_json_cp".format(name),
+        src = "_{}_index_json".format(name),
+        out = "_{}_index.json".format(name),
+        **kwargs
+    )
+
+    # Matches the [name].digest target produced by rules_docker container_image
+    jq(
+        name = name + ".digest",
+        args = ["--raw-output"],
+        srcs = ["_{}_index.json".format(name)],
+        filter = """.manifests[0].digest""",
+        out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
+        **kwargs
+    )
+
 def oci_image_index(name, **kwargs):
     """Macro wrapper around [oci_image_index_rule](#oci_image_index_rule).
 
@@ -51,26 +78,8 @@ def oci_image_index(name, **kwargs):
         **kwargs
     )
 
-    directory_path(
-        name = "_{}_index_json".format(name),
-        directory = name,
-        path = "index.json",
-        **forwarded_kwargs
-    )
-
-    copy_file(
-        name = "_{}_index_json_cp".format(name),
-        src = "_{}_index_json".format(name),
-        out = "_{}_index.json".format(name),
-        **forwarded_kwargs
-    )
-
-    jq(
-        name = name + ".digest",
-        args = ["--raw-output"],
-        srcs = ["_{}_index.json".format(name)],
-        filter = """.manifests[0].digest""",
-        out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
+    _digest(
+        name = name,
         **forwarded_kwargs
     )
 
@@ -200,29 +209,8 @@ def oci_image(
         **kwargs
     )
 
-    # `oci_image_rule` produces a directory as default output.
-    # Label for the [name]/index.json file
-    directory_path(
-        name = "_{}_index_json".format(name),
-        directory = name,
-        path = "index.json",
-        **forwarded_kwargs
-    )
-
-    copy_file(
-        name = "_{}_index_json_cp".format(name),
-        src = "_{}_index_json".format(name),
-        out = "_{}_index.json".format(name),
-        **forwarded_kwargs
-    )
-
-    # Matches the [name].digest target produced by rules_docker container_image
-    jq(
-        name = name + ".digest",
-        args = ["--raw-output"],
-        srcs = ["_{}_index.json".format(name)],
-        filter = """.manifests[0].digest""",
-        out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
+    _digest(
+        name = name,
         **forwarded_kwargs
     )
 
