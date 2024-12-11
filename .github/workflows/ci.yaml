@@ -138,9 +138,6 @@ jobs:
 
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
-        env:
-          # Bazelisk will download bazel to here, ensure it is cached between runs.
-          XDG_CACHE_HOME: ~/.cache/bazel-repo
         run: |
           bazel \
           --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \
