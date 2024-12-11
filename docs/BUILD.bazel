@@ -18,7 +18,11 @@ stardoc_with_diff_test(
 
 stardoc_with_diff_test(
     name = "image_index",
-    bzl_library_target = "//oci/private:image_index",
+    bzl_library_target = "//oci:defs",
+    symbol_names = [
+        "oci_image_index_rule",
+        "oci_image_index",
+    ],
 )
 
 stardoc_with_diff_test(

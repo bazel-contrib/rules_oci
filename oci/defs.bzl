@@ -19,7 +19,7 @@ load("//oci/private:push.bzl", _oci_push = "oci_push")
 
 oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
-oci_image_index = _oci_image_index
+oci_image_index_rule = _oci_image_index
 oci_push_rule = _oci_push
 
 def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
@@ -32,6 +32,47 @@ def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
         **forwarded_kwargs
     )
     return label
+
+def oci_image_index(name, **kwargs):
+    """Macro wrapper around [oci_image_index_rule](#oci_image_index_rule).
+
+    Produces a target `[name].digest`, whose default output is a file containing the sha256 digest of the resulting image.
+    This is the same output as for the `oci_image` macro.
+
+    Args:
+        name: name of resulting oci_image_index_rule
+        **kwargs: other named arguments to [oci_image_index_rule](#oci_image_index_rule) and
+            [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
+    """
+    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+
+    oci_image_index_rule(
+        name = name,
+        **kwargs
+    )
+
+    directory_path(
+        name = "_{}_index_json".format(name),
+        directory = name,
+        path = "index.json",
+        **forwarded_kwargs
+    )
+
+    copy_file(
+        name = "_{}_index_json_cp".format(name),
+        src = "_{}_index_json".format(name),
+        out = "_{}_index.json".format(name),
+        **forwarded_kwargs
+    )
+
+    jq(
+        name = name + ".digest",
+        args = ["--raw-output"],
+        srcs = ["_{}_index.json".format(name)],
+        filter = """.manifests[0].digest""",
+        out = name + ".json.sha256",  # path chosen to match rules_docker for easy migration
+        **forwarded_kwargs
+    )
 
 def oci_image(
         name,

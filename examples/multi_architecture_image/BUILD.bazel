@@ -32,16 +32,8 @@ oci_image_index(
     ],
 )
 
-genrule(
-    name = "hash",
-    srcs = [":index"],
-    outs = ["sha256.sum"],
-    cmd = "$(JQ_BIN) -r '.manifests[0].digest' $(location :index)/index.json > $@",
-    toolchains = ["@jq_toolchains//:resolved_toolchain"],
-)
-
 assert_contains(
     name = "check_digest",
-    actual = ":hash",
+    actual = ":index.digest",
     expected = "sha256:a2b8ae94672721788b67874f27cf3574fada3ccccc69f483bcb43de653573fe0",
 )
