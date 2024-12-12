@@ -24,6 +24,7 @@ load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
         tags = [
             "exclusive",
             "local",
+            "manual",  # TODO(#746) re-enable this test
             "no-remote",
             "no-remote-exec",
         ],
