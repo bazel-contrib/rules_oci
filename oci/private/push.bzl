@@ -167,6 +167,13 @@ _attrs = {
         """,
         allow_single_file = True,
     ),
+    "tag_platform_images": attr.bool(
+        doc = """\
+        If true, tag platform specific images with each remote tag and an additional
+        '-${os}-${arch}' suffix. This is useful for platforms that cannot handle OCI
+        image indexes and instead require a reference to a platform specific image.
+        """,
+    ),
     "_crane": attr.label(
         default = "@oci_crane_toolchains//:current_toolchain",
         cfg = "exec",
@@ -205,6 +212,7 @@ def _impl(ctx):
         "{{crane_path}}": to_rlocation_path(ctx, crane.crane_info.binary),
         "{{jq_path}}": to_rlocation_path(ctx, jq.jqinfo.bin),
         "{{image_dir}}": to_rlocation_path(ctx, ctx.file.image),
+        "{{tag_platform_images}}": "0",
         "{{fixed_args}}": "",
     }
 
@@ -217,6 +225,9 @@ def _impl(ctx):
     if ctx.attr.remote_tags:
         files.append(ctx.file.remote_tags)
         substitutions["{{tags}}"] = to_rlocation_path(ctx, ctx.file.remote_tags)
+
+    if ctx.attr.tag_platform_images:
+        substitutions["{{tag_platform_images}}"] = "1"
 
     ctx.actions.expand_template(
         template = ctx.file._push_sh_tpl,
