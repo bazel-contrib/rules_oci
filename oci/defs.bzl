@@ -23,10 +23,10 @@ oci_image_index_rule = _oci_image_index
 oci_push_rule = _oci_push
 
 def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
-    label = "_{}_write_{}".format(name, kind)
+    label = "{}_write_{}".format(name, kind)
     write_file(
         name = label,
-        out = "_{}.{}.txt".format(name, kind),
+        out = "{}.{}.txt".format(name, kind),
         # %5Cn is the uri escaped newline
         content = [elem.replace("\n", "%5Cn") for elem in elems],
         **forwarded_kwargs
@@ -37,16 +37,16 @@ def _digest(name, **kwargs):
     # `oci_image_rule` and `oci_image_index_rule` produce a directory as default output.
     # Label for the [name]/index.json file
     directory_path(
-        name = "_{}_index_json".format(name),
+        name = "{}_index_json".format(name),
         directory = name,
         path = "index.json",
         **kwargs
     )
 
     copy_file(
-        name = "_{}_index_json_cp".format(name),
-        src = "_{}_index_json".format(name),
-        out = "_{}_index.json".format(name),
+        name = "{}_index_json_cp".format(name),
+        src = "{}_index_json".format(name),
+        out = "{}_index.json".format(name),
         **kwargs
     )
 
@@ -131,30 +131,30 @@ def oci_image(
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
     if types.is_dict(annotations):
-        annotations_label = "_{}_write_annotations".format(name)
+        annotations_label = "{}_write_annotations".format(name)
         write_file(
             name = annotations_label,
-            out = "_{}.annotations.txt".format(name),
+            out = "{}.annotations.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
             **forwarded_kwargs
         )
         annotations = annotations_label
 
     if types.is_dict(labels):
-        labels_label = "_{}_write_labels".format(name)
+        labels_label = "{}_write_labels".format(name)
         write_file(
             name = labels_label,
-            out = "_{}.labels.txt".format(name),
+            out = "{}.labels.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in labels.items()],
             **forwarded_kwargs
         )
         labels = labels_label
 
     if types.is_dict(env):
-        env_label = "_{}_write_env".format(name)
+        env_label = "{}_write_env".format(name)
         write_file(
             name = env_label,
-            out = "_{}.env.txt".format(name),
+            out = "{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
             **forwarded_kwargs
         )
@@ -177,20 +177,20 @@ def oci_image(
         )
 
     if types.is_list(exposed_ports):
-        exposed_ports_label = "_{}_write_exposed_ports".format(name)
+        exposed_ports_label = "{}_write_exposed_ports".format(name)
         write_file(
             name = exposed_ports_label,
-            out = "_{}.exposed_ports.txt".format(name),
+            out = "{}.exposed_ports.txt".format(name),
             content = [",".join(exposed_ports)],
             **forwarded_kwargs
         )
         exposed_ports = exposed_ports_label
 
     if types.is_list(volumes):
-        volumes_label = "_{}_write_volumes".format(name)
+        volumes_label = "{}_write_volumes".format(name)
         write_file(
             name = volumes_label,
-            out = "_{}.volumes.txt".format(name),
+            out = "{}.volumes.txt".format(name),
             content = [",".join(volumes)],
             **forwarded_kwargs
         )
@@ -231,10 +231,10 @@ def oci_push(name, remote_tags = None, **kwargs):
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
     if types.is_list(remote_tags):
-        tags_label = "_{}_write_tags".format(name)
+        tags_label = "{}_write_tags".format(name)
         write_file(
             name = tags_label,
-            out = "_{}.tags.txt".format(name),
+            out = "{}.tags.txt".format(name),
             content = remote_tags,
             **forwarded_kwargs
         )
@@ -263,10 +263,10 @@ def oci_load(name, repo_tags = None, **kwargs):
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
     if types.is_list(repo_tags):
-        tags_label = "_{}_write_tags".format(name)
+        tags_label = "{}_write_tags".format(name)
         write_file(
             name = tags_label,
-            out = "_{}.tags.txt".format(name),
+            out = "{}.tags.txt".format(name),
             content = repo_tags,
             **forwarded_kwargs
         )
