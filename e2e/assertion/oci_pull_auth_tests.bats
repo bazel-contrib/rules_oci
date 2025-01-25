@@ -164,3 +164,16 @@ EOF
     run bazel build @empty_image//... $BAZEL_FLAGS
     assert_failure
 }
+
+@test "empty username and password succeeds" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "credHelpers": {
+    "localhost:1447": "devpod-esque"
+  }
+}
+EOF
+    update_assert ''
+    run bazel build @empty_image//... $BAZEL_FLAGS
+    assert_success
+}
