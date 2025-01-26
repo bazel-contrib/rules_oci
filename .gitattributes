@@ -8,3 +8,7 @@ docs/load.md linguist-generated=true
 #################################
 # Configuration for 'git archive'
 # See https://git-scm.com/docs/git-archive#ATTRIBUTES
+
+# Don't include examples or tools in the distribution artifact, to reduce size
+examples export-ignore
+tools export-ignore
