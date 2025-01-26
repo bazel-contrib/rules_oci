@@ -9,14 +9,14 @@ _Need help?_ This ruleset has support provided by [Aspect Build](https://www.asp
 
 ## Comparison with rules_docker
 
-This ruleset is not intended as a complete replacement for [rules_docker]!
-Many use cases can be accomodated, and we know that many users have completely replaced rules*docker.
-You can find a migration guide at <https://docs.aspect.build/guides/rules_oci_migration>.
+This ruleset is not intended as a complete replacement for [rules_docker].
+Most use cases can be accomodated, and we know many users who have completely replaced rules_docker.
 However, some other use cases such as `container_run_and*\*` rules have no equivalent.
+You might still decide to use rules_docker, and perhaps even volunteer to help maintain it.
 
-[rules_docker] was largely unmaintained for 18 months, and as of October 2023 it has been archived.
-See https://github.com/bazelbuild/rules_docker/discussions/2038.
-You might still decide to use rules_docker, and perhaps even sign up as a maintainer so that it may be un-archived.
+You can find a migration guide at <https://docs.aspect.build/guides/rules_oci_migration>.
+
+## Design
 
 We started from first principles and avoided some pitfalls we learned from rules_docker:
 
