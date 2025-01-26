@@ -14,6 +14,7 @@ def _impl_configure_buildx(rctx):
     compatible_with = "[]"
     builder_name = "builder-docker"
     if has_docker:
+        # TODO(alex): a less hacky way for a repo rule to find this transitive repo label?
         buildx = rctx.path(Label("@@rules_multitool~~multitool~multitool.{0}//tools/buildx:{0}_executable".format(repo_utils.platform(rctx))))
 
         r = rctx.execute([buildx, "ls"])

@@ -39,6 +39,5 @@ bazel_dep(name = "stardoc", version = "0.6.2", dev_dependency = True, repo_name 
 bazel_dep(name = "rules_multitool", version = "0.9.0", dev_dependency = True)
 
 multitool = use_extension("@rules_multitool//multitool:extension.bzl", "multitool", dev_dependency = True)
-multitool.hub(lockfile = "//examples:assertion_tools.lock.json")
-multitool.hub(lockfile = "//examples/dockerfile:buildx.lock.json")
+multitool.hub(lockfile = "//tools:tools.lock.json")
 use_repo(multitool, "multitool")
