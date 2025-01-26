@@ -15,7 +15,16 @@ def _impl_configure_buildx(rctx):
     builder_name = "builder-docker"
     if has_docker:
         # TODO(alex): a less hacky way for a repo rule to find this transitive repo label?
-        buildx = rctx.path(Label("@@rules_multitool~~multitool~multitool.{0}//tools/buildx:{0}_executable".format(repo_utils.platform(rctx))))
+        if repo_utils.platform(rctx) == "darwin_amd64":
+            multitool_label = "@@rules_multitool~~multitool~multitool.macos_x86_64//tools/buildx:macos_x86_64_executable"
+        elif repo_utils.platform(rctx) == "darwin_arm64":
+            multitool_label = "@@rules_multitool~~multitool~multitool.macos_arm64//tools/buildx:macos_arm64_executable"
+        elif repo_utils.platform(rctx) == "linux_amd64":
+            multitool_label = "@@rules_multitool~~multitool~multitool.linux_x86_64//tools/buildx:linux_x86_64_executable"
+        else:
+            fail("platform {} is not known", repo_utils.platform(rctx))
+
+        buildx = rctx.path(Label(multitool_label))
 
         r = rctx.execute([buildx, "ls"])
         if not builder_name in r.stdout:
