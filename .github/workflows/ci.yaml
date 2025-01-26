@@ -74,6 +74,8 @@ jobs:
             folder: e2e/assertion
           - os: macos-13
             bazelversion: 6.4.0
+          - folder: .
+            bazelversion: 6.4.0
           # e2e/assertion is bzlmod only but it has test for both cases.
           - folder: e2e/assertion
             bzlmodEnabled: false

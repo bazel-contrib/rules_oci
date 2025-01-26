@@ -1,7 +1,5 @@
 "Setup for docker testing"
 
-load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-
 def _impl_configure_docker(rctx):
     # See if docker_host is set
     has_docker = "DOCKER_HOST" in rctx.os.environ
@@ -24,37 +22,3 @@ TARGET_COMPATIBLE_WITH = %s
 configure_docker = repository_rule(
     implementation = _impl_configure_docker,
 )
-
-def setup_assertion_repos():
-    "creates repos necessary for testing agaisnt docker"
-    http_archive(
-        name = "docker_cli_darwin_arm64",
-        urls = [
-            "https://download.docker.com/mac/static/stable/aarch64/docker-23.0.0.tgz",
-        ],
-        integrity = "sha256-naXFF3G/D3a8XieHkd2cm29/SHdheslS3VyI77ep/xA=",
-        strip_prefix = "docker",
-        build_file_content = 'exports_files(["docker"])',
-    )
-
-    http_archive(
-        name = "docker_cli_darwin_amd64",
-        urls = [
-            "https://download.docker.com/mac/static/stable/x86_64/docker-23.0.0.tgz",
-        ],
-        integrity = "sha256-55P6RTHVIWEHuEuH8ZHFgu6TeCVPF7WqvPD6MBApOuc=",
-        strip_prefix = "docker",
-        build_file_content = 'exports_files(["docker"])',
-    )
-
-    http_archive(
-        name = "docker_cli_linux_amd64",
-        urls = [
-            "https://download.docker.com/linux/static/stable/x86_64/docker-23.0.0.tgz",
-        ],
-        integrity = "sha256-agO72paEW3RRvi9qumnDgWxgqX3jGOg/0bOdG+Ji2K8=",
-        strip_prefix = "docker",
-        build_file_content = 'exports_files(["docker"])',
-    )
-
-    configure_docker(name = "docker_configure")

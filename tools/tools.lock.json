@@ -25,6 +25,34 @@
       }
     ]
   },
+  "docker": {
+    "binaries": [
+      {
+        "kind": "archive",
+        "url": "https://download.docker.com/linux/static/stable/x86_64/docker-23.0.0.tgz",
+        "file": "docker/docker",
+        "sha256": "6a03bbda96845b7451be2f6aba69c3816c60a97de318e83fd1b39d1be262d8af",
+        "os": "linux",
+        "cpu": "x86_64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://download.docker.com/mac/static/stable/aarch64/docker-23.0.0.tgz",
+        "file": "docker/docker",
+        "sha256": "9da5c51771bf0f76bc5e278791dd9c9b6f7f4877617ac952dd5c88efb7a9ff10",
+        "os": "macos",
+        "cpu": "arm64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://download.docker.com/mac/static/stable/x86_64/docker-23.0.0.tgz",
+        "file": "docker/docker",
+        "sha256": "e793fa4531d5216107b84b87f191c582ee9378254f17b5aabcf0fa3010293ae7",
+        "os": "macos",
+        "cpu": "x86_64"
+      }
+    ]
+  },
   "docker-compose": {
     "binaries": [
       {

@@ -6,7 +6,7 @@ by writing them to a generated macro in a .bzl file.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@rules_oci//oci:pull.bzl", "oci_pull")
-load("//examples:setup_assertion_repos.bzl", "setup_assertion_repos")
+load("//examples:setup_assertion_repos.bzl", "configure_docker")
 load("//examples/dockerfile:buildx.bzl", "configure_buildx")
 
 def fetch_images():
@@ -247,4 +247,4 @@ def fetch_test_repos():
     configure_buildx(name = "configure_buildx")
 
     # Setup steps for docker testing
-    setup_assertion_repos()
+    configure_docker(name = "docker_configure")
