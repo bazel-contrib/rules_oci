@@ -3,7 +3,6 @@
 # Settings that apply only to CI are in .github/workflows/ci.bazelrc
 
 build --incompatible_strict_action_env
-build --nolegacy_external_runfiles
 common --test_env=DOCKER_HOST --action_env=DOCKER_HOST --repo_env=DOCKER_HOST
 
 # On bazel 6.4.0 these are needed to successfully fetch images.
