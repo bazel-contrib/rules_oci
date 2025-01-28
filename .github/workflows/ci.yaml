@@ -74,12 +74,17 @@ jobs:
             folder: e2e/assertion
           - os: macos-13
             bazelversion: 6.4.0
+          - folder: .
+            bazelversion: 6.4.0
           # e2e/assertion is bzlmod only but it has test for both cases.
           - folder: e2e/assertion
             bzlmodEnabled: false
           # TODO: fix
           - folder: e2e/wasm
             bzlmodEnabled: true
+          # Don't test the root module with WORKSPACE at all
+          - folder: .
+            bzlmodEnabled: false
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
