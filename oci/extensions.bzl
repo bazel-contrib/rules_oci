@@ -9,6 +9,10 @@ pull = tag_class(attrs = {
     "image": attr.string(doc = """the remote image without a tag, such as gcr.io/bazel-public/bazel"""),
     "platforms": attr.string_list(doc = """for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers."""),
+    "registry": attr.string(doc = """the remote registry domain, such as `gcr.io` or `docker.io`.
+            When set, repository must be set as well."""),
+    "repository": attr.string(doc = """the image path beneath the registry, such as `distroless/static`.
+            When set, registry must be set as well."""),
     "digest": attr.string(doc = """the digest string, starting with "sha256:", "sha512:", etc.
             If omitted, instructions for pinning are provided."""),
     "tag": attr.string(doc = """a tag to choose an image from the registry.
