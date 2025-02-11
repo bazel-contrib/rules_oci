@@ -57,7 +57,7 @@ function update_config() {
   local config=
   config="$(coreutils cat -)"
   digest="$(echo -n "$config" | regctl blob put "$REF")"
-  get_manifest | jq '.config.digest = $digest | .config.size = $size' --arg digest "$digest" --argjson size "${#config}" | update_manifest >/dev/null
+  get_manifest | jq '.config.digest = $digest | .config.size = $size | del(.config.data)' --arg digest "$digest" --argjson size "${#config}" | update_manifest >/dev/null
   echo "$digest"
 }
 
