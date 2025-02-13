@@ -28,7 +28,16 @@ def _impl_configure_buildx(rctx):
 
         r = rctx.execute([buildx, "ls"])
         if not builder_name in r.stdout:
-            r = rctx.execute([buildx, "create", "--name", builder_name, "--driver", "docker-container"])
+            r = rctx.execute([
+                buildx,
+                "create",
+                "--name",
+                builder_name,
+                "--driver",
+                "docker-container",
+                "--use",
+                "--bootstrap",
+            ])
             if r.return_code != 0:
                 fail("Failed to create buildx driver %s: \nSTDERR:\n%s\nsSTDOUT:\n%s" % (builder_name, r.stderr, r.stdout))
         else:
