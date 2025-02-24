@@ -132,8 +132,8 @@ See the [examples/credential_helper](/examples/credential_helper/auth.sh) direct
 ## oci_pull
 
 <pre>
-oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-repository">repository</a>, <a href="#oci_pull-registry">registry</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>, <a href="#oci_pull-reproducible">reproducible</a>, <a href="#oci_pull-is_bzlmod">is_bzlmod</a>, <a href="#oci_pull-config">config</a>,
-         <a href="#oci_pull-bazel_tags">bazel_tags</a>)
+oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-repository">repository</a>, <a href="#oci_pull-registry">registry</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>, <a href="#oci_pull-registry_mirrors">registry_mirrors</a>, <a href="#oci_pull-reproducible">reproducible</a>,
+         <a href="#oci_pull-is_bzlmod">is_bzlmod</a>, <a href="#oci_pull-config">config</a>, <a href="#oci_pull-bazel_tags">bazel_tags</a>)
 </pre>
 
 Repository macro to fetch image manifest data from a remote docker registry.
@@ -158,6 +158,7 @@ in rules like `oci_image`.
 | <a id="oci_pull-platforms"></a>platforms |  a list of the platforms the image supports. Mandatory for multi-architecture images. Optional for single-architecture images, which expect a one-element list. This creates a separate external repository for each platform, avoiding fetching layers, and an alias that validates the presence of an image matching the target platform's cpu.   |  `None` |
 | <a id="oci_pull-digest"></a>digest |  the digest string, starting with "sha256:", "sha512:", etc. If omitted, instructions for pinning are provided.   |  `None` |
 | <a id="oci_pull-tag"></a>tag |  a tag to choose an image from the registry. Exactly one of `tag` and `digest` must be set. Since tags are mutable, this is not reproducible, so a warning is printed.   |  `None` |
+| <a id="oci_pull-registry_mirrors"></a>registry_mirrors |  <p align="center"> - </p>   |  `[]` |
 | <a id="oci_pull-reproducible"></a>reproducible |  Set to False to silence the warning about reproducibility when using `tag`.   |  `True` |
 | <a id="oci_pull-is_bzlmod"></a>is_bzlmod |  whether the oci_pull is being called from a module extension   |  `False` |
 | <a id="oci_pull-config"></a>config |  Label to a `.docker/config.json` file.   |  `None` |

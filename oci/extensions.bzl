@@ -7,6 +7,7 @@ load(":repositories.bzl", "oci_register_toolchains")
 pull = tag_class(attrs = {
     "name": attr.string(doc = "Name of the generated repository"),
     "image": attr.string(doc = """the remote image without a tag, such as gcr.io/bazel-public/bazel"""),
+    "registry_mirrors": attr.string_list(doc = "List of alternative registry mirrors to use if the primary registry is unavailable."),
     "platforms": attr.string_list(doc = """for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers."""),
     "digest": attr.string(doc = """the digest string, starting with "sha256:", "sha512:", etc.
@@ -34,6 +35,7 @@ def _oci_extension(module_ctx):
             oci_pull(
                 name = pull.name,
                 image = pull.image,
+                registry_mirrors = pull.registry_mirrors,
                 platforms = pull.platforms,
                 digest = pull.digest,
                 tag = pull.tag,
