@@ -303,18 +303,12 @@ def _get_token(rctx, state, registry, repository):
                         return {}
                     fail(IDENTITY_TOKEN_WARNING)
 
-                response = _oauth2(
+                auth_raw = _oauth2(
                     rctx = rctx,
                     realm = "https://" + www_authenticate["realm"].format(registry = registry),
                     scope = www_authenticate["scope"].format(repository = repository),
                     service = www_authenticate["service"].format(registry = registry),
                     secret = pattern["password"],
-                )
-
-                rctx.file(
-                    "www-authenticate.json",
-                    content = response,
-                    executable = False,
                 )
             else:
                 result = rctx.download(
@@ -326,9 +320,12 @@ def _get_token(rctx, state, registry, repository):
                     allow_fail = allow_fail,
                 )
                 if allow_fail and not result.success:
+                    rctx.file("www-authenticate.json", content = "")
+                    rctx.delete("www-authenticate.json")
                     return {}
+                auth_raw = rctx.read("www-authenticate.json")
+                rctx.delete("www-authenticate.json")
 
-            auth_raw = rctx.read("www-authenticate.json")
             auth = json.decode(auth_raw)
 
             token = ""
