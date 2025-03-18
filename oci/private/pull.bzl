@@ -28,6 +28,9 @@ _IMAGE_REFERENCE_ATTRS = {
         doc = "Label to a .docker/config.json file",
         allow_single_file = True,
     ),
+    "registry_mirrors": attr.string_list(
+        doc = "List of alternative registry mirrors to use if the primary registry is unavailable.",
+    ),
 }
 
 SCHEMA1_ERROR = """\
@@ -91,37 +94,66 @@ def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fai
 
     auth = authn.get_token(rctx.attr.registry, rctx.attr.repository)
 
-    # Construct the URL to fetch from remote, see
-    # https://github.com/google/go-containerregistry/blob/62f183e54939eabb8e80ad3dbc787d7e68e68a43/pkg/v1/remote/descriptor.go#L234
-    registry_url = "{scheme}://{registry}/v2/{repository}/{resource}/{identifier}".format(
-        scheme = rctx.attr.scheme,
-        registry = rctx.attr.registry,
-        repository = rctx.attr.repository,
-        resource = resource,
-        identifier = identifier,
+    # Construct the list of URLs to try, starting with mirrors
+    registry_urls = [
+        "{scheme}://{mirror}/v2/{repository}/{resource}/{identifier}".format(
+            scheme = rctx.attr.scheme,
+            mirror = mirror,
+            repository = rctx.attr.repository,
+            resource = resource,
+            identifier = identifier,
+        )
+        for mirror in rctx.attr.registry_mirrors or []
+    ]
+    # Add the original URL as the last fallback
+    registry_urls.append(
+        "{scheme}://{registry}/v2/{repository}/{resource}/{identifier}".format(
+            scheme = rctx.attr.scheme,
+            registry = rctx.attr.registry,
+            repository = rctx.attr.repository,
+            resource = resource,
+            identifier = identifier,
+        )
     )
 
     sha256 = ""
-
     if identifier.startswith("sha256:"):
         sha256 = identifier[len("sha256:"):]
     else:
         util.warning(rctx, "Fetching from {}@{} without an integrity hash, result will not be cached.".format(rctx.attr.repository, identifier))
 
-    kwargs = dict(
-        output = output,
-        sha256 = sha256,
-        url = registry_url,
-        auth = {registry_url: auth},
-        allow_fail = allow_fail,
-    )
+    results = []
+    for registry_url in registry_urls:
+        kwargs = dict(
+            output = output,
+            sha256 = sha256,
+            url = registry_url,
+            auth = {registry_url: auth},
+            allow_fail = allow_fail,
+            block = False,
+        )
 
-    # Use non-blocking download, and forward headers, on Bazel 7.1.0 and later.
-    if versions.is_at_least("7.1.0", versions.get()):
-        kwargs["block"] = block
-        kwargs["headers"] = headers
+        if versions.is_at_least("7.1.0", versions.get()):
+            kwargs["block"] = block
+            kwargs["headers"] = headers
 
-    return rctx.download(**kwargs)
+        result = rctx.download(**kwargs)
+        results.append(result)
+
+    if len(results) > 1:
+        for result in results:
+            result.wait()
+            if result.success:
+                print("Downloaded from {}".format(registry_url))
+                return result
+            else:
+                print("Failed to download from {}".format(registry_url))
+    elif len(results) == 1:
+        if not block:
+            results[0].wait()
+        return results[0]
+
+    fail("Failed to download from all provided URLs.")
 
 def _download_manifest(rctx, authn, identifier, output):
     bytes = None
