@@ -57,6 +57,11 @@ _WWW_AUTH = {
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
+    "gitlab-registry.rivianvw.io": {
+        "realm": "gitlab.rivianvw.io/jwt/auth",
+        "scope": "repository:{repository}:pull",
+        "service": "container_registry",
+    },
 }
 
 def _strip_host(url):
