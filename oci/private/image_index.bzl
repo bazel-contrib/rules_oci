@@ -25,9 +25,34 @@ oci_image_index(
 ```
 """
 
+def _image_index_transition_impl(_, attr):
+    return [
+        {"//command_line_option:platforms": str(platform)}
+        for platform in attr.platforms
+    ]
+
+_image_index_transition = transition(
+    implementation = _image_index_transition_impl,
+    inputs = [],
+    outputs = ["//command_line_option:platforms"],
+)
+
 _attrs = {
-    "images": attr.label_list(mandatory = True, doc = "List of labels to oci_image targets."),
+    "images": attr.label_list(
+        mandatory = True,
+        doc = "List of labels to oci_image targets.",
+        cfg = _image_index_transition,
+    ),
+    "platforms": attr.label_list(
+        doc = """This feature is highly EXPERIMENTAL and not subject to our usual SemVer guarantees.
+A list of platform targets to build the image for. If specified, only one image can be specified in the images attribute.      
+""",
+        providers = [platform_common.PlatformInfo],
+    ),
     "_image_index_sh_tpl": attr.label(default = "image_index.sh.tpl", allow_single_file = True),
+    "_allowlist_function_transition": attr.label(
+        default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
+    ),
 }
 
 def _expand_image_to_args(image, expander):
@@ -40,6 +65,9 @@ def _expand_image_to_args(image, expander):
     return args
 
 def _oci_image_index_impl(ctx):
+    if len(ctx.attr.platforms) > 0 and len(ctx.attr.images) != len(ctx.attr.platforms):
+        fail("platforms can only be specified when there is exactly one image in the images attribute.")
+
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 

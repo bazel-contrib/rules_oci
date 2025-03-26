@@ -11,7 +11,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_image_index_rule
 
 <pre>
-oci_image_index_rule(<a href="#oci_image_index_rule-name">name</a>, <a href="#oci_image_index_rule-images">images</a>)
+oci_image_index_rule(<a href="#oci_image_index_rule-name">name</a>, <a href="#oci_image_index_rule-images">images</a>, <a href="#oci_image_index_rule-platforms">platforms</a>)
 </pre>
 
 Build a multi-architecture OCI compatible container image.
@@ -45,6 +45,7 @@ oci_image_index(
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_image_index_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="oci_image_index_rule-images"></a>images |  List of labels to oci_image targets.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | required |  |
+| <a id="oci_image_index_rule-platforms"></a>platforms |  This feature is highly EXPERIMENTAL and not subject to our usual SemVer guarantees. A list of platform targets to build the image for. If specified, only one image can be specified in the images attribute.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 
 
 <a id="oci_image_index"></a>

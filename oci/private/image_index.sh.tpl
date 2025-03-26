@@ -68,3 +68,4 @@ size=$("${COREUTILS}" wc -c < "${OUTPUT}/manifest_list.json")
         '.manifests = [{"mediaType": "application/vnd.oci.image.index.v1+json", "size": $size, "digest": ("sha256:" + $checksum) }]' > "$OUTPUT/index.json"
 
 "${COREUTILS}" mv "${OUTPUT}/manifest_list.json" "$OUTPUT/blobs/sha256/${checksum}"
+"${COREUTILS}" rm "${OUTPUT}/manifest_list.new.json"
