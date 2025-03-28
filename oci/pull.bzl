@@ -172,7 +172,7 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, bazel_tags = []):
+def oci_pull(name, www_authenticate_challenges = None, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, bazel_tags = []):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -184,6 +184,10 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
 
     Args:
         name: repository with this name is created
+        www_authenticate_challenges: a dictionary of registry hostnames to WWW-Authenticate challenges.
+            This is used to perform authentication challenges for private registries.
+            See the [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate)
+            for more information about the WWW-Authenticate header.
         image: the remote image, such as `gcr.io/bazel-public/bazel`.
             A tag can be suffixed with a colon, like `debian:latest`,
             and a digest can be suffixed with an at-sign, like
@@ -244,6 +248,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             plat_name = "_".join([name] + plat.split("/"))
             _oci_pull(
                 name = plat_name,
+                www_authenticate_challenges = www_authenticate_challenges,
                 scheme = scheme,
                 registry = registry,
                 repository = repository,
@@ -268,6 +273,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         single_platform = "{}_single".format(name)
         _oci_pull(
             name = single_platform,
+            www_authenticate_challenges = www_authenticate_challenges,
             scheme = scheme,
             registry = registry,
             repository = repository,
@@ -280,6 +286,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     oci_alias(
         name = name,
         target_name = name,
+        www_authenticate_challenges = www_authenticate_challenges,
         # image attributes
         scheme = scheme,
         registry = registry,

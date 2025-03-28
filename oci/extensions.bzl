@@ -6,6 +6,11 @@ load(":repositories.bzl", "oci_register_toolchains")
 # TODO: it sucks that the API of the oci_pull macro has to be repeated here.
 pull = tag_class(attrs = {
     "name": attr.string(doc = "Name of the generated repository"),
+    "www_authenticate_challenges": attr.string_dict(doc = """a dictionary of registry hostnames to WWW-Authenticate challenges.
+        This is used to perform authentication challenges for private registries.
+        See the [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate)
+        for more information about the WWW-Authenticate header.
+    """),
     "image": attr.string(doc = """the remote image without a tag, such as gcr.io/bazel-public/bazel"""),
     "platforms": attr.string_list(doc = """for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers."""),
@@ -16,7 +21,7 @@ pull = tag_class(attrs = {
             Since tags are mutable, this is not reproducible, so a warning is printed."""),
     "reproducible": attr.bool(doc = """Set to False to silence the warning about reproducibility when using `tag`.""", default = True),
     "config": attr.label(doc = "Label to a .docker/config.json file"),
-    "bazel_tags": attr.string_list(doc = """Bazel tags to be propagated to generated rules.""")
+    "bazel_tags": attr.string_list(doc = """Bazel tags to be propagated to generated rules."""),
 })
 
 toolchains = tag_class(attrs = {
@@ -40,6 +45,7 @@ def _oci_extension(module_ctx):
                 reproducible = pull.reproducible,
                 config = pull.config,
                 bazel_tags = pull.bazel_tags,
+                www_authenticate_challenges = pull.www_authenticate_challenges,
                 is_bzlmod = True,
             )
 

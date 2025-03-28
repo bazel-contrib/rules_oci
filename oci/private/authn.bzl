@@ -323,7 +323,11 @@ def _get_token(rctx, state, registry, repository):
     for registry_pattern in www_authh.keys():
         if (registry == registry_pattern) or registry.endswith(registry_pattern):
             www_authenticate = www_authh[registry_pattern]
-            url = "https://{realm}?scope={scope}&service={service}".format(
+            scheme = "https://"
+            if "://" in www_authenticate["realm"]:
+                scheme = ""
+            url = "{scheme}{realm}?scope={scope}&service={service}".format(
+                scheme = scheme,
                 realm = www_authenticate["realm"].format(registry = registry),
                 service = www_authenticate["service"].format(registry = registry),
                 scope = www_authenticate["scope"].format(repository = repository),
@@ -342,7 +346,7 @@ def _get_token(rctx, state, registry, repository):
 
                 auth_raw = _oauth2(
                     rctx = rctx,
-                    realm = "https://" + www_authenticate["realm"].format(registry = registry),
+                    realm = scheme + www_authenticate["realm"].format(registry = registry),
                     scope = www_authenticate["scope"].format(repository = repository),
                     service = www_authenticate["service"].format(registry = registry),
                     secret = pattern["password"],
