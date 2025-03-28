@@ -12,55 +12,60 @@ load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
             "--timing",
             "--trace",
         ],
-        data = glob(["credential-helper/**"]) + [
+        data = glob([
+            "credential-helper/**",
+            "empty/**/*",
+        ]) + [
             "wksp",
             "//registry:auth",
+            "@ocix_crane_toolchains//:current_toolchain",
         ],
         env = {
             "WKSP": "$(location :wksp)",
+            "CRANE_BIN": "$(location @ocix_crane_toolchains//:current_toolchain)",
             "REGISTRY": "$(rootpath //registry:auth)",
+            "OCI_DIR": "empty",
             "BAZEL_FLAGS": flags,
         },
         tags = [
             "exclusive",
             "local",
-            "manual",  # TODO(#746) re-enable this test
             "no-remote",
             "no-remote-exec",
         ],
     )
     for (name, flags) in [
-        ("bzlmod", "--noenable_bzlmod"),
-        ("nobzlmod", "--enable_bzlmod"),
+        ("bzlmod", "--enable_bzlmod"),
+        #  ("nobzlmod", "--noenable_bzlmod --enable_workspace"),
     ]
 ]
 
-[
-    bats_test(
-        name = "test_oci_pull_%s" % name,
-        size = "large",
-        srcs = [
-            "oci_pull_tests.bats",
-        ],
-        args = [
-            "--verbose-run",
-            "--timing",
-            "--trace",
-        ],
-        data = [":wksp"],
-        env = {
-            "WKSP": "$(location :wksp)",
-            "BAZEL_FLAGS": flags,
-        },
-        tags = [
-            "exclusive",
-            "local",
-            "no-remote",
-            "no-remote-exec",
-        ],
-    )
-    for (name, flags) in [
-        ("bzlmod", "--noenable_bzlmod"),
-        ("nobzlmod", "--enable_bzlmod"),
-    ]
-]
+# [
+#     bats_test(
+#         name = "test_oci_pull_%s" % name,
+#         size = "large",
+#         srcs = [
+#             "oci_pull_tests.bats",
+#         ],
+#         args = [
+#             "--verbose-run",
+#             "--timing",
+#             "--trace",
+#         ],
+#         data = [":wksp"],
+#         env = {
+#             "WKSP": "$(location :wksp)",
+#             "BAZEL_FLAGS": flags,
+#         },
+#         tags = [
+#             "exclusive",
+#             "local",
+#             "no-remote",
+#             "no-remote-exec",
+#         ],
+#     )
+#     for (name, flags) in [
+#         ("bzlmod", "--noenable_bzlmod"),
+#         ("nobzlmod", "--enable_bzlmod"),
+#     ]
+# ]

@@ -8,51 +8,61 @@ load(":util.bzl", "util")
 # keep a map of known registries that require us to acquire a temporary token for authentication.
 _WWW_AUTH = {
     "index.docker.io": {
+        "challenge": "Bearer",
         "realm": "auth.docker.io/token",
         "scope": "repository:{repository}:pull",
         "service": "registry.docker.io",
     },
     "public.ecr.aws": {
+        "challenge": "Bearer",
         "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
     "ghcr.io": {
+        "challenge": "Bearer",
         "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
         "service": "{registry}/token",
     },
     "cgr.dev": {
+        "challenge": "Bearer",
         "realm": "{registry}/token",
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
     ".azurecr.io": {
+        "challenge": "Bearer",
         "realm": "{registry}/oauth2/token",
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
     "registry.gitlab.com": {
+        "challenge": "Bearer",
         "realm": "gitlab.com/jwt/auth",
         "scope": "repository:{repository}:pull",
         "service": "container_registry",
     },
     ".app.snowflake.com": {
+        "challenge": "Bearer",
         "realm": "{registry}/v2/token",
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
     "docker.elastic.co": {
+        "challenge": "Bearer",
         "realm": "docker-auth.elastic.co/auth",
         "scope": "repository:{repository}:pull",
         "service": "token-service",
     },
     "quay.io": {
+        "challenge": "Bearer",
         "realm": "{registry}/v2/auth",
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
     },
     "nvcr.io": {
+        "challenge": "Bearer",
         "realm": "{registry}/proxy_auth",
         "scope": "repository:{repository}:pull",
         "service": "{registry}",
@@ -279,13 +289,40 @@ We may change or abandon it without a notice. Use it at your own peril!
 To enable this feature, add `common --repo_env=OCI_ENABLE_OAUTH2_SUPPORT=1` to the `.bazelrc` file.
 """
 
+def _get_known_www_auth_challenges(rctx):
+    www = dict(**_WWW_AUTH)
+
+    for host, challenge_raw in rctx.attr.www_authenticate_challenges.items():
+        challenges = util.parse_www_authenticate(challenge_raw)
+        if len(challenges.keys()) != 1:
+            fail("`%s` must have exactly one challenge" % host)
+
+        challenge = challenges.keys()[0]
+        parameters = challenges[challenge]
+        scope = "repository:{repository}:pull"
+        if "scope" in parameters:
+            scope = parameters["scope"]
+        if "service" not in parameters:
+            fail("parameter `service` must be present in `%s`" % host)
+        if "realm" not in parameters:
+            fail("parameter `realm` must be present in `%s`" % host)
+        www[host] = {
+            "challenge": challenge,
+            "realm": parameters["realm"],
+            "scope": scope,
+            "service": parameters["service"],
+        }
+
+    return www
+
 def _get_token(rctx, state, registry, repository):
     allow_fail = rctx.os.environ.get("OCI_GET_TOKEN_ALLOW_FAIL") != None
     pattern = _get_auth(rctx, state, registry)
 
-    for registry_pattern in _WWW_AUTH.keys():
+    www_authh = _get_known_www_auth_challenges(rctx)
+    for registry_pattern in www_authh.keys():
         if (registry == registry_pattern) or registry.endswith(registry_pattern):
-            www_authenticate = _WWW_AUTH[registry_pattern]
+            www_authenticate = www_authh[registry_pattern]
             url = "https://{realm}?scope={scope}&service={service}".format(
                 realm = www_authenticate["realm"].format(registry = registry),
                 service = www_authenticate["service"].format(registry = registry),
@@ -339,7 +376,7 @@ def _get_token(rctx, state, registry, repository):
                 fail("could not find token in neither field 'token' nor 'access_token' in the response from the registry")
             pattern = {
                 "type": "pattern",
-                "pattern": "Bearer <password>",
+                "pattern": "%s <password>" % www_authenticate["challenge"],
                 "password": token,
             }
 

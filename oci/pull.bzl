@@ -131,6 +131,28 @@ When using a credential helper, it may be desirable to allow the built-in creden
 ```
 common --repo_env=OCI_GET_TOKEN_ALLOW_FAIL=1
 ```
+
+### Providing WWW-Authenticate challenges
+
+Due to limitations of Bazel downloader, repository rules can not look up HTTP Response headers to perform `WWW-Authenticate` challenges.
+To workaround this, we keep a map of [known registries](/oci/private/authn.bzl#L9) that require us to perform www-auth challenge to acquire a temporary token for authentication.
+
+While this works well for known registries, it does not work for private registries that require authentication. To accomodate this, `oci.pull` allows additional www-authenticate
+challenges to be provided via the `www_authenticate_challenges` attribute. This is useful for private registries that require additional authentication.
+
+```starlark
+oci.pull(
+    name = "my_private_image",
+    image = "my.private.registry/my/image",
+    digest = "sha256:deadbeef",
+    www_authenticate_challenges = {
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate
+        "index.docker.io": 'Bearer realm="https://auth.docker.io/token",service="registry.docker.io"'}     
+    },
+)
+```
+
+In this example, we provide a `www_authenticate_challenges` attribute to the `oci.pull` rule to allow the rule to perform the `WWW-Authenticate` challenge for the `my.private.registry` registry.
 """
 
 load("//oci/private:pull.bzl", "oci_alias", _oci_pull = "oci_pull")

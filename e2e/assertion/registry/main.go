@@ -38,10 +38,21 @@ func main() {
 		}
 	}()
 
-	reg := registry.New(registry.Logger(log.New(ioutil.Discard, "", log.LstdFlags)))
+	reg := registry.New(
+		registry.Logger(log.New(ioutil.Discard, "", log.LstdFlags)),
+	)
 	s := &http.Server{
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if strings.Contains(r.RequestURI, "/v2/empty_image/") {
+			if strings.Contains(r.RequestURI, "/token") {
+				if r.Header["Authorization"] == nil || r.Header["Authorization"][0] != "Basic dGVzdDp0ZXN0" {
+					w.WriteHeader(http.StatusUnauthorized)
+					w.Write([]byte("{\"errors\":[{\"code\":\"UNAUTHORIZED\",\"message\":\"authentication required\"}]}"))
+				} else {
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte("{\"token\": \"here_is_the_token\"}"))
+				}
+				return
+			} else if strings.Contains(r.RequestURI, "/v2/empty_image/") {
 				currentAuth := Authn{Authorization: []string{}}
 				if r.Header["Authorization"] != nil {
 					currentAuth.Authorization = r.Header["Authorization"]
