@@ -62,6 +62,8 @@ oci_push(
 
 Push a multi-architecture image to github container registry with a semver tag
 
+Refer to [oci_image_index](/docs/image_index.md) for more details on how to create a multi-architecture image.
+
 ```starlark
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template_rule")
 
