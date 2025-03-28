@@ -2,7 +2,7 @@
 
 _DOC = """Build a multi-architecture OCI compatible container image.
 
-It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [https://github.com/opencontainers/image-spec/blob/main/image-index.md](OCI Image Index Specification).
+It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/main/image-index.md).
 
 Image indexes can be created in two ways:
 
