@@ -11,14 +11,47 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_image_index_rule
 
 <pre>
-oci_image_index_rule(<a href="#oci_image_index_rule-name">name</a>, <a href="#oci_image_index_rule-images">images</a>)
+oci_image_index_rule(<a href="#oci_image_index_rule-name">name</a>, <a href="#oci_image_index_rule-images">images</a>, <a href="#oci_image_index_rule-platforms">platforms</a>)
 </pre>
 
 Build a multi-architecture OCI compatible container image.
 
-It takes number of `oci_image`s  to create a fat multi-architecture image.
+It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/main/image-index.md).
 
-Requires `wc` and either `sha256sum` or `shasum` to be installed on the execution machine.
+Image indexes can be created in two ways:
+
+## Using Bazel platforms
+
+While this feature is still experimental, it is the recommended way to create image indexes.
+
+```starlark
+go_binary(
+    name = "app_can_cross_compile"
+)
+
+tar(
+    name = "app_layer",
+    srcs = [
+        ":app_can_cross_compile",
+    ],
+)
+
+oci_image(
+    name = "image",
+    tars = [":app_layer"],
+)
+
+oci_image_index(
+    name = "image_multiarch",
+    images = [":image"],
+    platforms = [
+        "@rules_go//go/toolchain:linux_amd64",
+        "@rules_go//go/toolchain:linux_arm64",
+    ],
+)
+```
+
+## Without using Bazel platforms
 
 ```starlark
 oci_image(
@@ -45,6 +78,7 @@ oci_image_index(
 | :------------- | :------------- | :------------- | :------------- | :------------- |
 | <a id="oci_image_index_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="oci_image_index_rule-images"></a>images |  List of labels to oci_image targets.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | required |  |
+| <a id="oci_image_index_rule-platforms"></a>platforms |  This feature is highly EXPERIMENTAL and not subject to our usual SemVer guarantees. A list of platform targets to build the image for. If specified, only one image can be specified in the images attribute.   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 
 
 <a id="oci_image_index"></a>
