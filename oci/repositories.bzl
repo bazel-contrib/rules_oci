@@ -107,12 +107,13 @@ def oci_register_toolchains(name, register = True):
         register: whether to call through to native.register_toolchains.
             Should be True for WORKSPACE users, but false when used under bzlmod extension
     """
-    bazel_features_deps()
-    register_jq_toolchains(register = register)
-    register_tar_toolchains(register = register)
-    register_coreutils_toolchains(register = register)
-    register_copy_to_directory_toolchains(register = register)
-    register_zstd_toolchains(register = register)
+    if register:
+        bazel_features_deps()
+        register_jq_toolchains(register = register)
+        register_tar_toolchains(register = register)
+        register_coreutils_toolchains(register = register)
+        register_copy_to_directory_toolchains(register = register)
+        register_zstd_toolchains(register = register)
     register_crane_toolchains(name, register = register)
     register_regctl_toolchains(name, register = register)
 

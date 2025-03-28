@@ -38,3 +38,25 @@ def _parse_image_test_impl(ctx):
     return unittest.end(env)
 
 parse_image_test = unittest.make(_parse_image_test_impl)
+
+def _parse_www_authenticate_test_impl(ctx):
+    env = unittest.begin(ctx)
+    asserts.equals(
+        env,
+        {
+            "Bearer": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"},
+            "Bearer2": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"},
+        },
+        util.parse_www_authenticate('''\
+Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull" 
+Bearer2 realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull"
+'''),
+    )
+    asserts.equals(
+        env,
+        {"Bearer": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"}},
+        util.parse_www_authenticate('Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull"'),
+    )
+    return unittest.end(env)
+
+parse_www_authenticate_test = unittest.make(_parse_www_authenticate_test_impl)

@@ -28,6 +28,10 @@ _IMAGE_REFERENCE_ATTRS = {
         doc = "Label to a .docker/config.json file",
         allow_single_file = True,
     ),
+    "www_authenticate_challenges": attr.string_dict(
+        doc = "EXPERIMENTAL! Additional WWW-Authenticate entries for private registries.",
+        default = {},
+    ),
 }
 
 SCHEMA1_ERROR = """\

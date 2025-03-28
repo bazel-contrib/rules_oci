@@ -7,6 +7,66 @@ _IMAGE_PLATFORM_VARIANT_DEFAULTS = {
     "linux/arm64": "v8",
 }
 
+# This is a naive implementation of a www-authenticate parser
+def _parse_www_authenticate(val):
+    def is_space(chr):
+        return chr == " " or chr == "\t" or chr == "\n"
+
+    challenges = {}
+    current = ""
+    in_quotes = False
+    current_scheme = None
+    in_scheme = False
+    for chr in val.elems():
+        if current_scheme == None:
+            if chr == " " or chr == '"':
+                fail("invalid www-authenticate header")
+            current_scheme = chr
+            in_scheme = True
+            continue
+        if in_scheme:
+            if is_space(chr):
+                in_scheme = False
+                current_scheme = current_scheme.strip()
+                challenges[current_scheme] = []
+                continue
+            current_scheme += chr
+            continue
+
+        # beginnig/ending of a parameter value
+        if chr == '"':
+            in_quotes = not in_quotes
+            current += chr
+        elif chr == "," and not in_quotes:
+            if current.strip():
+                challenges[current_scheme].append(current.strip())
+            current = ""
+        elif is_space(chr) and not in_quotes:
+            if current.strip():
+                challenges[current_scheme].append(current.strip())
+            in_quotes = False
+            in_scheme = False
+            current_scheme = None
+            current = ""
+        else:
+            current += chr
+
+    if current.strip():
+        challenges[current_scheme].append(current.strip())
+
+    for challenge in challenges.keys():
+        kv = {}
+        for part in challenges[challenge]:
+            c = part.strip()
+            if c.find("=") == -1:
+                fail("malformed www-authenticate header")
+            key, value = c.split("=", 1)
+            kv[key] = value.strip('"').strip()
+
+        challenges[challenge] = kv
+
+    return challenges
+
 def _parse_image(image):
     """Support syntax sugar in oci_pull where multiple data fields are in a single string, "image"
 
@@ -225,6 +285,7 @@ def _platform_triplet(platform_str):
     return os, architecture, variant
 
 util = struct(
+    parse_www_authenticate = _parse_www_authenticate,
     parse_image = _parse_image,
     sha256 = _sha256,
     validate_image_platform = _validate_image_platform,

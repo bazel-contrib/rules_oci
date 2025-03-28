@@ -12,9 +12,17 @@ oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "empty_image",
     digest = "sha256:814539791f475a9d74eb21fd6149849d8b5b4bb1f222185c835581ce59bc7e0a",
-    image = "http://localhost:1447/empty_image",
+    image = "localhost:1447/empty_image",
 )
-use_repo(oci, "empty_image")
+oci.pull(
+    name = "empty_image_with_custom_auth",
+    digest = "sha256:814539791f475a9d74eb21fd6149849d8b5b4bb1f222185c835581ce59bc7e0a",
+    image = "localhost:1447/empty_image",
+    www_authenticate_challenges = {
+        "localhost:1447": 'Bearer realm="localhost:1447/token",service="localhost",scope="repository:empty_image:pull"',
+    },
+)
+use_repo(oci, "empty_image", "empty_image_with_custom_auth")
 oci.pull(
     name = "distroless_base_with_tag",
     image = "gcr.io/distroless/cc-debian12",
