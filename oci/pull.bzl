@@ -147,7 +147,7 @@ oci.pull(
     digest = "sha256:deadbeef",
     www_authenticate_challenges = {
         # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate
-        "index.docker.io": 'Bearer realm="https://auth.docker.io/token",service="registry.docker.io"'}     
+        "my.private.registry": 'Bearer realm="https://my.private.registry/token",service="my.private.registry"'}     
     },
 )
 ```
