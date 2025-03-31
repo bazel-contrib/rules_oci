@@ -131,6 +131,28 @@ When using a credential helper, it may be desirable to allow the built-in creden
 ```
 common --repo_env=OCI_GET_TOKEN_ALLOW_FAIL=1
 ```
+
+### Providing WWW-Authenticate challenges
+
+Due to limitations of Bazel downloader, repository rules can not look up HTTP Response headers to perform `WWW-Authenticate` challenges.
+To workaround this, we keep a map of [known registries](/oci/private/authn.bzl#L9) that require us to perform www-auth challenge to acquire a temporary token for authentication.
+
+While this works well for known registries, it does not work for private registries that require authentication. To accomodate this, `oci.pull` allows additional www-authenticate
+challenges to be provided via the `www_authenticate_challenges` attribute. This is useful for private registries that require additional authentication.
+
+```starlark
+oci.pull(
+    name = "my_private_image",
+    image = "my.private.registry/my/image",
+    digest = "sha256:deadbeef",
+    www_authenticate_challenges = {
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate
+        "my.private.registry": 'Bearer realm="https://my.private.registry/token",service="my.private.registry"'}     
+    },
+)
+```
+
+In this example, we provide a `www_authenticate_challenges` attribute to the `oci.pull` rule to allow the rule to perform the `WWW-Authenticate` challenge for the `my.private.registry` registry.
 """
 
 load("//oci/private:pull.bzl", "oci_alias", _oci_pull = "oci_pull")
@@ -150,7 +172,7 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, bazel_tags = []):
+def oci_pull(name, www_authenticate_challenges = None, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, bazel_tags = []):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example
@@ -162,6 +184,10 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
 
     Args:
         name: repository with this name is created
+        www_authenticate_challenges: a dictionary of registry hostnames to WWW-Authenticate challenges.
+            This is used to perform authentication challenges for private registries.
+            See the [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate)
+            for more information about the WWW-Authenticate header.
         image: the remote image, such as `gcr.io/bazel-public/bazel`.
             A tag can be suffixed with a colon, like `debian:latest`,
             and a digest can be suffixed with an at-sign, like
@@ -222,6 +248,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
             plat_name = "_".join([name] + plat.split("/"))
             _oci_pull(
                 name = plat_name,
+                www_authenticate_challenges = www_authenticate_challenges,
                 scheme = scheme,
                 registry = registry,
                 repository = repository,
@@ -246,6 +273,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
         single_platform = "{}_single".format(name)
         _oci_pull(
             name = single_platform,
+            www_authenticate_challenges = www_authenticate_challenges,
             scheme = scheme,
             registry = registry,
             repository = repository,
@@ -258,6 +286,7 @@ def oci_pull(name, image = None, repository = None, registry = None, platforms =
     oci_alias(
         name = name,
         target_name = name,
+        www_authenticate_challenges = www_authenticate_challenges,
         # image attributes
         scheme = scheme,
         registry = registry,

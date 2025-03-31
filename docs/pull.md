@@ -134,13 +134,35 @@ When using a credential helper, it may be desirable to allow the built-in creden
 common --repo_env=OCI_GET_TOKEN_ALLOW_FAIL=1
 ```
 
+### Providing WWW-Authenticate challenges
+
+Due to limitations of Bazel downloader, repository rules can not look up HTTP Response headers to perform `WWW-Authenticate` challenges.
+To workaround this, we keep a map of [known registries](/oci/private/authn.bzl#L9) that require us to perform www-auth challenge to acquire a temporary token for authentication.
+
+While this works well for known registries, it does not work for private registries that require authentication. To accomodate this, `oci.pull` allows additional www-authenticate
+challenges to be provided via the `www_authenticate_challenges` attribute. This is useful for private registries that require additional authentication.
+
+```starlark
+oci.pull(
+    name = "my_private_image",
+    image = "my.private.registry/my/image",
+    digest = "sha256:deadbeef",
+    www_authenticate_challenges = {
+        # https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate
+        "my.private.registry": 'Bearer realm="https://my.private.registry/token",service="my.private.registry"'}
+    },
+)
+```
+
+In this example, we provide a `www_authenticate_challenges` attribute to the `oci.pull` rule to allow the rule to perform the `WWW-Authenticate` challenge for the `my.private.registry` registry.
+
 <a id="oci_pull"></a>
 
 ## oci_pull
 
 <pre>
-oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-repository">repository</a>, <a href="#oci_pull-registry">registry</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>, <a href="#oci_pull-reproducible">reproducible</a>, <a href="#oci_pull-is_bzlmod">is_bzlmod</a>, <a href="#oci_pull-config">config</a>,
-         <a href="#oci_pull-bazel_tags">bazel_tags</a>)
+oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-www_authenticate_challenges">www_authenticate_challenges</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-repository">repository</a>, <a href="#oci_pull-registry">registry</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>,
+         <a href="#oci_pull-reproducible">reproducible</a>, <a href="#oci_pull-is_bzlmod">is_bzlmod</a>, <a href="#oci_pull-config">config</a>, <a href="#oci_pull-bazel_tags">bazel_tags</a>)
 </pre>
 
 Repository macro to fetch image manifest data from a remote docker registry.
@@ -159,6 +181,7 @@ in rules like `oci_image`.
 | Name  | Description | Default Value |
 | :------------- | :------------- | :------------- |
 | <a id="oci_pull-name"></a>name |  repository with this name is created   |  none |
+| <a id="oci_pull-www_authenticate_challenges"></a>www_authenticate_challenges |  a dictionary of registry hostnames to WWW-Authenticate challenges. This is used to perform authentication challenges for private registries. See the [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate) for more information about the WWW-Authenticate header.   |  `None` |
 | <a id="oci_pull-image"></a>image |  the remote image, such as `gcr.io/bazel-public/bazel`. A tag can be suffixed with a colon, like `debian:latest`, and a digest can be suffixed with an at-sign, like `debian@sha256:e822570981e13a6ef1efcf31870726fbd62e72d9abfdcf405a9d8f566e8d7028`.<br><br>Exactly one of image or {registry,repository} should be set.   |  `None` |
 | <a id="oci_pull-repository"></a>repository |  the image path beneath the registry, such as `distroless/static`. When set, registry must be set as well.   |  `None` |
 | <a id="oci_pull-registry"></a>registry |  the remote registry domain, such as `gcr.io` or `docker.io`. When set, repository must be set as well.   |  `None` |

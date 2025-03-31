@@ -10,16 +10,16 @@ setup_file() {
 
   mkfifo $AUTH_STDIN
 
-  (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | "$BATS_TEST_DIRNAME/$REGISTRY" 2>&3 &
+  (tail -f $AUTH_STDIN & echo $! > $TAIL_PID) | CERT=$BATS_TEST_DIRNAME/ca/cert.pem KEY=$BATS_TEST_DIRNAME/ca/key.pem "$BATS_TEST_DIRNAME/$REGISTRY" 2>&3 &
   export REGISTRY_PID=$!
   export TAIL_PID=$(cat $TAIL_PID)
   
-  while ! nc -z localhost 1447; do
+  while ! nc -z localhost 1448; do
     sleep 0.1
     echo "# waiting for registry at 1477" >&3
   done
   echo "# registry is ready. pushing the image" >&3
-  run bazel run :push -- --repository localhost:1447/empty_image 2>&3
+  "$BATS_TEST_DIRNAME/${CRANE_BIN/external/..}" push "$BATS_TEST_DIRNAME/$OCI_DIR" localhost:1448/empty_image
   echo "# image pushed" >&3
 }
 
@@ -173,7 +173,22 @@ EOF
   }
 }
 EOF
-    update_assert ''
+    update_assert '{}'
+    sleep 2
     run bazel build @empty_image//... $BAZEL_FLAGS
+    assert_success
+}
+
+
+@test "custom www auth challenge works" {
+    cat > "$DOCKER_CONFIG/config.json" <<EOF
+{
+  "auths": {
+    "localhost:1447": { "auth": "dGVzdDp0ZXN0" }
+  }
+}
+EOF
+    update_assert '{"Authorization": ["Bearer here_is_the_token"]}'
+    run bazel build @empty_image_with_custom_auth//... $BAZEL_FLAGS
     assert_success
 }
