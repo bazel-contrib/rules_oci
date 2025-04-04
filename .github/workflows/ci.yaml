@@ -64,6 +64,7 @@ jobs:
           - e2e/wasm
           - e2e/smoke
           - e2e/assertion
+          - examples/dockerfile
 
         bzlmodEnabled: [true, false]
         exclude:
@@ -75,6 +76,10 @@ jobs:
           - os: macos-13
             bazelversion: 6.4.0
           - folder: .
+            bazelversion: 6.4.0
+          - folder: examples/dockerfile
+            bzlmodEnabled: false
+          - folder: examples/dockerfile
             bazelversion: 6.4.0
           # e2e/assertion is bzlmod only but it has test for both cases.
           - folder: e2e/assertion

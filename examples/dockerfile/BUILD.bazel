@@ -1,78 +1,47 @@
-load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
-load("@configure_buildx//:defs.bzl", "BUILDER_NAME", "TARGET_COMPATIBLE_WITH")
-load("@rules_oci//oci:defs.bzl", "oci_image")
-load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
+load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("@buildx//:defs.bzl", "buildx", "context")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
-# docker buildx create --name container --driver=docker-container
-run_binary(
-    name = "base",
-    srcs = ["Dockerfile"] + glob(["src/*"]),
-    args = [
-        "build",
-        "./examples/dockerfile",
-        "--builder",
-        BUILDER_NAME,
-        "--output=type=oci,tar=false,dest=$@",
+buildx(
+    name = "base_image",
+    build_context = [
+        # replaces FROM python:3.11.9-bullseye with @ubuntu from oci_pull
+        context.oci_layout(
+            "python:3.11.9-bullseye",
+            "@python_3_11_9-bullseye",
+        ),
+        # make lib1 available as COPY --from=lib1 in the dockerfile
+        context.sources(
+            "lib1",
+            ["//libs/lib1:lib1"],
+            override_path = "libs/lib1",
+        ),
+        context.sources(
+            "bins_hi",
+            ["//bins/hi:hi"],
+            override_path = "$(BINDIR)/bins/hi",
+        ),
+        context.sources(
+            "root",
+            glob(["src/*"]),
+            override_path = "src",
+        ),
     ],
-    execution_requirements = {"local": "1"},
-    mnemonic = "BuildDocker",
-    out_dirs = ["base"],
-    target_compatible_with = TARGET_COMPATIBLE_WITH,
-    tool = "@multitool//tools/buildx",
+    dockerfile = ":Dockerfile",
 )
 
 oci_image(
     name = "image",
-    base = ":base",
+    base = ":base_image",
 )
 
-assert_oci_config(
-    name = "assert_metadata",
-    cmd_eq = ["/app/say.py"],
-    entrypoint_eq = None,
+oci_load(
+    name = "load",
     image = ":image",
+    repo_tags = ["example:latest"],
 )
 
-assert_oci_image_command(
-    name = "assert_jq_works",
-    args = [
-        "jq",
-        "--version",
-    ],
-    exit_code_eq = 0,
-    image = ":image",
-    output_eq = "jq-1.6\n",
-)
-
-assert_oci_image_command(
-    name = "assert_apt_lists_still_exist",
-    args = [
-        "file",
-        "/var/lib/apt/lists",
-    ],
-    exit_code_eq = 0,
-    image = ":image",
-    output_eq = "/var/lib/apt/lists: directory\n",
-)
-
-assert_oci_image_command(
-    name = "assert_cow_says_moo",
-    args = [
-        "python",
-        "/app/say.py",
-    ],
-    exit_code_eq = 0,
-    image = ":image",
-    output_eq = """\
-  ____
-| moo! |
-  ====
-    \\
-     \\
-       ^__^
-       (oo)\\_______
-       (__)\\       )\\/\\
-           ||----w |
-           ||     ||
-""",
+build_test(
+    name = "test",
+    targets = [":image"],
 )

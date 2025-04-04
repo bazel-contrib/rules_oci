@@ -13,6 +13,10 @@ RUN apt-get -y update \
 
 RUN pip install cowsay
 
-COPY src /app
+COPY --from=root . /app
+
+COPY --from=bins_hi hi_/hi /usr/local/bin/hi
+
+ENTRYPOINT ["/usr/local/bin/python3"]
 
 CMD ["/app/say.py"]
