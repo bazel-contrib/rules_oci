@@ -1,0 +1,33 @@
+load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+
+filegroup(
+    name = "regctl",
+    srcs = ["@oci_regctl_toolchains//:current_toolchain"],
+)
+
+run_binary(
+    name = "base",
+    srcs = ["tarball.tar"],
+    args = [
+        "image",
+        "import",
+        "ocidir://$@",
+        "$(location :tarball.tar)",
+    ],
+    execution_requirements = {"local": "1"},
+    mnemonic = "ExtractTarball",
+    out_dirs = ["base"],
+    tool = ":regctl",
+)
+
+oci_image(
+    name = "image",
+    base = ":base",
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = ["example:latest"],
+)
