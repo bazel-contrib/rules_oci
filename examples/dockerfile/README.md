@@ -15,9 +15,9 @@ And some good reasons why you should
 
 # Resources
 
-https://reproducible-builds.org/
-https://github.com/bazel-contrib/rules_oci/issues/35#issuecomment-1285954483
-https://github.com/bazel-contrib/rules_oci/blob/main/docs/compare_dockerfile.md
-https://github.com/moby/moby/issues/43124
-https://github.com/moby/buildkit/blob/master/docs/build-repro.md
-https://medium.com/nttlabs/bit-for-bit-reproducible-builds-with-dockerfile-7cc2b9faed9f
+- https://reproducible-builds.org/
+- https://github.com/bazel-contrib/rules_oci/issues/35#issuecomment-1285954483
+- https://github.com/bazel-contrib/rules_oci/blob/main/docs/compare_dockerfile.md
+- https://github.com/moby/moby/issues/43124
+- https://github.com/moby/buildkit/blob/master/docs/build-repro.md
+- https://medium.com/nttlabs/bit-for-bit-reproducible-builds-with-dockerfile-7cc2b9faed9f
