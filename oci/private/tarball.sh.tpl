@@ -18,7 +18,7 @@ readonly OUTPUT="{{output}}"
 function add_to_tar() {
     content=$1
     tar_path=$2
-    echo >>"${OUTPUT}" "${tar_path} uid=0 gid=0 mode=0755 time=1672560000 type=file content=${content}"
+    echo >>"${OUTPUT}" "${tar_path} uid=0 gid=0 mode=0755 time=1672560000 type=file nlink=1 content=${content}"
 }
 
 MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
