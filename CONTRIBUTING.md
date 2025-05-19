@@ -1,5 +1,9 @@
 # How to Contribute
 
+## Running tools
+
+To get rules_oci tools on your `PATH`, run `bazel run //tools:bazel_env` and follow any prompts.
+
 ## Formatting
 
 Starlark files should be formatted by buildifier.
