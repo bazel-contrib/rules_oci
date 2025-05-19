@@ -75,6 +75,13 @@
         "sha256": "dc30b0276c0ba45857eef021b677d4fb2bbf13bcf809f99b691db9512bca47cc",
         "os": "macos",
         "cpu": "arm64"
+      },
+      {
+        "kind": "file",
+        "url": "https://github.com/docker/compose/releases/download/v2.32.4/docker-compose-darwin-x86_64",
+        "sha256": "bd6f3b3b93032f47ad2c017e92df302651c9a649f4b533455371877eaaa76585",
+        "os": "macos",
+        "cpu": "x86_64"
       }
     ]
   },
