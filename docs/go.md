@@ -63,9 +63,9 @@ For this example let's say it's `go_binary(name = "app", ...)`.
 Next, put that file into a layer, which is just a `.tar` file:
 
 ```
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@tar.bzl", "tar")
 
-pkg_tar(
+tar(
     name = "tar",
     srcs = [":app"],
 )
