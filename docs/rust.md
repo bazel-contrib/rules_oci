@@ -130,15 +130,16 @@ rust_binary(
 )
 ```
 
-After that, we package that binary into a layer using `pkg_tar`
+After that, we package that binary into a layer using `tar`
 
 ```
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@tar.bzl", "tar")
 
-# Step 2: Compress it to layer using pkg_tar
-pkg_tar(
+# Step 2: Compress it to layer
+tar(
     name = "hello_bin_layer",
     srcs = [":hello_bin"],
+    compression = "gzip",
 )
 ```
 
@@ -165,8 +166,8 @@ Complete `BUILD.bazel` file
 
 ```
 load("@rules_rust//rust:defs.bzl", "rust_binary")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@tar.bzl", "tar")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -179,11 +180,11 @@ rust_binary(
     edition = "2021",
 )
 
-# Step 2: Compress it to layer using pkg_tar
-pkg_tar(
+# Step 2: Compress it to layer
+tar(
     name = "hello_bin_layer",
     srcs = [":hello_bin"],
-    extension = "tar.gz",
+    compression = "gzip",
 )
 
 # Step 3: Build image and add built layer to it
