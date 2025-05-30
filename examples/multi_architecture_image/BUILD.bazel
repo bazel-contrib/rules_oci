@@ -1,6 +1,6 @@
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
-load("//oci:defs.bzl", "oci_image", "oci_image_index")
+load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load")
 load(":transition.bzl", "multi_arch")
 
 tar(
@@ -30,6 +30,13 @@ oci_image_index(
     images = [
         ":images",
     ],
+)
+
+oci_load(
+    name = "load",
+    image = ":index",
+    repo_tags = ["my-repository:latest"],
+    format = "oci",
 )
 
 assert_contains(
