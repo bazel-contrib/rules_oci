@@ -20,7 +20,7 @@ To make a container image for this program, the `BUILD.bazel` would have somethi
 ```python
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@tar.bzl", "tar")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -33,7 +33,7 @@ cc_binary(
 )
 
 # Packaging the binary into tar, which is needed by oci_image rule
-pkg_tar(
+tar(
     name = "tar",
     srcs = [":example_binary"],
 )
@@ -76,8 +76,7 @@ use_repo(oci, "docker_lib_ubuntu")
 ```
 
 ```python
-# Import rules_pkg
-bazel_dep(name = "rules_pkg", version = "0.10.1")
+bazel_dep(name = "tar.bzl", version = "0.3.0")
 ```
 
 To load the image, execute:
