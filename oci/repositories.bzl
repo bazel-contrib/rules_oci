@@ -102,6 +102,7 @@ def oci_register_toolchains(name, register = True):
     - create a repository exposing toolchains for each platform like "container_platforms"
     - register a toolchain pointing at each platform
     Users can avoid this macro and do these steps themselves, if they want more control.
+
     Args:
         name: base name for all created repos, like "oci"
         register: whether to call through to native.register_toolchains.
@@ -117,6 +118,7 @@ def oci_register_toolchains(name, register = True):
     register_crane_toolchains(name, register = register)
     register_regctl_toolchains(name, register = register)
 
+# buildifier: disable=function-docstring
 def register_crane_toolchains(name, register = True):
     crane_toolchain_name = "{name}_crane_toolchains".format(name = name)
 
@@ -137,6 +139,7 @@ def register_crane_toolchains(name, register = True):
         toolchain = "@%s_crane_{platform}//:crane_toolchain" % name,
     )
 
+# buildifier: disable=function-docstring
 def register_regctl_toolchains(name, register = True):
     regctl_toolchain_name = "{name}_regctl_toolchains".format(name = name)
 
