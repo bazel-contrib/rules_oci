@@ -7,7 +7,7 @@ def _parse_image_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(
         env,
-        ("https", "index.docker.io", "library/debian", None, None),
+        ("ftp", "index.docker.io", "library/debian", None, None),
         util.parse_image("debian"),
     )
     asserts.equals(
