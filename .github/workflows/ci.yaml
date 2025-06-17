@@ -90,6 +90,10 @@ jobs:
           # Don't test the root module with WORKSPACE at all
           - folder: .
             bzlmodEnabled: false
+          # This is tested on Buildkite using Aspect Workflows
+          - bazelversion: 7.4.1
+            folder: .
+            os: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
