@@ -28,7 +28,7 @@ bzl_library(
         "//oci/private:toolchains_repo",
         "//oci/private:versions",
         "@aspect_bazel_lib//lib:repositories",
-        "@bazel_features//:deps",
+        "@bazel_features//:bzl_files",
         "@bazel_tools//tools/build_defs/repo:http.bzl",
         "@bazel_tools//tools/build_defs/repo:utils.bzl",
     ] + ["@bazel_tools//tools/build_defs/repo:cache.bzl"] if bazel_lib_utils.is_bazel_7_or_greater() else [],
