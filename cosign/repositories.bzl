@@ -46,8 +46,10 @@ def cosign_register_toolchains(name, register = True):
     - create a repository exposing toolchains for each platform like "oci_platforms"
     - register a toolchain pointing at each platform
     Users can avoid this macro and do these steps themselves, if they want more control.
+
     Args:
         name: base name for cosign repository, like "oci_cosign"
+        register: whether to call native.register_toolchains: True for workspace, False for bzlmod
     """
     toolchain_name = "{name}_toolchains".format(name = name)
 
