@@ -57,7 +57,7 @@ filegroup(
 tar(
     name = "static_tar",
     srcs = [":static"],
-    mutate = mutate(package_dir = "/usr/share/nginx/html"),
+    mutate = mutate(package_dir = "usr/share/nginx/html"),
 )
 
 oci_image(
