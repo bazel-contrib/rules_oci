@@ -6,6 +6,7 @@ readonly PUSH_IMAGE="$2"
 readonly PUSH_IMAGE_INDEX="$3"
 readonly PUSH_IMAGE_REPOSITORY_FILE="$4"
 readonly PUSH_IMAGE_WO_TAGS="$5"
+readonly PUSH_IMAGE_WO_REPOSITORY="$6"
 
 # start a registry
 output=$(mktemp)
@@ -55,3 +56,8 @@ if [ "${TAGS}" != "custom" ]; then
     echo "${TAGS}"
     exit 1
 fi
+
+# should push image without repository with default tags
+REPOSITORY="${REGISTRY}/local-wo-repository"
+"${PUSH_IMAGE_WO_REPOSITORY}" --repository "${REPOSITORY}"
+"${CRANE}" digest "$REPOSITORY:latest"

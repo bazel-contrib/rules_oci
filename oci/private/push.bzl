@@ -165,12 +165,13 @@ _attrs = {
     "repository": attr.string(
         doc = """\
         Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
-        Digests and tags are not allowed.
+        Digests and tags are not allowed. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.
         """,
     ),
     "repository_file": attr.label(
         doc = """\
         The same as 'repository' but in a file. This allows pushing to different repositories based on stamping.
+        If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.
         """,
         allow_single_file = True,
     ),
@@ -231,8 +232,6 @@ def _impl(ctx):
     elif ctx.attr.repository_file:
         files.append(ctx.file.repository_file)
         substitutions["{{repository_file}}"] = ctx.file.repository_file.short_path
-    else:
-        fail("must specify exactly one of 'repository_file' or 'repository'")
 
     if ctx.attr.remote_tags:
         files.append(ctx.file.remote_tags)

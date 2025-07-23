@@ -56,6 +56,11 @@ while (( $# > 0 )); do
   esac
 done
 
+if [[ -z "${REPOSITORY}" ]]; then
+  echo "ERROR: repository not set. Please pass --repository flag." >&2
+  exit 1
+fi
+
 DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
 
 REFS=$(mktemp)
