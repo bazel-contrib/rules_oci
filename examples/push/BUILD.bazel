@@ -29,6 +29,12 @@ oci_push(
     repository = "index.docker.io/<ORG>/image",
 )
 
+oci_push(
+    name = "push_image_wo_repository",
+    image = ":image",
+    remote_tags = ["latest"],
+)
+
 oci_image_index(
     name = "image_index",
     images = [
@@ -87,15 +93,26 @@ sh_test(
         "$(location :push_image_index)",
         "$(location :push_image_repository_file)",
         "$(location :push_image_wo_tags)",
+        "$(location :push_image_wo_repository)",
     ],
     data = [
         ":push_image",
         ":push_image_index",
         ":push_image_repository_file",
         ":push_image_wo_tags",
+        ":push_image_wo_repository",
         "@oci_crane_toolchains//:current_toolchain",
     ],
     toolchains = [
         "@oci_crane_toolchains//:current_toolchain",
+    ],
+)
+
+sh_test(
+    name = "test_push_image_wo_repository_fails",
+    srcs = ["test_push_image_wo_repository_fails.bash"],
+    args = ["$(location :push_image_wo_repository)"],
+    data = [
+        ":push_image_wo_repository",
     ],
 )
