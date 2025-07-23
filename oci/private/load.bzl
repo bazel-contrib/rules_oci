@@ -113,7 +113,7 @@ attrs = {
 
             See the _run_template attribute for the script that calls this loader tool.
             """,
-        allow_single_file = True,
+        allow_files = True,
         mandatory = False,
         executable = True,
         cfg = "target",
@@ -203,11 +203,13 @@ def _load_impl(ctx):
     runnable_loader = ctx.actions.declare_file(ctx.label.name + ".sh")
 
     runtime_deps = []
-    if ctx.file.loader:
-        runtime_deps.append(ctx.file.loader)
+    if ctx.executable.loader:
+        runtime_deps.append(ctx.executable.loader)
     runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
+    if ctx.executable.loader:
+        runfiles = runfiles.merge(ctx.attr.loader.default_runfiles)
 
     ctx.actions.expand_template(
         template = ctx.file._run_template,
@@ -216,7 +218,7 @@ def _load_impl(ctx):
             "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
             "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
             "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
-            "{{loader}}": to_rlocation_path(ctx, ctx.file.loader) if ctx.file.loader else "",
+            "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
             "{{manifest_root}}": manifest_json.root.path,
             "{{image_root}}": image.root.path,
             "{{workspace_name}}": ctx.workspace_name,
