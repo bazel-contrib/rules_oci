@@ -208,6 +208,8 @@ def _load_impl(ctx):
     runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
+    if ctx.executable.loader:
+        runfiles = runfiles.merge(ctx.attr.loader.default_runfiles)
 
     ctx.actions.expand_template(
         template = ctx.file._run_template,
