@@ -8,8 +8,10 @@ readonly DIGEST=$("${JQ}" -r '.manifests[].digest' "${IMAGE_DIR}/index.json")
 readonly FIXED_ARGS=({{fixed_args}})
 
 # set $@ to be FIXED_ARGS+$@
-ARGS=(${FIXED_ARGS[@]} $@)
-set -- ${ARGS[@]}
+ALL_ARGS=(${FIXED_ARGS[@]+"${FIXED_ARGS[@]}"} "$@")
+if [[ ${#ALL_ARGS[@]} -gt 0 ]]; then
+  set -- "${ALL_ARGS[@]}"
+fi
 
 REPOSITORY=""
 ARGS=()
@@ -21,6 +23,11 @@ while (( $# > 0 )); do
     *) ARGS+=( "$1" ); shift ;;
     esac
 done
+
+if [[ -z "${REPOSITORY}" ]]; then
+    echo "ERROR: repository not set. Please pass --repository flag or set the 'repository' attribute in the rule." >&2
+    exit 1
+fi
 
 exec "${COSIGN}" sign "${REPOSITORY}@${DIGEST}" ${ARGS[@]+"${ARGS[@]}"}
 

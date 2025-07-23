@@ -31,15 +31,25 @@ cosign_attest(
 ```
 
 via `bazel run :attest_spdx -- --repository=index.docker.io/org/test`
+
+You can also omit the `repository` attribute and provide it at runtime.
+```starlark
+cosign_attest(
+    name = "attest_no_repo",
+    image = ":image",
+    predicate = "image.sbom.spdx.json",
+    type = "spdx",
+)
+```
+Then run `bazel run :attest_no_repo -- --repository=index.docker.io/org/test`
 """
 
 _attrs = {
     "image": attr.label(allow_single_file = True, mandatory = True, doc = "Label to an oci_image"),
     "type": attr.string(values = ["slsaprovenance", "link", "spdx", "vuln", "custom"], mandatory = True, doc = "Type of predicate. Acceptable values are (slsaprovenance|link|spdx|vuln|custom)"),
     "predicate": attr.label(allow_single_file = True, mandatory = True, doc = "Label to the predicate file. Only files are allowed. eg: sbom.spdx, in-toto.json"),
-    "repository": attr.string(mandatory = True, doc = """\
-        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
-        Digests and tags are not allowed.
+    "repository": attr.string(doc = """        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
+        Digests and tags are not allowed. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.
     """),
     "_attest_sh_tpl": attr.label(default = "attest.sh.tpl", allow_single_file = True),
 }
@@ -48,17 +58,17 @@ def _cosign_attest_impl(ctx):
     cosign = ctx.toolchains["@rules_oci//cosign:toolchain_type"]
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
 
-    if ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1:
+    if ctx.attr.repository and (ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1):
         fail("repository attribute should not contain digest or tag.")
 
     fixed_args = [
-        "--repository",
-        ctx.attr.repository,
         "--predicate",
         ctx.file.predicate.short_path,
         "--type",
         ctx.attr.type,
     ]
+    if ctx.attr.repository:
+        fixed_args.extend(["--repository", ctx.attr.repository])
 
     executable = ctx.actions.declare_file("cosign_attest_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(

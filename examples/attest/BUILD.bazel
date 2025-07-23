@@ -48,3 +48,43 @@ sh_test(
         "@jq_toolchains//:resolved_toolchain",
     ],
 )
+
+cosign_attest(
+    name = "attest_no_repo",
+    image = ":image",
+    predicate = ":sbom_generated.spdx",
+    type = "spdx",
+)
+
+sh_test(
+    name = "test_attest_no_repo_fails",
+    srcs = ["test_attest_no_repo_fails.bash"],
+    args = ["$(location :attest_no_repo)"],
+    data = [":attest_no_repo"],
+)
+
+sh_test(
+    name = "test_attest_no_repo_passes",
+    srcs = ["test_attest_no_repo_passes.bash"],
+    args = [
+        "$(JQ_BIN)",
+        "$(COSIGN_BIN)",
+        "$(CRANE_BIN)",
+        "$(location :attest_no_repo)",
+        "$(location :image)",
+        "$(location sbom.spdx)",
+    ],
+    data = [
+        "sbom.spdx",
+        ":attest_no_repo",
+        ":image",
+        "@jq_toolchains//:resolved_toolchain",
+        "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
+    ],
+    toolchains = [
+        "@oci_cosign_toolchains//:current_toolchain",
+        "@oci_crane_toolchains//:current_toolchain",
+        "@jq_toolchains//:resolved_toolchain",
+    ],
+)
