@@ -115,7 +115,6 @@ def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
     args.add(layer.owner)
     executable = ctx.executable._descriptor_bat if is_windows else ctx.executable._descriptor_sh
     inputs = [ctx.executable._descriptor_sh] if is_windows else []
-    print(executable)
     ctx.actions.run(
         executable = executable,       
         inputs = [layer] + inputs,
@@ -255,7 +254,6 @@ def _oci_image_impl(ctx):
         action_env["MSYS_NO_PATHCONV"] = "1"
 
     executable = util.maybe_wrap_launcher_for_windows(ctx, builder)
-    print(executable)
     ctx.actions.run(
         inputs = depset(inputs, transitive = transitive_inputs),
         arguments = [args],
