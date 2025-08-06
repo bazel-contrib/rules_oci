@@ -43,8 +43,10 @@ jobs:
         run: echo "os=macos-13" >> $GITHUB_OUTPUT
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
+      - id: windows
+        run: echo "os=windows" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["ubuntu-latest", "macos-13"]
+      # Will look like ["ubuntu-latest", "macos-13", "windows"]
       os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
@@ -74,6 +76,8 @@ jobs:
           - os: macos-13
             folder: e2e/assertion
           - os: macos-13
+            bazelversion: 6.4.0
+          - os: windows
             bazelversion: 6.4.0
           - folder: .
             bazelversion: 6.4.0
