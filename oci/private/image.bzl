@@ -96,6 +96,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
+    "_descriptor_bat": attr.label(default = "descriptor.bat", executable = True, cfg = "exec", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
@@ -103,17 +104,21 @@ def _platform_str(os, arch, variant = None):
     parts = dict(os = os, architecture = arch)
     if variant:
         parts["variant"] = variant
-    return json.encode(parts)
+    return "\"" + json.encode(parts).replace('"', '\\"') + "\""
 
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
+    is_windows = ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo])
     descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
     args.add(layer.owner)
+    executable = ctx.executable._descriptor_bat if is_windows else ctx.executable._descriptor_sh
+    inputs = [ctx.executable._descriptor_sh] if is_windows else []
+    print(executable)
     ctx.actions.run(
-        executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh),
-        inputs = [layer],
+        executable = executable,       
+        inputs = [layer] + inputs,
         outputs = [descriptor],
         arguments = [args],
         env = {
@@ -249,13 +254,16 @@ def _oci_image_impl(ctx):
         # This one is for Windows Git MSys
         action_env["MSYS_NO_PATHCONV"] = "1"
 
+    executable = util.maybe_wrap_launcher_for_windows(ctx, builder)
+    print(executable)
     ctx.actions.run(
         inputs = depset(inputs, transitive = transitive_inputs),
         arguments = [args],
         outputs = [output],
         env = action_env,
-        executable = util.maybe_wrap_launcher_for_windows(ctx, builder),
+        executable = executable,
         tools = [
+            builder,
             regctl.regctl_info.binary,
             jq.jqinfo.bin,
             coreutils.coreutils_info.bin,

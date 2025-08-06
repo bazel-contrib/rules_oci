@@ -26,6 +26,7 @@ function base_from_scratch() {
     config: { mediaType: "application/vnd.oci.image.config.v1+json", size: 0 },
     layers: []
   }' | update_manifest
+  echo jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform'
   # Create the image config when there is annotations
   jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
 }

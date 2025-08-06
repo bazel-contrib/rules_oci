@@ -196,6 +196,9 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     https://github.com/aspect-build/bazel-lib/blob/main/lib/windows_utils.bzl
     but without requiring that the script has a .runfiles folder.
 
+    Note: only works to wrap scripts generated in bazel-out. Will not wrap
+    scripts from the repo itself.
+    
     To use:
     - add the _windows_constraint appears in the rule attrs
     - make sure the bash_launcher is in the inputs to the action
