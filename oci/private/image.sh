@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
-
+set -x
 # Replace PATH with hermetically built jq, regctl, coreutils.
 # shellcheck disable=SC2123
 PATH="{{jq_path}}"
@@ -16,8 +16,10 @@ readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | red
     {parts: [], prev: 0}; 
     {parts: (.parts + [$raw[.prev:$match.offset], ($envs[] | select(.key == $match.captures[0].string)).value ]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
+readonly SCRATCH="{{scratch}}"
 
 function base_from_scratch() {
+  echo $1
   local platform="$1"
   # Create a new manifest
   jq -n '{
@@ -121,7 +123,7 @@ CONFIG="{}"
 for ARG in "$@"; do
   case "$ARG" in
   --scratch=*)
-    base_from_scratch "${ARG#--scratch=}"
+    base_from_scratch "${SCRATCH}"
     ;;
   --from=*)
     base_from "${ARG#--from=}"

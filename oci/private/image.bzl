@@ -104,7 +104,7 @@ def _platform_str(os, arch, variant = None):
     parts = dict(os = os, architecture = arch)
     if variant:
         parts["variant"] = variant
-    return "\"" + json.encode(parts).replace('"', '\\"') + "\""
+    return json.encode(parts)
 
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
     is_windows = ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo])
@@ -156,6 +156,9 @@ def _oci_image_impl(ctx):
 
     # create the image builder
     builder = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
+    # pass the platform json via template to avoid issues with escaping via bat wrappers
+    platform_str = _platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant) if not ctx.attr.base else "0"
+    platform_str = platform_str.replace('"', '\\"')
     ctx.actions.expand_template(
         template = ctx.file._image_sh,
         output = builder,
@@ -166,6 +169,7 @@ def _oci_image_impl(ctx):
             "{{coreutils_path}}": coreutils.coreutils_info.bin.dirname,
             "{{output}}": output.path,
             "{{treeartifact_symlinks}}": str(int(use_symlinks)),
+            "{{scratch}}": platform_str,
         },
     )
 
@@ -187,7 +191,7 @@ def _oci_image_impl(ctx):
             transitive_inputs.append(base_default_info.files)
     else:
         # create a scratch base image with given os/arch[/variant]
-        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
+        args.add("--scratch=true")
 
     # If tree artifact symlinks are supported also add tars into runfiles.
     if use_symlinks:
