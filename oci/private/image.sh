@@ -18,16 +18,6 @@ readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | red
 ) | .parts + [$raw[.prev:]] | join("")'
 readonly SCRATCH="{{scratch}}"
 
-function run_coreutils() {
-  #echo "$@" >&2
-  coreutils "$@"
-}
-
-function run_regctl() {
-  #echo regctl "$@" >&2
-  regctl "$@"
-}
-
 function base_from_scratch() {
   local platform="$1"
   # Create a new manifest
@@ -44,24 +34,24 @@ function base_from_scratch() {
 function base_from() {
   local path="$1"
   # shellcheck disable=SC2045
-  for blob in $(run_coreutils ls -1 -d "$path/blobs/"*/*); do
+  for blob in $(coreutils ls -1 -d "$path/blobs/"*/*); do
     local relative_to_blobs="${blob#"$path/blobs"}"
-    run_coreutils mkdir -p "$OUTPUT/blobs/$(run_coreutils dirname "$relative_to_blobs")"
+    coreutils mkdir -p "$OUTPUT/blobs/$(coreutils dirname "$relative_to_blobs")"
     if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
       # Relative path from `output/blobs/sha256/` to `$blob`
-      relative="$(run_coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
-      run_coreutils ln -s "$relative" "$OUTPUT/blobs/$relative_to_blobs"
+      relative="$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
+      coreutils ln -s "$relative" "$OUTPUT/blobs/$relative_to_blobs"
     else
-      run_coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
+      coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
-  run_coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
+  coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
   /usr/bin/chmod +w "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"
 }
 
 function get_config() {
-  run_regctl blob get "$REF" "$(regctl manifest get "$REF" --format "{{.Config.Digest}}")"
+  regctl blob get "$REF" "$(regctl manifest get "$REF" --format "{{.Config.Digest}}")"
 }
 
 function update_config() {
@@ -126,9 +116,9 @@ function add_layer() {
 
   if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
     relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
-    run_coreutils ln --force --symbolic "$relative" "$output_path"
+    coreutils ln --force --symbolic "$relative" "$output_path"
   else
-    run_coreutils cp --no-preserve=mode "$path" "$output_path"
+    coreutils cp --no-preserve=mode "$path" "$output_path"
   fi
 }
 
