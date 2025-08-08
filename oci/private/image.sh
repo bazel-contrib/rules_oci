@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
-set -x
+
 # Replace PATH with hermetically built jq, regctl, coreutils.
 # shellcheck disable=SC2123
 PATH="{{jq_path}}"
@@ -18,8 +18,17 @@ readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | red
 ) | .parts + [$raw[.prev:]] | join("")'
 readonly SCRATCH="{{scratch}}"
 
+function run_coreutils() {
+  #echo "$@" >&2
+  coreutils "$@"
+}
+
+function run_regctl() {
+  #echo regctl "$@" >&2
+  regctl "$@"
+}
+
 function base_from_scratch() {
-  echo $1
   local platform="$1"
   # Create a new manifest
   jq -n '{
@@ -28,7 +37,6 @@ function base_from_scratch() {
     config: { mediaType: "application/vnd.oci.image.config.v1+json", size: 0 },
     layers: []
   }' | update_manifest
-  echo jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform'
   # Create the image config when there is annotations
   jq -n --argjson platform "$platform" '{created: "1970-01-01T00:00:00Z", config:{}, history:[], rootfs:{type: "layers", diff_ids:[]}} + $platform' | update_config >/dev/null
 }
@@ -36,23 +44,24 @@ function base_from_scratch() {
 function base_from() {
   local path="$1"
   # shellcheck disable=SC2045
-  for blob in $(coreutils ls -1 -d "$path/blobs/"*/*); do
+  for blob in $(run_coreutils ls -1 -d "$path/blobs/"*/*); do
     local relative_to_blobs="${blob#"$path/blobs"}"
-    coreutils mkdir -p "$OUTPUT/blobs/$(coreutils dirname "$relative_to_blobs")"
+    run_coreutils mkdir -p "$OUTPUT/blobs/$(run_coreutils dirname "$relative_to_blobs")"
     if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
       # Relative path from `output/blobs/sha256/` to `$blob`
-      relative="$(coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
-      coreutils ln -s "$relative" "$OUTPUT/blobs/$relative_to_blobs"
+      relative="$(run_coreutils realpath --relative-to="$OUTPUT/blobs/sha256" "$blob" --no-symlinks)"
+      run_coreutils ln -s "$relative" "$OUTPUT/blobs/$relative_to_blobs"
     else
-      coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
+      run_coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
-  coreutils cp --no-preserve=mode "$path/oci-layout" "$OUTPUT/oci-layout"
+  run_coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
+  /usr/bin/chmod +w "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"
 }
 
 function get_config() {
-  regctl blob get "$REF" "$(regctl manifest get "$REF" --format "{{.Config.Digest}}")"
+  run_regctl blob get "$REF" "$(regctl manifest get "$REF" --format "{{.Config.Digest}}")"
 }
 
 function update_config() {
@@ -70,7 +79,12 @@ function get_manifest() {
 }
 
 function update_manifest() {
+  #echo regctl manifest put "$REF" 1>&2
   regctl manifest put "$REF"
+}
+
+function print_manifest() {
+  regctl manifest get "$REF" --format "raw"
 }
 
 function add_layer() {
@@ -112,9 +126,9 @@ function add_layer() {
 
   if [[ "$USE_TREEARTIFACT_SYMLINKS" == "1" ]]; then
     relative=$(coreutils realpath --no-symlinks --canonicalize-missing --relative-to="$OUTPUT/blobs/sha256" "$path" )
-    coreutils ln --force --symbolic "$relative" "$output_path"
+    run_coreutils ln --force --symbolic "$relative" "$output_path"
   else
-    coreutils cp --no-preserve=mode "$path" "$output_path"
+    run_coreutils cp --no-preserve=mode "$path" "$output_path"
   fi
 }
 
@@ -123,19 +137,24 @@ CONFIG="{}"
 for ARG in "$@"; do
   case "$ARG" in
   --scratch=*)
+    #echo base_from_scratch "${SCRATCH}" >&2
     base_from_scratch "${SCRATCH}"
     ;;
   --from=*)
+    #echo base_from "${ARG#--from=}" >&2
     base_from "${ARG#--from=}"
     ;;
   --layer=*)
     IFS='=' read -r layer descriptor <<<"${ARG#--layer=}"
+    #echo add_layer "${layer}" "$descriptor" >&2
     add_layer "${layer}" "$descriptor"
     ;;
   --env=*)
     # Get environment from existing config
     env=$(get_config | jq '(.config.Env // []) | map(. | split("=") | {"key": .[0], "value": .[1:] | join("=")})')
     while IFS= read -r expansion || [ -n "$expansion" ]; do
+      # Strip carriage return from Windows line endings
+      expansion="${expansion%$'\r'}"
       # collect all characters until a `=` is encountered
       key="${expansion%%=*}"
       # skip `length(k) + 1` to collect the rest.

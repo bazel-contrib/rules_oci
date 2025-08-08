@@ -1,4 +1,4 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
@@ -325,6 +325,9 @@ genrule(
 $(location :case10_tarball) && echo "worked" > $@
 """,
     tools = [":case10_tarball"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
 )
 
 # Case 11: an oci_tarball run as part of sh_test
@@ -357,6 +360,9 @@ sh_test(
     srcs = ["case11_test.sh"],
     args = ["$(location :case11_tarball)"],
     data = [":case11_tarball"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
 )
 
 # Case 12: oci_push an image that has transitive deps

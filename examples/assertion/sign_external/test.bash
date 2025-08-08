@@ -24,7 +24,9 @@ readonly DIGEST=$("$JQ" -r '.manifests[0].digest' "$IMAGE/index.json")
 "${CRANE}" push "${IMAGE}" "${REPOSITORY}@${DIGEST}"
 
 # Create key-pair
-COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair 
+rm -f cosign.key
+rm -f cosign.pub
+COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair
 
 # Sign the image at remote registry
 COSIGN_PASSWORD=123 "${IMAGE_SIGNER}" --repository="${REPOSITORY}" --key=cosign.key -y

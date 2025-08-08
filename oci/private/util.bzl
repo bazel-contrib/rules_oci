@@ -188,6 +188,14 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
+def _windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
+
 def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     """Windows cannot directly execute a shell script.
 
@@ -204,10 +212,14 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
     """
-    if not ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if not _windows_host(ctx):
         return bash_launcher
 
     win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
+    bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\")
+    if "WINDOWS\\system32" in bash_bin:
+        _warning(ctx, "The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference msys64 bash.")
+
     ctx.actions.write(
         output = win_launcher,
         content = r"""@echo off
@@ -225,7 +237,7 @@ if defined args (
 )
 "{bash_bin}" -c "%parent_dir%{launcher} !args!"
 """.format(
-            bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
+            bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\"),
             launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
         ),
         is_executable = True,

@@ -15,8 +15,10 @@ elif command -v docker &> /dev/null; then
     CONTAINER_CLI="docker"
 elif command -v podman &> /dev/null; then
     CONTAINER_CLI="podman"
+elif command -v nerdctl &> /dev/null; then
+    CONTAINER_CLI="nerdctl"
 else
-    echo >&2 "Neither docker or podman could be found."
+    echo >&2 "Neither docker or podman or nerdctl could be found."
     echo >&2 "To use a different container runtime, pass an executable to the 'loader' attribute of oci_tarball."
     exit 1
 fi

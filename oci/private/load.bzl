@@ -20,6 +20,7 @@ docker run --rm my-repository:latest
 """
 
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
+load("@aspect_bazel_lib//lib:windows_utils.bzl", "BATCH_RLOCATION_FUNCTION")
 load("//oci/private:util.bzl", "util")
 
 doc = """Loads an OCI layout into a container daemon without needing to publish the image first.
@@ -128,15 +129,33 @@ attrs = {
         """,
         allow_single_file = True,
     ),
+    "_run_template_windows": attr.label(
+        default = Label("//oci/private:load.bat.tpl"),
+        doc = """ \
+              The template used to load the container when using `bazel run` on this target.
+
+              See the `loader` attribute to replace the tool which is called.
+              Please reference the default template to see available substitutions.
+        """,
+        allow_single_file = True,
+    ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
+def _windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
+
 def _load_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
-    bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
+    bsdtar = ctx.toolchains["@tar.bzl//tar/toolchain:type"]
 
     image = ctx.file.image
     repo_tags = ctx.file.repo_tags
@@ -200,7 +219,38 @@ def _load_impl(ctx):
 
     # Create an executable runner script that will create the tarball at runtime,
     # as opposed to at build to avoid uploading large artifacts to remote cache.
-    runnable_loader = ctx.actions.declare_file(ctx.label.name + ".sh")
+    if not _windows_host(ctx):
+        runnable_loader = ctx.actions.declare_file(ctx.label.name + ".sh")
+        ctx.actions.expand_template(
+            template = ctx.file._run_template,
+            output = runnable_loader,
+            substitutions = {
+                "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+                "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
+                "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
+                "{{loader}}": to_rlocation_path(ctx, ctx.file.loader) if ctx.file.loader else "",
+                "{{manifest_root}}": manifest_json.root.path,
+                "{{image_root}}": image.root.path,
+                "{{workspace_name}}": ctx.workspace_name,
+            },
+            is_executable = True,
+        )
+    else:
+        runnable_loader = ctx.actions.declare_file(ctx.label.name + ".bat")
+        ctx.actions.expand_template(
+            template = ctx.file._run_template_windows,
+            output = runnable_loader,
+            substitutions = {
+                "{{BATCH_RLOCATION_FUNCTION}}": BATCH_RLOCATION_FUNCTION,
+                "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
+                "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
+                "{{loader}}": to_rlocation_path(ctx, ctx.file.loader) if ctx.file.loader else "",
+                "{{manifest_root}}": manifest_json.root.path,
+                "{{image_root}}": image.root.path,
+                "{{workspace_name}}": ctx.workspace_name,
+            },
+            is_executable = True,
+        )
 
     runtime_deps = []
     if ctx.file.loader:
@@ -208,21 +258,6 @@ def _load_impl(ctx):
     runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
-
-    ctx.actions.expand_template(
-        template = ctx.file._run_template,
-        output = runnable_loader,
-        substitutions = {
-            "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
-            "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
-            "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
-            "{{loader}}": to_rlocation_path(ctx, ctx.file.loader) if ctx.file.loader else "",
-            "{{manifest_root}}": manifest_json.root.path,
-            "{{image_root}}": image.root.path,
-            "{{workspace_name}}": ctx.workspace_name,
-        },
-        is_executable = True,
-    )
 
     return [
         DefaultInfo(
@@ -240,7 +275,7 @@ oci_load = rule(
         "@bazel_tools//tools/sh:toolchain_type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@aspect_bazel_lib//lib:tar_toolchain_type",
+        "@tar.bzl//tar/toolchain:type",
     ],
     executable = True,
 )

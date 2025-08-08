@@ -217,7 +217,7 @@ def _impl(ctx):
     if maybe_digest or maybe_tag:
         fail("`repository` attribute should not contain digest or tag. got: {}".format(ctx.attr.repository))
 
-    executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
+    bash_launcher = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
     substitutions = {
         "{{crane_path}}": crane.crane_info.binary.short_path,
@@ -240,16 +240,18 @@ def _impl(ctx):
 
     ctx.actions.expand_template(
         template = ctx.file._push_sh_tpl,
-        output = executable,
+        output = bash_launcher,
         is_executable = True,
         substitutions = substitutions,
     )
+    files.append(bash_launcher)
+    executable = util.maybe_wrap_launcher_for_windows(ctx, bash_launcher)
+    print(bash_launcher.path)
     runfiles = ctx.runfiles(files = files)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
-
-    return DefaultInfo(executable = util.maybe_wrap_launcher_for_windows(ctx, executable), runfiles = runfiles)
+    return DefaultInfo(executable = executable, runfiles = runfiles)
 
 oci_push_lib = struct(
     implementation = _impl,

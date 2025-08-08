@@ -106,15 +106,22 @@ def _platform_str(os, arch, variant = None):
         parts["variant"] = variant
     return json.encode(parts)
 
+def _windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
+
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
-    is_windows = ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo])
     descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
     args.add(layer.owner)
-    executable = ctx.executable._descriptor_bat if is_windows else ctx.executable._descriptor_sh
-    inputs = [ctx.executable._descriptor_sh] if is_windows else []
+    executable = ctx.executable._descriptor_bat if _windows_host(ctx) else ctx.executable._descriptor_sh
+    inputs = [ctx.executable._descriptor_sh] if _windows_host(ctx) else []
     ctx.actions.run(
         executable = executable,       
         inputs = [layer] + inputs,
@@ -249,7 +256,7 @@ def _oci_image_impl(ctx):
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
-    if ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if _windows_host(ctx):
         # See https://www.msys2.org/wiki/Porting/:
         # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
         action_env["MSYS2_ARG_CONV_EXCL"] = "*"
