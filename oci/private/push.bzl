@@ -246,7 +246,6 @@ def _impl(ctx):
     )
     files.append(bash_launcher)
     executable = util.maybe_wrap_launcher_for_windows(ctx, bash_launcher)
-    print(bash_launcher.path)
     runfiles = ctx.runfiles(files = files)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
