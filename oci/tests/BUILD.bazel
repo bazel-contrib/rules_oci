@@ -96,4 +96,4 @@ build_test(
 
 parse_image_test(name = "parse_image_test")
 
-#parse_www_authenticate_test(name = "parse_www_authenticate_test")
+parse_www_authenticate_test(name = "parse_www_authenticate_test")
