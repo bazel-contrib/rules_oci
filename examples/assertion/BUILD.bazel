@@ -51,40 +51,29 @@ oci_image(
 )
 
 # Case 4: Transition an oci_image and feed to oci_tarball
-# TODO: fails on linux as the platform transition appears to prevent
-# the bat wrapper from being created
-# oci_image(
-#     name = "case4",
-#     architecture = "arm64",
-#     os = "linux",
-#     target_compatible_with = [
-#         "@platforms//os:linux",
-#     ],
-# )
+oci_image(
+    name = "case4",
+    architecture = "arm64",
+    os = "linux",
+)
 
-# platform_transition_filegroup(
-#     name = "case4_transition",
-#     srcs = [":case4"],
-#     target_platform = "//examples:linux_arm64",
-# )
+platform_transition_filegroup(
+    name = "case4_transition",
+    srcs = [":case4"],
+    target_platform = "//examples:linux_arm64",
+)
 
-# oci_load(
-#     name = "case4_load",
-#     image = ":case4_transition",
-#     repo_tags = ["case4:example"],
-#     target_compatible_with = [
-#         "@platforms//os:linux",
-#     ],
-# )
+oci_load(
+    name = "case4_load",
+    image = ":case4_transition",
+    repo_tags = ["case4:example"],
+)
 
-# filegroup(
-#     name = "case4_tar",
-#     srcs = [":case4_load"],
-#     output_group = "tarball",
-#     target_compatible_with = [
-#         "@platforms//os:linux",
-#     ],
-# )
+filegroup(
+    name = "case4_tar",
+    srcs = [":case4_load"],
+    output_group = "tarball",
+)
 
 # Case 5: An oci_image directly fed into oci_tarball
 oci_image(
@@ -443,9 +432,6 @@ oci_image(
     name = "case14",
     architecture = "arm64",
     os = "linux",
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
 )
 
 assert_oci_config(
@@ -634,7 +620,7 @@ build_test(
         ":imagE",
         ":case2",
         ":case3",
-        # ":case4_tar",
+        ":case4_tar",
         ":case5_tar",
         ":case10_run",
     ],
