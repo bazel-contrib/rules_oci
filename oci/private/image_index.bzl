@@ -1,5 +1,7 @@
 "Implementation details for oci_image_index rule"
 
+load("//oci/private:util.bzl", "util")
+
 _DOC = """Build a multi-architecture OCI compatible container image.
 
 It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/main/image-index.md).
@@ -86,6 +88,7 @@ A list of platform targets to build the image for. If specified, only one image 
     "_allowlist_function_transition": attr.label(
         default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
     ),
+    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _expand_image_to_args(image, expander):
@@ -104,10 +107,10 @@ def _oci_image_index_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
-    launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
+    bash_launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
         template = ctx.file._image_index_sh_tpl,
-        output = launcher,
+        output = bash_launcher,
         is_executable = True,
         substitutions = {
             "{{jq_path}}": jq.jqinfo.bin.path,
@@ -121,11 +124,12 @@ def _oci_image_index_impl(ctx):
     args.add(output.path, format = "--output=%s")
     args.add_all(ctx.files.images, map_each = _expand_image_to_args, expand_directories = False)
 
+    executable = util.maybe_wrap_launcher_for_windows(ctx, bash_launcher)
     ctx.actions.run(
-        inputs = ctx.files.images,
+        inputs = ctx.files.images + [bash_launcher],
         arguments = [args],
         outputs = [output],
-        executable = launcher,
+        executable = executable,
         tools = [jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",
@@ -141,5 +145,6 @@ oci_image_index = rule(
     toolchains = [
         "@aspect_bazel_lib//lib:jq_toolchain_type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+        "@bazel_tools//tools/sh:toolchain_type",
     ],
 )

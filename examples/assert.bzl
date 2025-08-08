@@ -13,7 +13,7 @@ image_path="$(location {image})"
 manifest_digest=$$($(JQ_BIN) -r '.manifests[0].digest | sub(":"; "/")' $$image_path/index.json)
 config_digest=$$($(JQ_BIN) -r '.config.digest | sub(":"; "/")' $$image_path/blobs/$$manifest_digest)
 
-$(JQ_BIN) 'def pick(p): . as $$v | reduce path(p) as $$p ({{}}; setpath($$p; $$v | getpath($$p))); pick({keys})' "$$image_path/blobs/$$config_digest" > $@
+$(JQ_BIN) 'def pick(p): . as $$v | reduce path(p) as $$p ({{}}; setpath($$p; $$v | getpath($$p))); pick({keys})' "$$image_path/blobs/$$config_digest" | tr -d '\r' > $@
 """
 
 _DEFAULT_ = {"____I_WILL_NOT_MATCH_ANYTHING__": True}
