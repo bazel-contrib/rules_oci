@@ -319,10 +319,10 @@ def _get_token(rctx, state, registry, repository):
     allow_fail = rctx.os.environ.get("OCI_GET_TOKEN_ALLOW_FAIL") != None
     pattern = _get_auth(rctx, state, registry)
 
-    www_authh = _get_known_www_auth_challenges(rctx)
-    for registry_pattern in www_authh.keys():
+    www_auth = _get_known_www_auth_challenges(rctx)
+    for registry_pattern in www_auth.keys():
         if (registry == registry_pattern) or registry.endswith(registry_pattern):
-            www_authenticate = www_authh[registry_pattern]
+            www_authenticate = www_auth[registry_pattern]
             scheme = "https://"
             if "://" in www_authenticate["realm"]:
                 scheme = ""
