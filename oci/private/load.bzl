@@ -152,6 +152,7 @@ def _load_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
     bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
+    bsdtar_target = ctx.toolchains["@aspect_bazel_lib//lib:target_tar_toolchain_type"]
 
     image = ctx.file.image
     repo_tags = ctx.file.repo_tags
@@ -200,7 +201,7 @@ def _load_impl(ctx):
     # This action produces a large output and should rarely be used as it puts load on the cache.
     # It will only run if the "tarball" output_group is explicitly requested
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
-    tar_inputs = depset(direct = mtree_outputs, transitive = [mtree_inputs])
+    tar_inputs = depset(direct = mtree_outputs, transitive = [mtree_inputs, bsdtar_target.default.files])
     tar_args = ctx.actions.args()
     tar_args.add_all(["--create", "--no-xattr", "--no-mac-metadata"])
     tar_args.add("--file", tarball)
@@ -231,7 +232,7 @@ def _load_impl(ctx):
         output = runnable_loader,
         substitutions = {
             "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
-            "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
+            "{{tar}}": to_rlocation_path(ctx, bsdtar_target.tarinfo.binary),
             "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
             "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
             # This rule could be declared in external workspace than current execution context(e.g. main_wksp -> external_wksp -> rules_oci).
@@ -261,6 +262,7 @@ oci_load = rule(
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
         "@aspect_bazel_lib//lib:tar_toolchain_type",
+        "@aspect_bazel_lib//lib:target_tar_toolchain_type",
     ],
     executable = True,
 )
