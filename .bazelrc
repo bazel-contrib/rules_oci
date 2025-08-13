@@ -23,6 +23,11 @@ common --check_direct_dependencies=off
 # Symlinks are pretty much required on windows so enable by default
 startup --windows_enable_symlinks
 
+# Point tools such as coursier (used in rules_jvm_external) to Bazel's downloaded JDK
+# suggested in https://github.com/bazelbuild/rules_jvm_external/issues/445
+common --repo_env=JAVA_HOME=../bazel_tools/jdk
+common --action_env=JAVA_HOME=../bazel_tools/jdk
+
 # Load any settings specific to the current user.
 # .bazelrc.user should appear in .gitignore so that settings are not shared with team members
 # This needs to be last statement in this

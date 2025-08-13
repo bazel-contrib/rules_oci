@@ -10,7 +10,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.7.2")
 bazel_dep(name = "bazel_features", version = "1.10.0")
 bazel_dep(name = "bazel_skylib", version = "1.5.0")
 bazel_dep(name = "platforms", version = "0.0.8")
-bazel_dep(name = "tar.bzl", version = "0.5.1")
+bazel_dep(name = "tar.bzl", version = "0.5.2")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
 oci.toolchains()
