@@ -254,12 +254,12 @@ def _load_impl(ctx):
 
     runtime_deps = []
     if ctx.executable.loader:
-        runtime_deps.append(ctx.file.loader)
+        runtime_deps.append(ctx.executable.loader)
     runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
     if ctx.executable.loader:
-        runfiles = runfiles.merge(ctx.attr.loader.default_runfiles)
+        runfiles = runfiles.merge(ctx.executable.loader.default_runfiles)
 
     return [
         DefaultInfo(
