@@ -50,23 +50,24 @@ def _windows_host(ctx):
 def _parse_www_authenticate_test_impl(ctx):
     env = unittest.begin(ctx)
     # TODO: enable on windows
-    if not _windows_host(ctx):
-        asserts.equals(
-            env,
-            {
-                "Bearer": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"},
-                "Bearer2": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"},
-            },
-            util.parse_www_authenticate('''\
-    Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull" 
-    Bearer2 realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull"
-    '''),
-        )
-        asserts.equals(
-            env,
-            {"Bearer": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"}},
-            util.parse_www_authenticate('Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull"'),
-        )
+    if _windows_host(ctx):
+        return unittest.end(env)
+    asserts.equals(
+        env,
+        {
+            "Bearer": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"},
+            "Bearer2": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"},
+        },
+        util.parse_www_authenticate('''\
+Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull" 
+Bearer2 realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull"
+'''),
+    )
+    asserts.equals(
+        env,
+        {"Bearer": {"realm": "https://auth.docker.io/token", "service": "registry.docker.io", "scope": "repository:library/ubuntu:pull"}},
+        util.parse_www_authenticate('Bearer realm="https://auth.docker.io/token",service="registry.docker.io",scope="repository:library/ubuntu:pull"'),
+    )
     return unittest.end(env)
 
 parse_www_authenticate_test = unittest.make(_parse_www_authenticate_test_impl)

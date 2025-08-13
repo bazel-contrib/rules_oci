@@ -259,7 +259,7 @@ def _load_impl(ctx):
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
     if ctx.executable.loader:
-        runfiles = runfiles.merge(ctx.executable.loader.default_runfiles)
+        runfiles = runfiles.merge(ctx.attr.loader.default_runfiles)
 
     return [
         DefaultInfo(
