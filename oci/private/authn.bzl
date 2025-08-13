@@ -222,7 +222,7 @@ def _oauth2(rctx, realm, scope, service, secret):
         fail("oauth2 failed:\nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
     return result.stdout
 
-def _get_auth(rctx, state, registry):
+def _get_auth(rctx, state, registry, allow_fail):
     # if we have a cached auth for this registry then just return it.
     # this will prevent repetitive calls to external cred helper binaries.
     if registry in state["auth"]:
@@ -237,7 +237,7 @@ def _get_auth(rctx, state, registry):
             host = _strip_host(host_raw)
             if host == registry:
                 helper_val = config["credHelpers"][host_raw]
-                pattern = _fetch_auth_via_creds_helper(rctx, host_raw, helper_val)
+                pattern = _fetch_auth_via_creds_helper(rctx, host_raw, helper_val, allow_fail)
 
     # if no match for per registry credential helper for the host then look into auths dictionary
     if "auths" in config and len(pattern.keys()) == 0:
@@ -248,7 +248,7 @@ def _get_auth(rctx, state, registry):
 
                 if len(auth_val.keys()) == 0:
                     # zero keys indicates that credentials are stored in credsStore helper.
-                    pattern = _fetch_auth_via_creds_helper(rctx, host_raw, config["credsStore"])
+                    pattern = _fetch_auth_via_creds_helper(rctx, host_raw, config["credsStore"], allow_fail)
 
                 elif "auth" in auth_val:
                     # base64 encoded plaintext username and password
@@ -317,7 +317,7 @@ def _get_known_www_auth_challenges(rctx):
 
 def _get_token(rctx, state, registry, repository):
     allow_fail = rctx.os.environ.get("OCI_GET_TOKEN_ALLOW_FAIL") != None
-    pattern = _get_auth(rctx, state, registry)
+    pattern = _get_auth(rctx, state, registry, allow_fail)
 
     www_auth = _get_known_www_auth_challenges(rctx)
     for registry_pattern in www_auth.keys():
