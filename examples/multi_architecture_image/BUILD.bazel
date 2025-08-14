@@ -1,4 +1,4 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load")
 load(":transition.bzl", "multi_arch")
@@ -30,6 +30,9 @@ oci_image_index(
     images = [
         ":images",
     ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
 )
 
 oci_load(
@@ -43,4 +46,8 @@ assert_contains(
     name = "check_digest",
     actual = ":index.digest",
     expected = "sha256:a2b8ae94672721788b67874f27cf3574fada3ccccc69f483bcb43de653573fe0",
+    # todo: re-enable on windows when oci_load is fixed
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
 )

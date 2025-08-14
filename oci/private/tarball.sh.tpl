@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Produce an mtree specification file for creating a tarball in the form needed for `docker load`.
 # This doesn't actually run `tar` because that large output is often not required by any other actions in the graph and causes load on the cache.
+
 set -o pipefail -o errexit -o nounset
 
 readonly FORMAT="{{format}}"

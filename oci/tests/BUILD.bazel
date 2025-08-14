@@ -22,6 +22,13 @@ genrule(
     toolchains = ["@oci_crane_toolchains//:current_toolchain"],
 )
 
+genrule(
+    name = "crane_gen_windows",
+    outs = ["crane.bat"],
+    cmd = "echo '@echo off' > $@ && echo 'set CRANE_PATH=$(CRANE_BIN)' >> $@ && echo 'set CRANE_PATH=%CRANE_PATH:/=\\%' >> $@ && echo '%CRANE_PATH% %*' >> $@",
+    toolchains = ["@oci_crane_toolchains//:current_toolchain"],
+)
+
 # Use crane to pull images as a comparison for our oci_pull repository rule
 [
     run_binary(
@@ -43,7 +50,12 @@ genrule(
             reference = reference,
         ),
         tags = ["requires-network"],
-        tool = "crane.sh",
+        tool = select(
+            {
+                "@platforms//os:windows": ":crane.bat",
+                "//conditions:default": ":crane.sh",
+            }
+        ),
         visibility = ["//visibility:public"],
     )
     for platform in IMAGES_TO_TEST.keys()

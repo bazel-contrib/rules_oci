@@ -20,7 +20,9 @@ done
 readonly REPOSITORY="localhost:$port/local" 
 
 # generate key
-COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair 
+rm -f cosign.key
+rm -f cosign.pub
+COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair
 
 REF=$("${CRANE}" push "${IMAGE_PATH}" "${REPOSITORY}")
 
@@ -28,6 +30,6 @@ REF=$("${CRANE}" push "${IMAGE_PATH}" "${REPOSITORY}")
 COSIGN_PASSWORD=123 "${ATTACHER}" --repository "${REPOSITORY}" --key=cosign.key -y
 
 # download the sbom
-"${COSIGN}" verify-attestation $REF --key=cosign.pub --type spdx | "${JQ}" -r '.payload' | base64 --decode | "${JQ}" -r '.predicate' > "$TEST_TMPDIR/download.sbom" 
+"${COSIGN}" verify-attestation $REF --key=cosign.pub --type spdx | "${JQ}" -r '.payload' | tr -d '\r' | base64 --decode | "${JQ}" -r '.predicate' > "$TEST_TMPDIR/download.sbom" 
 
 diff -u --ignore-space-change --strip-trailing-cr "$SBOM_PATH"  "$TEST_TMPDIR/download.sbom" || (echo "FAIL: downloaded SBOM does not match the original" && exit 1)
