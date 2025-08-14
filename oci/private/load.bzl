@@ -133,6 +133,24 @@ attrs = {
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
+def _get_workspace_name(ctx, file):
+    label = getattr(file, "owner", None)
+    if label and getattr(label, "workspace_name", None):
+        return label.workspace_name
+    return ctx.workspace_name
+
+def _get_runfiles_prefix(ctx, file):
+    ws = _get_workspace_name(ctx, file)
+    if ws and ws != ctx.workspace_name:
+        return "%s/" % ws
+    return "%s/" % ctx.workspace_name
+
+def _get_workspace_root_path(ctx, file):
+    ws = _get_workspace_name(ctx, file)
+    if ws and ws != ctx.workspace_name:
+        return file.root.path + "/external/" + ws
+    return file.root.path
+
 def _load_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
@@ -219,9 +237,10 @@ def _load_impl(ctx):
             "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
             "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
             "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
-            "{{manifest_root}}": manifest_json.root.path,
-            "{{image_root}}": image.root.path,
-            "{{workspace_name}}": ctx.workspace_name,
+            "{{manifest_root}}": _get_workspace_root_path(ctx, manifest_json),
+            "{{image_root}}": _get_workspace_root_path(ctx, image),
+            "{{image_runfiles_prefix}}": _get_runfiles_prefix(ctx, image),
+            "{{manifest_runfiles_prefix}}": _get_runfiles_prefix(ctx, manifest_json),
         },
         is_executable = True,
     )
