@@ -218,7 +218,7 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
     bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\")
     if "WINDOWS\\system32" in bash_bin:
-        _warning(ctx, "The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference msys64 bash.")
+        print("The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference msys64 bash.")
 
     ctx.actions.write(
         output = win_launcher,

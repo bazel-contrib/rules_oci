@@ -13,7 +13,7 @@ CRANE_VERSIONS = {
         "linux_x86_64": "sha256-zfTUJtll2ai6YT1+vzrd+TEBqi6FOj8I+/2u0oI5GPM=",
         "windows_arm64": "sha256-gPhIch4F0ogiPUebW++ew7AmB2rWADGvJLo4CY63Gbc=",
         "windows_armv6": "sha256-i5pR8nbPkB96Zq+FtSG0YcyrGyYei9x5ncIwsOdfjcw=",
-        "windows_x86_64": "sha256-OZSR76HYjR7hjGZC0CWqDGekm/6ClwM/uEWxJyrXDJ0=",
+        "windows_x86_64": "sha256-OZSR76HYjR7hjGZC0CWqDGekm/6ClwM/tIWxJyrXDJ0=",
     },
 }
 
