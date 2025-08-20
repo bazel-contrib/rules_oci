@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly CRANE="{{crane_path}}"
-readonly JQ="{{jq_path}}"
-readonly IMAGE_DIR="{{image_dir}}"
-readonly TAGS_FILE="{{tags}}"
+{{BASH_RLOCATION_FUNCTION}}
+
+readonly CRANE="$(rlocation {{crane_path}})"
+readonly JQ="$(rlocation {{jq_path}})"
+readonly IMAGE_DIR="$(rlocation {{image_dir}})"
+readonly TAGS_FILE="$(rlocation {{tags}})"
 readonly FIXED_ARGS=({{fixed_args}})
-readonly REPOSITORY_FILE="{{repository_file}}"
+readonly REPOSITORY_FILE="$(rlocation {{repository_file}})"
 
 REPOSITORY=""
-if [ -f $REPOSITORY_FILE ] ; then
+if [ -n "$REPOSITORY_FILE" ] && [ -f $REPOSITORY_FILE ] ; then
   REPOSITORY=$(tr -d '\n' < "$REPOSITORY_FILE")
 fi
 
@@ -71,6 +73,6 @@ do
   "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}") "${tag}"
 done
 
-if [[ -e "${TAGS_FILE:-}" ]]; then
+if [[ -n "${TAGS_FILE:-}" ]] && [[ -e "${TAGS_FILE:-}" ]]; then
   cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}")
 fi

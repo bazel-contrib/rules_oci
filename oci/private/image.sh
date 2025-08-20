@@ -124,7 +124,27 @@ function add_layer() {
 
 CONFIG="{}"
 
+# Expand @params file if present
+ARGS=()
 for ARG in "$@"; do
+  if [[ "$ARG" == @* ]]; then
+    PARAMS_FILE="${ARG#@}"
+    if [[ -f "$PARAMS_FILE" ]]; then
+      while IFS= read -r line || [ -n "$line" ]; do
+        # skip empty lines and comments
+        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        ARGS+=("$line")
+      done < "$PARAMS_FILE"
+    else
+      echo "Params file $PARAMS_FILE not found" >&2
+      exit 1
+    fi
+  else
+    ARGS+=("$ARG")
+  fi
+done
+
+for ARG in "${ARGS[@]}"; do
   case "$ARG" in
   --scratch=*)
     #echo base_from_scratch "${SCRATCH}" >&2

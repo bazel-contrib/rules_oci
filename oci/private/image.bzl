@@ -253,16 +253,9 @@ def _oci_image_impl(ctx):
     if ctx.attr.workdir:
         args.add(ctx.attr.workdir, format = "--workdir=%s")
 
+    args.set_param_file_format("multiline")
+    args.use_param_file("@%s", use_always=True)
     action_env = {}
-
-    # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
-    if _windows_host(ctx):
-        # See https://www.msys2.org/wiki/Porting/:
-        # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
-        action_env["MSYS2_ARG_CONV_EXCL"] = "*"
-
-        # This one is for Windows Git MSys
-        action_env["MSYS_NO_PATHCONV"] = "1"
 
     executable = util.maybe_wrap_launcher_for_windows(ctx, builder)
     ctx.actions.run(
@@ -272,6 +265,7 @@ def _oci_image_impl(ctx):
         env = action_env,
         executable = executable,
         tools = [
+            executable,
             builder,
             regctl.regctl_info.binary,
             jq.jqinfo.bin,
