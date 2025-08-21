@@ -98,18 +98,20 @@ def assert_oci_config(
         toolchains = ["@jq_toolchains//:resolved_toolchain"],
     )
 
-    native_test(
+    native.sh_test(
         name = name,
+        srcs = ["//examples:jd_test.bash"],
+        args = [
+            "$(rlocationpath @multitool//tools/jd)",
+            "$(rlocationpath %s)" % expected,
+            "$(rlocationpath %s)" % actual,
+        ],
         data = [
+            "@multitool//tools/jd",
             expected,
             actual,
+            "@bazel_tools//tools/bash/runfiles",
         ],
-        args = [
-            "$(location %s)" % expected,
-            "$(location %s)" % actual,
-        ],
-        src = "@multitool//tools/jd",
-        out = name,
     )
 
 # buildifier: disable=function-docstring-args

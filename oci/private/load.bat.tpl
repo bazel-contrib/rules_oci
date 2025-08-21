@@ -7,10 +7,10 @@ set RUNFILES_MANIFEST_ONLY=1
 {{BATCH_RLOCATION_FUNCTION}}
 
 REM Equivalent of bash errexit - exit on any error
-if not defined RUNFILES_DIR (
-    echo Error: RUNFILES_DIR not set >&2
-    exit /b 1
-)
+rem if not defined RUNFILES_DIR (
+rem     echo Error: RUNFILES_DIR not set >&2
+rem     exit /b 1
+rem )
 
 REM Set paths using runfiles resolution
 call :rlocation "{{tar}}" TAR
@@ -59,8 +59,8 @@ if not exist "%MTREE%" (
 )
 
 REM Strip manifest root and image root from mtree to make it compatible with runfiles layout
-set "IMAGE_ROOT={{image_root}}/"
-set "MANIFEST_ROOT={{manifest_root}}/"
+call :rlocation "{{image_root}}" IMAGE_ROOT
+call :rlocation "{{manifest_root}}" MANIFEST_ROOT
 
 REM Process mtree file - remove image_root and manifest_root prefixes
 set "TEMP_MTREE=%TEMP%\mtree_processed_%RANDOM%.txt"
@@ -71,6 +71,20 @@ set "WORKSPACE_DIR=%RUNFILES_DIR%\{{workspace_name}}"
 
 REM Execute container load command using named pipe simulation
 REM Windows doesn't have process substitution, so we use a different approach
+set BAZEL
+pwd
+echo %cd%
+
+set "CURDIR=%cd%"
+for /f "delims=" %%A in ("!CURDIR!") do (
+    set "ROOTDIR=%%A"
+    for /f "delims=" %%B in ("!ROOTDIR:_main\=|!") do (
+        set "ROOTDIR=!ROOTDIR:~0,-%%B!"
+    )
+)
+set "ROOTDIR=%ROOTDIR%_main"
+echo %ROOTDIR%
+
 echo "%TAR%" -v --cd "%WORKSPACE_DIR%" --create --no-xattr --no-mac-metadata @"%TEMP_MTREE%"  >&2
 "%TAR%" -v --cd "%WORKSPACE_DIR%" --create --no-xattr --no-mac-metadata @"%TEMP_MTREE%" > temp.tar
 "%CONTAINER_CLI%" load temp.tar

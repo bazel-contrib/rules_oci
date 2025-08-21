@@ -1,5 +1,8 @@
 "Implementation details for sign rule"
 
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
+load("@aspect_bazel_lib//lib:windows_utils.bzl", "create_windows_native_launcher_script")
+
 _DOC = """Sign an oci_image using cosign binary at a remote registry.
 
 It signs the image by its digest determined beforehand.
@@ -48,6 +51,7 @@ _attrs = {
         Digests and tags are not allowed. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.
     """),
     "_sign_sh_tpl": attr.label(default = "sign.sh.tpl", allow_single_file = True),
+    "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
 }
 
 def _cosign_sign_impl(ctx):
@@ -57,7 +61,7 @@ def _cosign_sign_impl(ctx):
     if ctx.attr.repository and (ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1):
         fail("repository attribute should not contain digest or tag.")
 
-    executable = ctx.actions.declare_file("cosign_sign_{}.sh".format(ctx.label.name))
+    bash_launcher = ctx.actions.declare_file("cosign_sign_{}.sh".format(ctx.label.name))
 
     fixed_args = []
     if ctx.attr.repository:
@@ -65,20 +69,23 @@ def _cosign_sign_impl(ctx):
 
     ctx.actions.expand_template(
         template = ctx.file._sign_sh_tpl,
-        output = executable,
+        output = bash_launcher,
         is_executable = True,
         substitutions = {
-            "{{cosign_path}}": cosign.cosign_info.binary.short_path,
-            "{{jq_path}}": jq.jqinfo.bin.short_path,
-            "{{image_dir}}": ctx.file.image.short_path,
+            "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+            "{{cosign_path}}": to_rlocation_path(ctx, cosign.cosign_info.binary),
+            "{{jq_path}}": to_rlocation_path(ctx, jq.jqinfo.bin),
+            "{{image_dir}}": to_rlocation_path(ctx, ctx.file.image),
             "{{fixed_args}}": " ".join(fixed_args),
         },
     )
 
-    runfiles = ctx.runfiles(files = [ctx.file.image])
+    executable = create_windows_native_launcher_script(ctx, bash_launcher)
+    runfiles = ctx.runfiles(files = [ctx.file.image, bash_launcher])
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
+    runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
 
@@ -88,6 +95,7 @@ cosign_sign = rule(
     doc = _DOC,
     executable = True,
     toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//cosign:toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],

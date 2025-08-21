@@ -1,4 +1,5 @@
 load("@tar.bzl//tar:tar.bzl", "tar")
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
@@ -305,6 +306,9 @@ oci_load(
     name = "case10_tarball",
     image = ":case10",
     repo_tags = ["case10:example"],
+    # target_compatible_with = [
+    #     "@platforms//os:linux",
+    # ],
 )
 
 genrule(
@@ -314,9 +318,6 @@ genrule(
 $(location :case10_tarball) && echo "worked" > $@
 """,
     tools = [":case10_tarball"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
 )
 
 # Case 11: an oci_tarball run as part of sh_test
@@ -330,13 +331,16 @@ oci_load(
     name = "case11_tarball",
     image = ":case11",
     repo_tags = ["case11:example"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+    ],
 )
 
 write_file(
     name = "case11_test_sh",
     out = "case11_test.sh",
-    content = [
-        "output=$($1)",
+    content = BASH_RLOCATION_FUNCTION.split("\n") + [
+        "output=$(rlocation $1)",
         'if [[ "$output" != "Loaded image: case11:example" ]]; then',
         '   echo "failed to load: $output"',
         "   exit 1",
@@ -347,11 +351,8 @@ write_file(
 sh_test(
     name = "case11_test",
     srcs = ["case11_test.sh"],
-    args = ["$(location :case11_tarball)"],
+    args = ["$(rlocationpath :case11_tarball)"],
     data = [":case11_tarball"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-    ],
 )
 
 # Case 12: oci_push an image that has transitive deps
@@ -386,9 +387,12 @@ sh_test(
     name = "case12_test",
     srcs = ["assert_push_transitive_deps.sh"],
     args = [
-        "$(location :case12)",
+        "$(rlocationpath :case12)",
     ],
-    data = [":case12"],
+    data = [
+        ":case12",
+        "@bazel_tools//tools/bash/runfiles",
+    ],
 )
 
 # Case 13: image should have history entries

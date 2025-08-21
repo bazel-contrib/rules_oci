@@ -4,11 +4,13 @@
 
 set -o pipefail -o errexit -o nounset
 
+{{BASH_RLOCATION_FUNCTION}}
+
 readonly FORMAT="{{format}}"
-readonly JQ="{{jq_path}}"
-readonly COREUTILS="{{coreutils_path}}"
-readonly TAR="{{tar}}"
-readonly IMAGE_DIR="{{image_dir}}"
+readonly JQ="$(rlocation "{{jq_path}}")"
+readonly COREUTILS="$(rlocation "{{coreutils_path}}")"
+readonly TAR="$(rlocation "{{tar}}")"
+readonly IMAGE_DIR="$(rlocation "{{image_dir}}")"
 readonly REPOTAGS=($("${COREUTILS}" cat "{{tags}}"))
 readonly INDEX_FILE="${IMAGE_DIR}/index.json"
 

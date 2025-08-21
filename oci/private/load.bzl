@@ -20,7 +20,7 @@ docker run --rm my-repository:latest
 """
 
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
-load("@aspect_bazel_lib//lib:windows_utils.bzl", "BATCH_RLOCATION_FUNCTION")
+load("@aspect_bazel_lib//lib:windows_utils.bzl", "create_windows_native_launcher_script")
 load("//oci/private:util.bzl", "util")
 
 doc = """Loads an OCI layout into a container daemon without needing to publish the image first.
@@ -129,28 +129,10 @@ attrs = {
         """,
         allow_single_file = True,
     ),
-    "_run_template_windows": attr.label(
-        default = Label("//oci/private:load.bat.tpl"),
-        doc = """ \
-              The template used to load the container when using `bazel run` on this target.
-
-              See the `loader` attribute to replace the tool which is called.
-              Please reference the default template to see available substitutions.
-        """,
-        allow_single_file = True,
-    ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
-
-def _windows_host(ctx):
-    """Returns true if the host platform is windows.
-    
-    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
-    build targets. We need to know the host platform, not the target platform.
-    """
-    return ctx.configuration.host_path_separator == ";"
 
 def _load_impl(ctx):
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
@@ -161,42 +143,45 @@ def _load_impl(ctx):
     repo_tags = ctx.file.repo_tags
 
     mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
-    executable = ctx.actions.declare_file("{}/load.sh".format(ctx.label.name))
+    bash_tarball_launcher = ctx.actions.declare_file("{}/tarball.sh".format(ctx.label.name))
     manifest_json = ctx.actions.declare_file("{}/manifest.json".format(ctx.label.name))
 
     # Represents either manifest.json or index.json depending on the image format
     substitutions = {
+        "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
         "{{format}}": ctx.attr.format,
-        "{{jq_path}}": jq.jqinfo.bin.path,
-        "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
-        "{{tar}}": bsdtar.tarinfo.binary.path,
-        "{{image_dir}}": image.path,
-        "{{output}}": mtree_spec.path,
-        "{{json_out}}": manifest_json.path,
+        "{{jq_path}}": to_rlocation_path(ctx, jq.jqinfo.bin),
+        "{{coreutils_path}}": to_rlocation_path(ctx, coreutils.coreutils_info.bin),
+        "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
+        "{{image_dir}}": to_rlocation_path(ctx, image),
+        "{{output}}": to_rlocation_path(ctx, mtree_spec),
+        "{{json_out}}": to_rlocation_path(ctx, manifest_json),
     }
 
     if ctx.attr.repo_tags:
-        substitutions["{{tags}}"] = repo_tags.path
+        substitutions["{{tags}}"] = to_rlocation_path(ctx, repo_tags)
 
     ctx.actions.expand_template(
         template = ctx.file._tarball_sh,
-        output = executable,
+        output = bash_tarball_launcher,
         is_executable = True,
         substitutions = substitutions,
     )
 
     mtree_inputs = depset(
-        direct = [image, repo_tags, executable],
-        transitive = [bsdtar.default.files],
+        direct = [image, repo_tags, bash_tarball_launcher],
+        transitive = [bsdtar.default.files, ctx.attr._runfiles.files],
     )
     mtree_outputs = [mtree_spec, manifest_json]
+    tarball_executable = util.maybe_wrap_launcher_for_windows(ctx, bash_tarball_launcher, True)
     ctx.actions.run(
-        executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
+        executable = tarball_executable,
         inputs = mtree_inputs,
         outputs = mtree_outputs,
         tools = [
             jq.jqinfo.bin,
             coreutils.coreutils_info.bin,
+            bash_tarball_launcher,
         ],
         mnemonic = "OCITarballManifest",
     )
@@ -217,45 +202,28 @@ def _load_impl(ctx):
         mnemonic = "OCITarball",
     )
 
-    # Create an executable runner script that will create the tarball at runtime,
-    # as opposed to at build to avoid uploading large artifacts to remote cache.
-    if not _windows_host(ctx):
-        runnable_loader = ctx.actions.declare_file(ctx.label.name + ".sh")
-        ctx.actions.expand_template(
-            template = ctx.file._run_template,
-            output = runnable_loader,
-            substitutions = {
-                "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
-                "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
-                "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
-                "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
-                "{{manifest_root}}": manifest_json.root.path,
-                "{{image_root}}": image.root.path,
-                "{{workspace_name}}": ctx.workspace_name,
-            },
-            is_executable = True,
-        )
-    else:
-        runnable_loader = ctx.actions.declare_file(ctx.label.name + ".bat")
-        ctx.actions.expand_template(
-            template = ctx.file._run_template_windows,
-            output = runnable_loader,
-            substitutions = {
-                "{{BATCH_RLOCATION_FUNCTION}}": BATCH_RLOCATION_FUNCTION,
-                "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
-                "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
-                "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
-                "{{manifest_root}}": manifest_json.root.path,
-                "{{image_root}}": image.root.path,
-                "{{workspace_name}}": ctx.workspace_name,
-            },
-            is_executable = True,
-        )
+    bash_load_launcher = ctx.actions.declare_file("{}/load.sh".format(ctx.label.name))
+    ctx.actions.expand_template(
+        template = ctx.file._run_template,
+        output = bash_load_launcher,
+        substitutions = {
+            "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+            "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
+            "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
+            "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
+            "{{manifest_root}}": manifest_json.root.path,
+            "{{image_root}}": image.root.path,
+            "{{workspace_name}}": ctx.workspace_name,
+        },
+        is_executable = True,
+    )
 
-    runtime_deps = []
+    files = []
     if ctx.executable.loader:
-        runtime_deps.append(ctx.executable.loader)
-    runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
+        files.append(ctx.executable.loader)
+
+    load_executable = util.maybe_wrap_launcher_for_windows(ctx, bash_load_launcher, True)
+    runfiles = ctx.runfiles(files, transitive_files = tar_inputs)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
     if ctx.executable.loader:
@@ -264,7 +232,7 @@ def _load_impl(ctx):
     return [
         DefaultInfo(
             runfiles = runfiles,
-            executable = runnable_loader,
+            executable = load_executable,
         ),
         OutputGroupInfo(tarball = depset([tarball])),
     ]

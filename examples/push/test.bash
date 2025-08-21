@@ -12,7 +12,7 @@ source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
   { echo>&2 "ERROR: runfiles.bash initializer cannot find $f. An executable rule may have forgotten to expose it in the runfiles, or the binary may require RUNFILES_DIR to be set."; exit 1; }; f=; set -e
 # --- end runfiles.bash initialization v3 ---
 
-readonly CRANE="$1"
+readonly CRANE="$(rlocation $1)"
 readonly PUSH_IMAGE="$(rlocation $2)"
 readonly PUSH_IMAGE_INDEX="$(rlocation $3)"
 readonly PUSH_IMAGE_REPOSITORY_FILE="$(rlocation $4)"
@@ -44,7 +44,7 @@ REPOSITORY="${REGISTRY}/local-index"
 REPOSITORY="${REGISTRY}/local-wo-tags" 
 "${PUSH_IMAGE_WO_TAGS}" --repository "${REPOSITORY}"
 TAGS=$("${CRANE}" ls "$REPOSITORY")
-if [ -n "${TAGS}" ]; then 
+if [ -n "${TAGS:-}" ]; then 
     echo "image is not supposed to have any tags but got"
     echo "${TAGS}"
     exit 1
@@ -52,7 +52,7 @@ fi
 
 
 # should push image to the repository defined in the file
-set -ex
+set -e
 REPOSITORY="${REGISTRY}/repository-file"
 "${PUSH_IMAGE_REPOSITORY_FILE}" --repository "${REPOSITORY}"
 "${CRANE}" digest "$REPOSITORY:latest"

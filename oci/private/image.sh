@@ -34,6 +34,7 @@ function base_from_scratch() {
 function base_from() {
   local path="$1"
   # shellcheck disable=SC2045
+  echo $(coreutils ls -1 -d "$path/blobs/"*/*)
   for blob in $(coreutils ls -1 -d "$path/blobs/"*/*); do
     local relative_to_blobs="${blob#"$path/blobs"}"
     coreutils mkdir -p "$OUTPUT/blobs/$(coreutils dirname "$relative_to_blobs")"
