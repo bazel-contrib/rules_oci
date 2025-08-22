@@ -43,4 +43,8 @@ oci_load(
     name = "load",
     image = ":image",
     repo_tags = ["example:latest"],
+    target_compatible_with = select({
+        "@aspect_bazel_lib//lib:enable_runfiles": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
 )

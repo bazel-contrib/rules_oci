@@ -182,6 +182,7 @@ def _load_impl(ctx):
             jq.jqinfo.bin,
             coreutils.coreutils_info.bin,
             bash_tarball_launcher,
+            tarball_executable,
         ],
         mnemonic = "OCITarballManifest",
     )
