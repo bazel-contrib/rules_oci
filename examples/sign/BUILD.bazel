@@ -1,4 +1,4 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("//cosign:defs.bzl", "cosign_sign")
 load("//oci:defs.bzl", "oci_image")
 
@@ -24,11 +24,11 @@ sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
-        "$(JQ_BIN)",
-        "$(CRANE_BIN)",
-        "$(COSIGN_BIN)",
-        "$(location :sign)",
-        "$(location :image)",
+        "$(rlocationpath @jq_toolchains//:resolved_toolchain)",
+        "$(rlocationpath @oci_crane_toolchains//:current_toolchain)",
+        "$(rlocationpath @oci_cosign_toolchains//:current_toolchain)",
+        "$(rlocationpath :sign)",
+        "$(rlocationpath :image)",
     ],
     data = [
         ":image",
@@ -36,6 +36,7 @@ sh_test(
         "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
+        "@bazel_tools//tools/bash/runfiles",
     ],
     toolchains = [
         "@oci_cosign_toolchains//:current_toolchain",
@@ -52,7 +53,7 @@ cosign_sign(
 sh_test(
     name = "test_sign_no_repo_fails",
     srcs = ["test_sign_no_repo_fails.bash"],
-    args = ["$(location :sign_no_repo)"],
+    args = ["$(rlocationpath :sign_no_repo)"],
     data = [":sign_no_repo"],
 )
 
@@ -60,11 +61,11 @@ sh_test(
     name = "test_sign_no_repo_passes",
     srcs = ["test_sign_no_repo_passes.bash"],
     args = [
-        "$(JQ_BIN)",
-        "$(CRANE_BIN)",
-        "$(COSIGN_BIN)",
-        "$(location :sign_no_repo)",
-        "$(location :image)",
+        "$(rlocationpath @jq_toolchains//:resolved_toolchain)",
+        "$(rlocationpath @oci_crane_toolchains//:current_toolchain)",
+        "$(rlocationpath @oci_cosign_toolchains//:current_toolchain)",
+        "$(rlocationpath :sign_no_repo)",
+        "$(rlocationpath :image)",
     ],
     data = [
         ":image",

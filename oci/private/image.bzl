@@ -96,6 +96,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
+    "_descriptor_bat": attr.label(default = "descriptor.bat", executable = True, cfg = "exec", allow_single_file = True),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
@@ -105,15 +106,25 @@ def _platform_str(os, arch, variant = None):
         parts["variant"] = variant
     return json.encode(parts)
 
+def _windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
+
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
     descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
     args.add(layer.owner)
+    executable = ctx.executable._descriptor_bat if _windows_host(ctx) else ctx.executable._descriptor_sh
+    inputs = [ctx.executable._descriptor_sh] if _windows_host(ctx) else []
     ctx.actions.run(
-        executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh),
-        inputs = [layer],
+        executable = executable,       
+        inputs = [layer] + inputs,
         outputs = [descriptor],
         arguments = [args],
         env = {
@@ -152,6 +163,9 @@ def _oci_image_impl(ctx):
 
     # create the image builder
     builder = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
+    # pass the platform json via template to avoid issues with escaping via bat wrappers
+    platform_str = _platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant) if not ctx.attr.base else "0"
+    platform_str = platform_str.replace('"', '\\"')
     ctx.actions.expand_template(
         template = ctx.file._image_sh,
         output = builder,
@@ -162,6 +176,7 @@ def _oci_image_impl(ctx):
             "{{coreutils_path}}": coreutils.coreutils_info.bin.dirname,
             "{{output}}": output.path,
             "{{treeartifact_symlinks}}": str(int(use_symlinks)),
+            "{{scratch}}": platform_str,
         },
     )
 
@@ -183,7 +198,7 @@ def _oci_image_impl(ctx):
             transitive_inputs.append(base_default_info.files)
     else:
         # create a scratch base image with given os/arch[/variant]
-        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
+        args.add("--scratch=true")
 
     # If tree artifact symlinks are supported also add tars into runfiles.
     if use_symlinks:
@@ -238,10 +253,12 @@ def _oci_image_impl(ctx):
     if ctx.attr.workdir:
         args.add(ctx.attr.workdir, format = "--workdir=%s")
 
+    args.set_param_file_format("multiline")
+    args.use_param_file("@%s", use_always=True)
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
-    if ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if _windows_host(ctx):
         # See https://www.msys2.org/wiki/Porting/:
         # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
         action_env["MSYS2_ARG_CONV_EXCL"] = "*"
@@ -249,13 +266,16 @@ def _oci_image_impl(ctx):
         # This one is for Windows Git MSys
         action_env["MSYS_NO_PATHCONV"] = "1"
 
+    executable = util.maybe_wrap_launcher_for_windows(ctx, builder)
     ctx.actions.run(
         inputs = depset(inputs, transitive = transitive_inputs),
         arguments = [args],
         outputs = [output],
         env = action_env,
-        executable = util.maybe_wrap_launcher_for_windows(ctx, builder),
+        executable = executable,
         tools = [
+            executable,
+            builder,
             regctl.regctl_info.binary,
             jq.jqinfo.bin,
             coreutils.coreutils_info.bin,

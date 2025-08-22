@@ -1,11 +1,22 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly JQ="${1/external\//../}"
-readonly CRANE="${2/external\//../}"
-readonly COSIGN="${3/external\//../}"
-readonly IMAGE_SIGNER_NO_REPO="$4"
-readonly IMAGE="$5"
+# --- begin runfiles.bash initialization v3 ---
+# Copy-pasted from the Bazel Bash runfiles library v3.
+set -uo pipefail; set +e; f=bazel_tools/tools/bash/runfiles/runfiles.bash
+source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
+  source "$0.runfiles/$f" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  { echo>&2 "ERROR: runfiles.bash initializer cannot find $f. An executable rule may have forgotten to expose it in the runfiles, or the binary may require RUNFILES_DIR to be set."; exit 1; }; f=; set -e
+# --- end runfiles.bash initialization v3 ---
+
+readonly JQ="$(rlocation $1)"
+readonly CRANE="$(rlocation $2)"
+readonly COSIGN="$(rlocation $3)"
+readonly IMAGE_SIGNER_NO_REPO="$(rlocation $4)"
+readonly IMAGE="$(rlocation $5)"
 
 # start a registry
 output=$(mktemp)
@@ -25,6 +36,8 @@ readonly DIGEST
 "${CRANE}" push "${IMAGE}" "${REPOSITORY}@${DIGEST}"
 
 # Create key-pair
+rm -f cosign.key
+rm -f cosign.pub
 COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair 
 
 # Sign the image at remote registry
