@@ -70,6 +70,8 @@ if [[ "${FORMAT}" == "oci" ]]; then
 
     LAYER_DIGESTS=$("${JQ}" -r '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
     for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYER_DIGESTS); do
+      # remove control characters; causing test failures on windows
+      LAYER_DIGEST=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER_DIGEST}")
       add_to_tar "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" blobs/${LAYER_DIGEST}
     done
   done
@@ -96,6 +98,8 @@ LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH
 add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
 for LAYER in $(${JQ} -r ".[]" <<< $LAYERS); do
+  # remove control characters; causing test failures on windows
+  LAYER=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER}")
   add_to_tar "${IMAGE_DIR}/blobs/${LAYER}" "blobs/${LAYER}.tar.gz"
 done
 
