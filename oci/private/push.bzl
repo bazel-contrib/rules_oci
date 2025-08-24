@@ -1,6 +1,8 @@
 "Implementation details for the push rule"
 
 load("//oci/private:util.bzl", "util")
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
+load("@aspect_bazel_lib//lib:windows_utils.bzl", "create_windows_native_launcher_script")
 
 _DOC = """Push an oci_image or oci_image_index to a remote registry.
 
@@ -199,10 +201,19 @@ _attrs = {
         cfg = _transition_to_target,
         default = "@jq_toolchains//:resolved_toolchain",
     ),
+    "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
 }
 
 def _quote_args(args):
     return ["\"{}\"".format(arg) for arg in args]
+
+def _windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
 
 def _impl(ctx):
     crane = ctx.attr._crane[0][platform_common.ToolchainInfo]
@@ -218,12 +229,13 @@ def _impl(ctx):
     if maybe_digest or maybe_tag:
         fail("`repository` attribute should not contain digest or tag. got: {}".format(ctx.attr.repository))
 
-    executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
+    bash_launcher = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
     substitutions = {
-        "{{crane_path}}": crane.crane_info.binary.short_path,
-        "{{jq_path}}": jq.jqinfo.bin.short_path,
-        "{{image_dir}}": ctx.file.image.short_path,
+        "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+        "{{crane_path}}": to_rlocation_path(ctx, crane.crane_info.binary),
+        "{{jq_path}}": to_rlocation_path(ctx, jq.jqinfo.bin),
+        "{{image_dir}}": to_rlocation_path(ctx, ctx.file.image),
         "{{fixed_args}}": "",
     }
 
@@ -231,29 +243,33 @@ def _impl(ctx):
         substitutions["{{fixed_args}}"] += " ".join(_quote_args(["--repository", ctx.attr.repository]))
     elif ctx.attr.repository_file:
         files.append(ctx.file.repository_file)
-        substitutions["{{repository_file}}"] = ctx.file.repository_file.short_path
+        substitutions["{{repository_file}}"] = to_rlocation_path(ctx, ctx.file.repository_file)
 
     if ctx.attr.remote_tags:
         files.append(ctx.file.remote_tags)
-        substitutions["{{tags}}"] = ctx.file.remote_tags.short_path
+        substitutions["{{tags}}"] = to_rlocation_path(ctx, ctx.file.remote_tags)
 
     ctx.actions.expand_template(
         template = ctx.file._push_sh_tpl,
-        output = executable,
+        output = bash_launcher,
         is_executable = True,
         substitutions = substitutions,
     )
+    files.append(bash_launcher)
+    executable = create_windows_native_launcher_script(ctx, bash_launcher) if _windows_host(ctx) else bash_launcher
     runfiles = ctx.runfiles(files = files)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
-
-    return DefaultInfo(executable = util.maybe_wrap_launcher_for_windows(ctx, executable), runfiles = runfiles)
+    runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
+    return DefaultInfo(executable = executable, runfiles = runfiles)
 
 oci_push_lib = struct(
     implementation = _impl,
     attrs = _attrs,
-    toolchains = ["@bazel_tools//tools/sh:toolchain_type"],
+    toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
+    ],
 )
 
 oci_push = rule(

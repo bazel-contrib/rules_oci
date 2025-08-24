@@ -22,6 +22,13 @@
         "sha256": "d8af275d61e770a8cf552d893e03ac4b5938517ea875fb5f7b7275e381358c92",
         "os": "macos",
         "cpu": "x86_64"
+      },
+      {
+        "kind": "file",
+        "url": "https://github.com/docker/buildx/releases/download/v0.20.1/buildx-v0.20.1.windows-amd64.exe",
+        "sha256": "39f53ec70c6ce37beca6898809e8eb89a77a1651be35ea50b51629c7a5d3b1f2",
+        "os": "windows",
+        "cpu": "x86_64"
       }
     ]
   },
@@ -49,6 +56,14 @@
         "file": "docker/docker",
         "sha256": "e793fa4531d5216107b84b87f191c582ee9378254f17b5aabcf0fa3010293ae7",
         "os": "macos",
+        "cpu": "x86_64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://download.docker.com/win/static/stable/x86_64/docker-23.0.0.zip",
+        "file": "docker/docker.exe",
+        "sha256": "7cdf8dfb19b545079bee399b927b77220987b0428501e0d1525311d31ca8b29e",
+        "os": "windows",
         "cpu": "x86_64"
       }
     ]
@@ -82,6 +97,13 @@
         "sha256": "bd6f3b3b93032f47ad2c017e92df302651c9a649f4b533455371877eaaa76585",
         "os": "macos",
         "cpu": "x86_64"
+      },
+      {
+        "kind": "file",
+        "url": "https://github.com/docker/compose/releases/download/v2.32.4/docker-compose-windows-x86_64.exe",
+        "sha256": "5df58bb738c7ac2712c031e15154b49f32f4026640d8c0539090d6e0a66d6dfd",
+        "os": "windows",
+        "cpu": "x86_64"
       }
     ]
   },
@@ -106,6 +128,13 @@
         "url": "https://github.com/josephburnett/jd/releases/download/v1.9.1/jd-amd64-darwin",
         "sha256": "7cda0be31188f8388ba537161a4f3aaaaba58bca5707be86980de759ae90c2b7",
         "os": "macos",
+        "cpu": "x86_64"
+      },
+      {
+        "kind": "file",
+        "url": "https://github.com/josephburnett/jd/releases/download/v1.9.1/jd-amd64-windows.exe",
+        "sha256": "6421f25f518f9861286ce5b7c5d2a8c7aa8d86e03cd14ef8f8520724cb49a9ca",
+        "os": "windows",
         "cpu": "x86_64"
       }
     ]
@@ -142,6 +171,14 @@
         "file": "multitool-x86_64-apple-darwin/multitool",
         "sha256": "abde3bbbd49a09d33048e1f55cc9a8aa5dd61a13493a0b1bd5ffc2c56e5bf837",
         "os": "macos",
+        "cpu": "x86_64"
+      },
+      {
+        "kind": "archive",
+        "url": "https://github.com/theoremlp/multitool/releases/download/v0.9.0/multitool-x86_64-pc-windows-msvc.zip",
+        "file": "multitool.exe",
+        "sha256": "df058283b8d23fd56f8accee3ad218faef20d5bd81735c2615626aeca46d2158",
+        "os": "windows",
         "cpu": "x86_64"
       }
     ]

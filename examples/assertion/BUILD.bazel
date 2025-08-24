@@ -1,10 +1,15 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_json_matches")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("//examples:assert.bzl", "assert_oci_config")
+
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
 
 # Case 1: image name containing a capital case.
 oci_image(
@@ -67,6 +72,7 @@ oci_load(
     name = "case4_load",
     image = ":case4_transition",
     repo_tags = ["case4:example"],
+    target_compatible_with = NOT_WINDOWS,
 )
 
 filegroup(
@@ -86,6 +92,7 @@ oci_load(
     name = "case5_load",
     image = ":case5",
     repo_tags = ["case5:example"],
+    target_compatible_with = NOT_WINDOWS,
 )
 
 filegroup(
@@ -263,6 +270,7 @@ oci_load(
     name = "case9_tarball",
     image = ":case9_image",
     repo_tags = repo_tags,
+    target_compatible_with = NOT_WINDOWS,
 )
 
 # Not typically recommended: ask the tarball rule to write the .tar file
@@ -305,6 +313,7 @@ oci_load(
     name = "case10_tarball",
     image = ":case10",
     repo_tags = ["case10:example"],
+    target_compatible_with = NOT_WINDOWS,
 )
 
 genrule(
@@ -327,6 +336,7 @@ oci_load(
     name = "case11_tarball",
     image = ":case11",
     repo_tags = ["case11:example"],
+    target_compatible_with = NOT_WINDOWS,
 )
 
 write_file(
@@ -380,9 +390,14 @@ sh_test(
     name = "case12_test",
     srcs = ["assert_push_transitive_deps.sh"],
     args = [
-        "$(location :case12)",
+        "$(rlocationpath :case12)",
     ],
-    data = [":case12"],
+    data = [
+        ":case12",
+        "@bazel_tools//tools/bash/runfiles",
+    ],
+    # TODO; refactor this test to allow run without runfiles
+    target_compatible_with = NOT_WINDOWS,
 )
 
 # Case 13: image should have history entries
@@ -617,5 +632,18 @@ build_test(
         ":case4_tar",
         ":case5_tar",
         ":case10_run",
+    ],
+)
+
+# build them as test.
+build_test(
+    name = "test_windows",
+    targets = [
+        ":imagE",
+        ":case2",
+        ":case3",
+    ],
+    target_compatible_with = [
+        "@platforms//os:windows",
     ],
 )
