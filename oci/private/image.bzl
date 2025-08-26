@@ -95,9 +95,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
-    "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
-    "_descriptor_bat": attr.label(default = "descriptor.bat", executable = True, cfg = "exec", allow_single_file = True),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    "_descriptor_sh": attr.label(default = "descriptor.sh.tpl", executable = True, cfg = "exec", allow_single_file = True),
 }
 
 def _platform_str(os, arch, variant = None):
@@ -115,26 +113,35 @@ def _windows_host(ctx):
     return ctx.configuration.host_path_separator == ";"
 
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
+    # Represents either manifest.json or index.json depending on the image format
+    bash_launcher = ctx.actions.declare_file("%s.%s.descriptor.sh" % (ctx.label.name, idx))
     descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
+
+    substitutions = {
+        "{{zstd_path}}": zstd.zstdinfo.binary.path,
+        "{{jq_path}}": jq.jqinfo.bin.path,
+        "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
+        "{{regctl_path}}": regctl.regctl_info.binary.path,
+    }
+
+    ctx.actions.expand_template(
+        template = ctx.file._descriptor_sh,
+        output = bash_launcher,
+        is_executable = True,
+        substitutions = substitutions,
+    )
+
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
     args.add(layer.owner)
-    executable = ctx.executable._descriptor_bat if _windows_host(ctx) else ctx.executable._descriptor_sh
-    inputs = [ctx.executable._descriptor_sh] if _windows_host(ctx) else []
+    executable = util.maybe_wrap_launcher_for_windows(ctx, bash_launcher)
+    inputs = [bash_launcher]
     ctx.actions.run(
         executable = executable,       
         inputs = [layer] + inputs,
         outputs = [descriptor],
         arguments = [args],
-        env = {
-            "HPATH": ":".join([
-                zstd.zstdinfo.binary.dirname,
-                jq.jqinfo.bin.dirname,
-                coreutils.coreutils_info.bin.dirname,
-                regctl.regctl_info.binary.dirname,
-            ]),
-        },
         tools = [
             jq.jqinfo.bin,
             zstd.zstdinfo.binary,

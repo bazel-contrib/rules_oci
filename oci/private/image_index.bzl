@@ -88,7 +88,6 @@ A list of platform targets to build the image for. If specified, only one image 
     "_allowlist_function_transition": attr.label(
         default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
     ),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _expand_image_to_args(image, expander):

@@ -208,7 +208,6 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     scripts from the repo itself.
     
     To use:
-    - add the _windows_constraint appears in the rule attrs
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
     """
@@ -218,10 +217,10 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     if use_subdir:
         win_launcher = ctx.actions.declare_file("%s/wrap_%s.bat" % (ctx.label.name, bash_launcher.basename.removesuffix(".sh")))
     else:
-        win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
+        win_launcher = ctx.actions.declare_file("%s.bat" % bash_launcher.basename.removesuffix(".sh"))
     bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\")
     if "WINDOWS\\system32" in bash_bin:
-        print("The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference msys64 bash.")
+        print("WARNING: The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference a fully featured bash (e.g. git/msys2).")
 
     ctx.actions.write(
         output = win_launcher,

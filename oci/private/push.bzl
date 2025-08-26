@@ -196,7 +196,6 @@ _attrs = {
         default = "push.sh.tpl",
         allow_single_file = True,
     ),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     "_jq": attr.label(
         cfg = _transition_to_target,
         default = "@jq_toolchains//:resolved_toolchain",
