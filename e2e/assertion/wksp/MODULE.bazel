@@ -2,10 +2,17 @@
 
 bazel_dep(name = "rules_oci", version = "0.0.0")
 bazel_dep(name = "platforms", version = "0.0.8")
+bazel_dep(name = "external_wksp", version = "1.0")
 
 local_path_override(
     module_name = "rules_oci",
     path = "../../..",
+)
+
+# Define external library for oci_load testing
+local_path_override(
+    module_name = "external_wksp",
+    path = "./external_wksp",
 )
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
