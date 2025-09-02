@@ -140,10 +140,7 @@ def _get_workspace_name(ctx, file):
     return ctx.workspace_name
 
 def _get_runfiles_prefix(ctx, file):
-    ws = _get_workspace_name(ctx, file)
-    if ws and ws != ctx.workspace_name:
-        return "%s/" % ws
-    return "%s/" % ctx.workspace_name
+    return _get_workspace_name(ctx, file) + "/"
 
 def _get_workspace_root_path(ctx, file):
     ws = _get_workspace_name(ctx, file)
@@ -237,6 +234,8 @@ def _load_impl(ctx):
             "{{tar}}": to_rlocation_path(ctx, bsdtar.tarinfo.binary),
             "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
             "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
+            # This rule could be declared in external workspace than current execution context(e.g. main_wksp -> external_wksp -> rules_oci).
+            # In such cases we need to handle manifest_json and image in a workspace-aware way(when --nolegacy_external_runfiles flag is set).
             "{{manifest_root}}": _get_workspace_root_path(ctx, manifest_json),
             "{{image_root}}": _get_workspace_root_path(ctx, image),
             "{{image_runfiles_prefix}}": _get_runfiles_prefix(ctx, image),

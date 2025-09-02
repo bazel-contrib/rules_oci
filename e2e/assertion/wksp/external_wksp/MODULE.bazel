@@ -1,7 +1,5 @@
-"External lib module for testing external oci_load"
-
 module(
-    name = "external_lib",
+    name = "external_wksp",
     version = "1.0",
 )
 
