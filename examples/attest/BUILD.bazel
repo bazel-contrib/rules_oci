@@ -27,12 +27,12 @@ sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
-        "$(JQ_BIN)",
-        "$(COSIGN_BIN)",
-        "$(CRANE_BIN)",
-        "$(location :attest)",
-        "$(location :image)",
-        "$(location sbom.spdx)",
+        "$(rlocationpath @jq_toolchains//:resolved_toolchain)",
+        "$(rlocationpath @oci_cosign_toolchains//:current_toolchain)",
+        "$(rlocationpath @oci_crane_toolchains//:current_toolchain)",
+        "$(rlocationpath :attest)",
+        "$(rlocationpath :image)",
+        "$(rlocationpath sbom.spdx)",
     ],
     data = [
         "sbom.spdx",
@@ -41,6 +41,7 @@ sh_test(
         "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
+        "@bazel_tools//tools/bash/runfiles",
     ],
     toolchains = [
         "@oci_cosign_toolchains//:current_toolchain",
@@ -59,7 +60,7 @@ cosign_attest(
 sh_test(
     name = "test_attest_no_repo_fails",
     srcs = ["test_attest_no_repo_fails.bash"],
-    args = ["$(location :attest_no_repo)"],
+    args = ["$(rlocationpath :attest_no_repo)"],
     data = [":attest_no_repo"],
 )
 
@@ -67,12 +68,12 @@ sh_test(
     name = "test_attest_no_repo_passes",
     srcs = ["test_attest_no_repo_passes.bash"],
     args = [
-        "$(JQ_BIN)",
-        "$(COSIGN_BIN)",
-        "$(CRANE_BIN)",
-        "$(location :attest_no_repo)",
-        "$(location :image)",
-        "$(location sbom.spdx)",
+        "$(rlocationpath @jq_toolchains//:resolved_toolchain)",
+        "$(rlocationpath @oci_cosign_toolchains//:current_toolchain)",
+        "$(rlocationpath @oci_crane_toolchains//:current_toolchain)",
+        "$(rlocationpath :attest_no_repo)",
+        "$(rlocationpath :image)",
+        "$(rlocationpath sbom.spdx)",
     ],
     data = [
         "sbom.spdx",

@@ -1,7 +1,12 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
 load("//oci:defs.bzl", "oci_image", "oci_image_index", "oci_load")
 load(":transition.bzl", "multi_arch")
+
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
 
 tar(
     name = "app",
@@ -30,6 +35,8 @@ oci_image_index(
     images = [
         ":images",
     ],
+    # todo: re-enable on windows when oci_load is fixed
+    target_compatible_with = NOT_WINDOWS,
 )
 
 oci_load(
@@ -37,6 +44,8 @@ oci_load(
     image = ":index",
     repo_tags = ["my-repository:latest"],
     format = "oci",
+    # todo: re-enable on windows when oci_load is fixed
+    target_compatible_with = NOT_WINDOWS,
 )
 
 assert_contains(
