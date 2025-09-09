@@ -246,4 +246,6 @@ buildx = module_extension(
     tag_classes = {
         "toolchains": toolchains,
     },
+    arch_dependent = True,
+    os_dependent = True,
 )
