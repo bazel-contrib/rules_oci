@@ -100,3 +100,4 @@ Note that these examples rely on the setup code in the `/WORKSPACE` file in the 
 ### 3rd Party Extensions/Tools
 
 - [ociupdate](https://github.com/theoremlp/ociupdate): CLI and basic module extension to help with automating updates to image digests for ECR-based images with immutable tags.
+- [rules_buildx](https://github.com/aspect-build/rules_buildx): Build container images from Dockerfiles using Docker Buildx.
