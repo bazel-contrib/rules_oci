@@ -1,8 +1,8 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 load("@rules_rust//rust:defs.bzl", "rust_binary")
+load("@tar.bzl", "tar")
 
 package(default_visibility = ["//visibility:public"])
 

@@ -76,7 +76,7 @@ use_repo(oci, "docker_lib_ubuntu")
 ```
 
 ```python
-bazel_dep(name = "tar.bzl", version = "0.3.0")
+bazel_dep(name = "tar.bzl", version = "0.6.0")
 ```
 
 To load the image, execute:

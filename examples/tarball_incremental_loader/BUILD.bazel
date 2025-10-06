@@ -1,4 +1,4 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 load("//oci:defs.bzl", "oci_image", "oci_load")
 
 tar(

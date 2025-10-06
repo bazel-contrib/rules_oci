@@ -12,6 +12,13 @@ def http_archive(**kwargs):
 
 def rules_oci_dependencies():
     http_archive(
+        name = "tar.bzl",
+        sha256 = "a147d473a359742db2a43c8a9a8e04e31321582e6bb669dafc5ba6b2c59845d1",
+        strip_prefix = "tar.bzl-0.6.0",
+        url = "https://github.com/bazel-contrib/tar.bzl/releases/download/v0.6.0/tar.bzl-v0.6.0.tar.gz",
+    )
+
+    http_archive(
         name = "bazel_skylib",
         sha256 = "c6966ec828da198c5d9adbaa94c05e3a1c7f21bd012a0b29ba8ddbccb2c93b0d",
         urls = [
