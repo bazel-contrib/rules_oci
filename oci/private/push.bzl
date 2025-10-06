@@ -172,6 +172,7 @@ _attrs = {
     ),
     "_crane": attr.label(
         default = "@oci_crane_toolchains//:current_toolchain",
+        cfg = "exec",
     ),
     "_push_sh_tpl": attr.label(
         default = "push.sh.tpl",
@@ -181,6 +182,7 @@ _attrs = {
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     "_jq": attr.label(
         default = "@jq_toolchains//:resolved_toolchain",
+        cfg = "exec",
     ),
 }
 
