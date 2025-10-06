@@ -3,7 +3,7 @@
 Users are typically migrating from [scala_image](https://github.com/bazelbuild/rules_docker#scala_image)
 in rules_docker.
 
-You can request the *_deploy.jar output of a scala_binary target, which is a single, self-contained launcher that includes all the dependencies. This can then be added to a container with a base image such as gcr.io/distroless/java17 and then executed directly as `java -jar <your jar>`.
+You can request the \*\_deploy.jar output of a scala_binary target, which is a single, self-contained launcher that includes all the dependencies. This can then be added to a container with a base image such as gcr.io/distroless/java17 and then executed directly as `java -jar <your jar>`.
 
 ## Example
 
@@ -19,7 +19,7 @@ object App {
 }
 ```
 
-In this example, I will not use bzlmod and fall back to the `WORKSPACE` file, as `rules_scala` doesn't support bzlmod yet. This file setups 
+In this example, I will not use bzlmod and fall back to the `WORKSPACE` file, as `rules_scala` doesn't support bzlmod yet. This file setups
 the `rules_scala` according to the documentation so that we can build scala targets. Next, it configures `aspect_bazel_lib` so that we can have access to `tar` rule needed later. Finally, it configures `rules_oci` and pulls the base image with Java 17.
 
 **WORKSPACE**
@@ -116,7 +116,7 @@ oci_pull(
 )
 ```
 
-Now, let's create *BUILD.bazel* step by step. First, create a `scala_binary` target for our app. It is safe to add dependencies, but they were omitted here for simplicity.
+Now, let's create _BUILD.bazel_ step by step. First, create a `scala_binary` target for our app. It is safe to add dependencies, but they were omitted here for simplicity.
 
 **BUILD.bazel**
 
@@ -133,7 +133,7 @@ scala_binary(
 After that, we can package that binary into a layer using `tar`
 
 ```python
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 
 tar(
     name = "layer",
@@ -181,7 +181,7 @@ Complete `BUILD.bazel` file
 
 ```python
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary")
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
 
 scala_binary(

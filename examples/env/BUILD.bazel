@@ -1,6 +1,6 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@tar.bzl", "tar")
 load("//examples:assert.bzl", "assert_oci_image_command")
 
 tar(
@@ -27,7 +27,7 @@ oci_image(
 
 assert_oci_image_command(
     name = "assert_version_is_correct",
+    exit_code_eq = 0,
     image = ":image",
     output_eq = "version: 1.2.3",
-    exit_code_eq = 0
 )

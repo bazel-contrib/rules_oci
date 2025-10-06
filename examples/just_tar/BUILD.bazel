@@ -1,4 +1,4 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 
 # See `Case 3` in examples/assertion
 genrule(
