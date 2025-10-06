@@ -5,10 +5,10 @@ load(
     "register_copy_to_directory_toolchains",
     "register_coreutils_toolchains",
     "register_jq_toolchains",
-    "register_tar_toolchains",
     "register_zstd_toolchains",
 )
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
+load("@tar.bzl//tar:extensions.bzl", tar_toolchains_setup = "create_repositories")
 load("//oci/private:toolchains_repo.bzl", "PLATFORMS", "toolchains_repo")
 load("//oci/private:versions.bzl", "CRANE_VERSIONS", "REGCTL_VERSIONS")
 
@@ -111,10 +111,11 @@ def oci_register_toolchains(name, register = True):
     if register:
         bazel_features_deps()
         register_jq_toolchains(register = register)
-        register_tar_toolchains(register = register)
         register_coreutils_toolchains(register = register)
         register_copy_to_directory_toolchains(register = register)
         register_zstd_toolchains(register = register)
+        tar_toolchains_setup()
+        native.register_toolchains("@bsd_tar_toolchains//:all")
     register_crane_toolchains(name, register = register)
     register_regctl_toolchains(name, register = register)
 

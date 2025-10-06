@@ -133,7 +133,7 @@ scala_binary(
 After that, we can package that binary into a layer using `tar`
 
 ```python
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 
 tar(
     name = "layer",
@@ -181,7 +181,7 @@ Complete `BUILD.bazel` file
 
 ```python
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary")
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 scala_binary(

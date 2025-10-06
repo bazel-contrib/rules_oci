@@ -9,6 +9,7 @@ bazel_dep(name = "aspect_bazel_lib", version = "2.7.2")
 bazel_dep(name = "bazel_features", version = "1.10.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "tar.bzl", version = "0.7.0")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
 oci.toolchains()
@@ -25,8 +26,12 @@ register_toolchains("@zstd_toolchains//:all")
 
 bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
 bazel_lib.jq()
-bazel_lib.tar()
-use_repo(bazel_lib, "bsd_tar_toolchains", "jq_toolchains")
+use_repo(bazel_lib, "jq_toolchains")
+
+tar = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar, "bsd_tar_toolchains")
+
+register_toolchains("@bsd_tar_toolchains//:all")
 
 # Dev dependencies
 

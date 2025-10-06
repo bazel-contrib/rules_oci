@@ -1,5 +1,5 @@
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
+load("@tar.bzl", "tar")
 load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
 
 tar(
@@ -40,8 +40,8 @@ assert_oci_image_command(
         "y",
         "l1\nl2",
     ],
-    image = ":image",
     exit_code_eq = 0,
+    image = ":image",
     output_eq = """\
 hello world!
 arg 0:x

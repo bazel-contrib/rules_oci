@@ -65,7 +65,7 @@ oci_pull(
 2. Replace `COPY` with `tar`.
 
 ```starlark
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 
 tar(
     name = "web_assets",
@@ -77,7 +77,7 @@ tar(
 3. The resulting `BUILD` file would look like:
 
 ```starlark
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl", "tar")
 
 tar(
     name = "web_assets",
