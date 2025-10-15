@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly CRANE="{{crane_path}}"
-readonly JQ="{{jq_path}}"
-readonly IMAGE_DIR="{{image_dir}}"
-readonly TAGS_FILE="{{tags}}"
+{{BASH_RLOCATION_FUNCTION}}
+
+runfiles_export_envvars
+
+readonly CRANE="$(rlocation "{{crane_path}}")"
+readonly JQ="$(rlocation "{{jq_path}}")"
+readonly IMAGE_DIR="$(rlocation "{{image_dir}}")"
+readonly TAGS_FILE="$(rlocation "{{tags}}")"
 readonly FIXED_ARGS=({{fixed_args}})
-readonly REPOSITORY_FILE="{{repository_file}}"
+readonly REPOSITORY_FILE="$(rlocation "{{repository_file}}")"
 
 REPOSITORY=""
-if [ -f $REPOSITORY_FILE ] ; then
+if [ -f "$REPOSITORY_FILE" ] ; then
   REPOSITORY=$(tr -d '\n' < "$REPOSITORY_FILE")
 fi
 

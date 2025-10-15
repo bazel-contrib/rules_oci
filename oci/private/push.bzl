@@ -1,5 +1,6 @@
 "Implementation details for the push rule"
 
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("//oci/private:util.bzl", "util")
 
 _DOC = """Push an oci_image or oci_image_index to a remote registry.
@@ -194,6 +195,7 @@ _attrs = {
         default = "push.sh.tpl",
         allow_single_file = True,
     ),
+    "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
     "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     "_jq": attr.label(
         cfg = _transition_to_target,
@@ -221,9 +223,10 @@ def _impl(ctx):
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
     substitutions = {
-        "{{crane_path}}": crane.crane_info.binary.short_path,
-        "{{jq_path}}": jq.jqinfo.bin.short_path,
-        "{{image_dir}}": ctx.file.image.short_path,
+        "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+        "{{crane_path}}": to_rlocation_path(ctx, crane.crane_info.binary),
+        "{{jq_path}}": to_rlocation_path(ctx, jq.jqinfo.bin),
+        "{{image_dir}}": to_rlocation_path(ctx, ctx.file.image),
         "{{fixed_args}}": "",
     }
 
@@ -231,11 +234,11 @@ def _impl(ctx):
         substitutions["{{fixed_args}}"] += " ".join(_quote_args(["--repository", ctx.attr.repository]))
     elif ctx.attr.repository_file:
         files.append(ctx.file.repository_file)
-        substitutions["{{repository_file}}"] = ctx.file.repository_file.short_path
+        substitutions["{{repository_file}}"] = to_rlocation_path(ctx, ctx.file.repository_file)
 
     if ctx.attr.remote_tags:
         files.append(ctx.file.remote_tags)
-        substitutions["{{tags}}"] = ctx.file.remote_tags.short_path
+        substitutions["{{tags}}"] = to_rlocation_path(ctx, ctx.file.remote_tags)
 
     ctx.actions.expand_template(
         template = ctx.file._push_sh_tpl,
@@ -247,6 +250,7 @@ def _impl(ctx):
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(crane.default.default_runfiles)
+    runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
 
     return DefaultInfo(executable = util.maybe_wrap_launcher_for_windows(ctx, executable), runfiles = runfiles)
 
