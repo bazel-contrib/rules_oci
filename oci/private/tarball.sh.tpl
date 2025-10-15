@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Produce an mtree specification file for creating a tarball in the form needed for `docker load`.
 # This doesn't actually run `tar` because that large output is often not required by any other actions in the graph and causes load on the cache.
+
 set -o pipefail -o errexit -o nounset
 
 readonly FORMAT="{{format}}"
@@ -37,8 +38,8 @@ if [[ "${FORMAT}" != "docker" && "${FORMAT}" != "oci" ]]; then
   echo >&2 "Unknown format: ${FORMAT}. Only support docker|oci"
   exit 1
 fi
-if [[ "${FORMAT}" == "oci" && "${MEDIA_TYPE}" != "application/vnd.oci.image.index.v1+json" && "${MEDIA_TYPE}" != "application/vnd.docker.distribution.manifest.v2+json" ]]; then
-  echo >&2 "Format oci is only supported for oci_image_index targets but saw ${MEDIA_TYPE}"
+if [[ "${FORMAT}" == "oci" && "${MEDIA_TYPE}" != "application/vnd.oci.image.manifest.v1+json" && "${MEDIA_TYPE}" != "application/vnd.docker.distribution.manifest.v2+json" ]]; then
+  echo >&2 "Format oci is only supported for oci_image_index or oci_image targets but saw ${MEDIA_TYPE}"
   exit 1
 fi
 if [[ "${FORMAT}" == "docker" && "${MEDIA_TYPE}" != "application/vnd.oci.image.manifest.v1+json" && "${MEDIA_TYPE}" != "application/vnd.docker.distribution.manifest.v2+json" ]]; then
@@ -47,40 +48,64 @@ if [[ "${FORMAT}" == "docker" && "${MEDIA_TYPE}" != "application/vnd.oci.image.m
 fi
 
 if [[ "${FORMAT}" == "oci" ]]; then
-  # Handle multi-architecture image indexes.
-  # Ideally the toolchains we rely on would output these for us, but they don't seem to.
+  INDEX_FILE_MANIFEST_DIGESTS=$("${JQ}" -r '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
+  if [[ $(wc -l <<< "${INDEX_FILE_MANIFEST_DIGESTS}") == 1 ]]; then
+    # handle oci_image targets with a single manifest
+    add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
 
-  add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
+    MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json" | "${COREUTILS}" tr  -d '"')
+    MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
+    add_to_tar "${MANIFEST_BLOB_PATH}" "blobs/${MANIFEST_DIGEST}"
 
-  INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
-  INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"
-
-  add_to_tar "${INDEX_FILE_MANIFEST_BLOB_PATH}" "blobs/${INDEX_FILE_MANIFEST_DIGEST}"
-
-  IMAGE_MANIFESTS_DIGESTS=($("${JQ}" -r '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
-
-  for IMAGE_MANIFEST_DIGEST in "${IMAGE_MANIFESTS_DIGESTS[@]}"; do
-    IMAGE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${IMAGE_MANIFEST_DIGEST}"
-    add_to_tar "${IMAGE_MANIFEST_BLOB_PATH}" "blobs/${IMAGE_MANIFEST_DIGEST}"
-
-    CONFIG_DIGEST=$("${JQ}" -r '.config.digest  | sub(":"; "/")' ${IMAGE_MANIFEST_BLOB_PATH})
+    CONFIG_DIGEST=$(${JQ} -r '.config.digest  | sub(":"; "/")' ${MANIFEST_BLOB_PATH})
     CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
     add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
-    LAYER_DIGESTS=$("${JQ}" -r '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
-    for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYER_DIGESTS); do
+    LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH})
+    for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYERS); do
+      # remove control characters; causing test failures on windows
+      LAYER_DIGEST=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER_DIGEST}")
       add_to_tar "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" blobs/${LAYER_DIGEST}
     done
-  done
+
+    add_to_tar "${IMAGE_DIR}/index.json" index.json
+    cp "${MANIFEST_BLOB_PATH}" "{{json_out}}"
+  else
+    # Handle multi-architecture image indexes.
+    # Ideally the toolchains we rely on would output these for us, but they don't seem to.
+    add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
+
+    INDEX_FILE_MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
+    INDEX_FILE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${INDEX_FILE_MANIFEST_DIGEST}"
+
+    add_to_tar "${INDEX_FILE_MANIFEST_BLOB_PATH}" "blobs/${INDEX_FILE_MANIFEST_DIGEST}"
+
+    IMAGE_MANIFESTS_DIGESTS=($("${JQ}" -r '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE_MANIFEST_BLOB_PATH}"))
+
+    for IMAGE_MANIFEST_DIGEST in "${IMAGE_MANIFESTS_DIGESTS[@]}"; do
+      IMAGE_MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${IMAGE_MANIFEST_DIGEST}"
+      add_to_tar "${IMAGE_MANIFEST_BLOB_PATH}" "blobs/${IMAGE_MANIFEST_DIGEST}"
+
+      CONFIG_DIGEST=$("${JQ}" -r '.config.digest  | sub(":"; "/")' ${IMAGE_MANIFEST_BLOB_PATH})
+      CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
+      add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
+
+      LAYER_DIGESTS=$("${JQ}" -r '.layers | map(.digest | sub(":"; "/"))' "${IMAGE_MANIFEST_BLOB_PATH}")
+      for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYER_DIGESTS); do
+        # remove control characters; causing test failures on windows
+        LAYER_DIGEST=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER_DIGEST}")
+        add_to_tar "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" blobs/${LAYER_DIGEST}
+      done
+    done
 
 
-  # Repeat the first manifest entry once per repo tag.
-  repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
-  "${JQ}" >"{{json_out}}" \
-    -r --arg repo_tags "$repotags" \
-    '.manifests[0] as $manifest | .manifests = ($repo_tags | split(" ") | map($manifest * {annotations:{"org.opencontainers.image.ref.name":.}}))' "${INDEX_FILE}"
-  add_to_tar "{{json_out}}" index.json
-
+    # Repeat the first manifest entry once per repo tag.
+    repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
+    "${JQ}" >"{{json_out}}" \
+      -r --arg repo_tags "$repotags" \
+      '.manifests[0] as $manifest | .manifests = ($repo_tags | split(" ") | map($manifest * {annotations:{"org.opencontainers.image.ref.name":.}}))' "${INDEX_FILE}"
+    add_to_tar "{{json_out}}" index.json
+  fi
   exit 0
 fi
 
@@ -95,6 +120,8 @@ LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH
 add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
 
 for LAYER in $(${JQ} -r ".[]" <<< $LAYERS); do
+  # remove control characters; causing test failures on windows
+  LAYER=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER}")
   add_to_tar "${IMAGE_DIR}/blobs/${LAYER}" "blobs/${LAYER}.tar.gz"
 done
 
