@@ -118,6 +118,10 @@ attrs = {
         executable = True,
         cfg = "target",
     ),
+    "tarball_name": attr.string(
+        default = "tarball.tar",
+        doc = "Name of the tarball file to generate.",
+    ),
     "_run_template": attr.label(
         default = Label("//oci/private:load.sh.tpl"),
         doc = """ \
