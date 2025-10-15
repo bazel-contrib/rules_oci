@@ -48,16 +48,16 @@ And finally the build rules for our image.
 
 ```python
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
-load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@tar.bzl", "mutate", "tar")
 filegroup(
     name = "static",
     srcs = ["index.html", "textfile.txt"],
 )
 
-pkg_tar(
+tar(
     name = "static_tar",
     srcs = [":static"],
-    package_dir = "/usr/share/nginx/html"
+    mutate = mutate(package_dir = "usr/share/nginx/html"),
 )
 
 oci_image(

@@ -182,7 +182,7 @@ Complete `BUILD.bazel` file
 ```python
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary")
 load("@aspect_bazel_lib//lib:tar.bzl", "tar")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 scala_binary(
     name = "app",
@@ -202,8 +202,8 @@ oci_image(
     tars = [":layer"],
 )
 
-oci_tarball(
-    name = "tarball",
+oci_load(
+    name = "load",
     image = ":image",
     repo_tags = ["my-repository:latest"],
 )

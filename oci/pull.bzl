@@ -172,7 +172,20 @@ _PLATFORM_TO_BAZEL_CPU = {
     "linux/mips64le": "@platforms//cpu:mips64",
 }
 
-def oci_pull(name, www_authenticate_challenges = None, image = None, repository = None, registry = None, platforms = None, digest = None, tag = None, reproducible = True, is_bzlmod = False, config = None, bazel_tags = []):
+def oci_pull(
+    name,
+    www_authenticate_challenges = None,
+    image = None,
+    repository = None,
+    registry = None,
+    platforms = None,
+    digest = None,
+    tag = None,
+    reproducible = True,
+    is_bzlmod = False,
+    config = None,
+    bazel_tags = []
+):
     """Repository macro to fetch image manifest data from a remote docker registry.
 
     To use the resulting image, you can use the `@wkspc` shorthand label, for example

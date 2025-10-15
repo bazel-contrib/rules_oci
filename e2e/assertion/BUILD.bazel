@@ -68,3 +68,35 @@ load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
         ("nobzlmod", "--noenable_bzlmod"),
     ]
 ]
+
+[
+    bats_test(
+        name = "test_oci_load_%s" % name,
+        size = "large",
+        srcs = [
+            "oci_load_tests.bats",
+        ],
+        args = [
+            "--verbose-run",
+            "--timing",
+            "--trace",
+        ],
+        data = [":wksp"],
+        env = {
+            "WKSP": "$(location :wksp)",
+            "BAZEL_FLAGS": flags,
+        },
+        tags = [
+            "exclusive",
+            "local",
+            "no-remote",
+            "no-remote-exec",
+        ],
+    )
+    for (name, flags) in [
+        ("bzlmod_legacy_runfiles", "--enable_bzlmod --legacy_external_runfiles"),
+        ("nobzlmod_legacy_runfiles", "--noenable_bzlmod --legacy_external_runfiles"),
+        ("bzlmod_nolegacy_runfiles", "--enable_bzlmod --nolegacy_external_runfiles"),
+        ("nobzlmod_nolegacy_runfiles", "--noenable_bzlmod --nolegacy_external_runfiles"),
+    ]
+]

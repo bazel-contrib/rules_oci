@@ -11,7 +11,12 @@ pull = tag_class(attrs = {
         See the [documentation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/WWW-Authenticate)
         for more information about the WWW-Authenticate header.
     """),
-    "image": attr.string(doc = """the remote image without a tag, such as gcr.io/bazel-public/bazel"""),
+    "registry": attr.string(doc = """the remote registry domain, such as `gcr.io` or `docker.io`.
+            When set, `repository` must also be set, and `image` must not be set."""),
+    "repository": attr.string(doc = """the image path beneath the registry, such as `distroless/static`.
+            When set, `registry` must also be set, and `image` must not be set."""),
+    "image": attr.string(doc = """the remote image without a tag, such as `gcr.io/bazel-public/bazel`.
+            When set, `registry` and `repository` must not be set."""),
     "platforms": attr.string_list(doc = """for multi-architecture images, a dictionary of the platforms it supports
             This creates a separate external repository for each platform, avoiding fetching layers."""),
     "digest": attr.string(doc = """the digest string, starting with "sha256:", "sha512:", etc.
@@ -39,6 +44,8 @@ def _oci_extension(module_ctx):
             oci_pull(
                 name = pull.name,
                 image = pull.image,
+                registry = pull.registry,
+                repository = pull.repository,
                 platforms = pull.platforms,
                 digest = pull.digest,
                 tag = pull.tag,

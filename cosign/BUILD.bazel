@@ -9,7 +9,10 @@ bzl_library(
     name = "defs",
     srcs = ["defs.bzl"],
     visibility = ["//visibility:public"],
-    deps = ["//cosign/private:sign"],
+    deps = [
+        "//cosign/private:attest",
+        "//cosign/private:sign",
+    ],
 )
 
 bzl_library(

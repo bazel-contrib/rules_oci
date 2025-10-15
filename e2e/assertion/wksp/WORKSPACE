@@ -3,6 +3,11 @@ local_repository(
     path = "../../../",
 )
 
+local_repository(
+    name = "external_wksp",
+    path = "./external_wksp",
+)
+
 load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
 
 rules_oci_dependencies()
