@@ -45,10 +45,11 @@ function base_from() {
       coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
-  coreutils cp --no-preserve=mode "$path/oci-layout" "$OUTPUT/oci-layout"
-  # todo peakschris: remove if not needed
-  # coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
-  # /usr/bin/chmod +w "$OUTPUT/oci-layout"
+  # without this explicit chmod the following error occurs on windows:
+  # bazel build /examples/tarball_as_base:image
+  # failed to write index: cannot create oci-layout: open bazel-out/x64_windows-fastbuild/bin/examples/tarball_as_base/image/oci-layout: Access is denied.
+  coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
+  /usr/bin/chmod +w "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"
 }
 

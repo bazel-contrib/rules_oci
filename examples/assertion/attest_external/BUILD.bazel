@@ -1,5 +1,10 @@
 load("//cosign:defs.bzl", "cosign_attest")
 
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 cosign_attest(
     name = "attest",
     image = "@empty_image",
@@ -33,4 +38,6 @@ sh_test(
         "@oci_crane_toolchains//:current_toolchain",
         "@jq_toolchains//:resolved_toolchain",
     ],
+    # the diff command is not available on windows
+    target_compatible_with = NOT_WINDOWS,    
 )

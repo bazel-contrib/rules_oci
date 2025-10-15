@@ -255,6 +255,9 @@ def _oci_image_impl(ctx):
     # todo: remove if not needed
     #args.set_param_file_format("multiline")
     args.use_param_file("@%s", use_always=True)
+    # without this on windows the args are quoted and the quotes end up in the bash script and upset the parsing
+    # eg unknown argument '--scratch=true'
+    args.set_param_file_format("multiline")
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin

@@ -9,6 +9,8 @@ COSIGN_VERSIONS = {
         "linux-arm64": "sha256-VqFkgL3VbseJq6plkkQC9rksAEHwaIWZWFPAVWe3bzQ=",
         "linux-ppc64le": "sha256-vn642hpl2gu7YaEVp+E88FsjN57pdpFZl0uK1pDU8Fc=",
         "linux-s390x": "sha256-6AybLpHQBp2XqQabBcR9yj+eGbRlLEx+bKMx14e6CXI=",
+        "windows-amd64": "sha256-BJAm2uMkbW6oIBUS7D7846qwx/HTONUuJsUl3QK0GKA=",
+        "windows-arm64": "sha256-ABnfxLMtY8E5KqJkrtIlPB4ML7CSFvjizCabv7i7SbU=",
     },
     "v2.2.3": {
         "darwin-amd64": "sha256-JCn0sCf8MRpjJOnbb7OpN9VZ3GHekGocLQ0eBnFoXkw=",

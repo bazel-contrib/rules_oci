@@ -188,6 +188,14 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
+def windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
+
 def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     """Windows cannot directly execute a shell script.
 
