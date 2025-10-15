@@ -26,9 +26,9 @@ jobs:
       - id: bazel_7
         run: echo "bazelversion=$(head -n 1 .bazelversion)" >> $GITHUB_OUTPUT
       - id: bazel_6
-        run: echo "bazelversion=6.4.0" >> $GITHUB_OUTPUT
+        run: echo "bazelversion=6.5.0" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["<version from .bazelversion>", "6.4.0"]
+      # Will look like ["<version from .bazelversion>", "6.5.0"]
       bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
 
   matrix-prep-os:
@@ -43,8 +43,10 @@ jobs:
         run: echo "os=macos-13" >> $GITHUB_OUTPUT
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
+      - id: windows
+        run: echo "os=windows" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["ubuntu-latest", "macos-13"]
+      # Will look like ["ubuntu-latest", "macos-13", "windows"]
       os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
@@ -74,13 +76,15 @@ jobs:
           - os: macos-13
             folder: e2e/assertion
           - os: macos-13
-            bazelversion: 6.4.0
+            bazelversion: 6.5.0
+          - os: windows
+            bazelversion: 6.5.0
           - folder: .
-            bazelversion: 6.4.0
+            bazelversion: 6.5.0
           - folder: examples/dockerfile
             bzlmodEnabled: false
           - folder: examples/dockerfile
-            bazelversion: 6.4.0
+            bazelversion: 6.5.0
           # e2e/assertion is bzlmod only but it has test for both cases.
           - folder: e2e/assertion
             bzlmodEnabled: false
@@ -121,12 +125,12 @@ jobs:
         # Add --config needs_credential_helpers to add additional credential helpers
         # to fetch from registries with HTTP headers set by credential helpers.
         id: set_credential_helper_flag
-        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        if: matrix.bazelversion == '6.5.0' && matrix.folder == '.'
         run: echo "credential_helper_flag=--config=needs_credential_helpers" >> $GITHUB_OUTPUT
 
       - name: Setup crane for credential helpers to use
         uses: imjasonh/setup-crane@v0.3
-        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        if: matrix.bazelversion == '6.5.0' && matrix.folder == '.'
         with:
           version: "v0.19.1"
 

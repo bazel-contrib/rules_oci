@@ -130,7 +130,6 @@ attrs = {
     ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
 }
 
 def _get_workspace_name(ctx, file):

@@ -1,5 +1,8 @@
 "Implementation details for attest rule"
 
+load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
+load("@aspect_bazel_lib//lib:windows_utils.bzl", "create_windows_native_launcher_script")
+
 _DOC = """Attest an oci_image using cosign binary at a remote registry.
 
 ```starlark
@@ -52,7 +55,16 @@ _attrs = {
         Digests and tags are not allowed. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.
     """),
     "_attest_sh_tpl": attr.label(default = "attest.sh.tpl", allow_single_file = True),
+    "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
 }
+
+def _windows_host(ctx):
+    """Returns true if the host platform is windows.
+    
+    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
+    build targets. We need to know the host platform, not the target platform.
+    """
+    return ctx.configuration.host_path_separator == ";"
 
 def _cosign_attest_impl(ctx):
     cosign = ctx.toolchains["@rules_oci//cosign:toolchain_type"]
@@ -63,31 +75,34 @@ def _cosign_attest_impl(ctx):
 
     fixed_args = [
         "--predicate",
-        ctx.file.predicate.short_path,
+        to_rlocation_path(ctx, ctx.file.predicate),
         "--type",
         ctx.attr.type,
     ]
     if ctx.attr.repository:
         fixed_args.extend(["--repository", ctx.attr.repository])
 
-    executable = ctx.actions.declare_file("cosign_attest_{}.sh".format(ctx.label.name))
+    bash_launcher = ctx.actions.declare_file("cosign_attest_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
         template = ctx.file._attest_sh_tpl,
-        output = executable,
+        output = bash_launcher,
         is_executable = True,
         substitutions = {
-            "{{cosign_path}}": cosign.cosign_info.binary.short_path,
-            "{{jq_path}}": jq.jqinfo.bin.short_path,
-            "{{image_dir}}": ctx.file.image.short_path,
+            "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
+            "{{cosign_path}}": to_rlocation_path(ctx, cosign.cosign_info.binary),
+            "{{jq_path}}": to_rlocation_path(ctx, jq.jqinfo.bin),
+            "{{image_dir}}": to_rlocation_path(ctx, ctx.file.image),
             "{{fixed_args}}": " ".join(fixed_args),
             "{{type}}": ctx.attr.type,
         },
     )
 
-    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.predicate])
+    executable = create_windows_native_launcher_script(ctx, bash_launcher) if _windows_host(ctx) else bash_launcher
+    runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.predicate, bash_launcher])
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(cosign.default.default_runfiles)
+    runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
 
     return DefaultInfo(executable = executable, runfiles = runfiles)
 
@@ -97,6 +112,7 @@ cosign_attest = rule(
     doc = _DOC,
     executable = True,
     toolchains = [
+        "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//cosign:toolchain_type",
         "@aspect_bazel_lib//lib:jq_toolchain_type",
     ],

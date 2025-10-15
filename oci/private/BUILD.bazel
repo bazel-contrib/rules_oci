@@ -20,6 +20,7 @@ bzl_library(
     deps = [
         ":util",
         "@aspect_bazel_lib//lib:paths",
+        "@aspect_bazel_lib//lib:windows_utils",
     ],
 )
 

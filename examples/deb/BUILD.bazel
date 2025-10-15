@@ -1,5 +1,10 @@
 load("//oci:defs.bzl", "oci_image", "oci_load")
 
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 _ARCH = [
     "amd64",
     "arm64",
@@ -24,4 +29,5 @@ oci_load(
     name = "load",
     image = ":image_amd64",
     repo_tags = ["test:test"],
+    target_compatible_with = NOT_WINDOWS,
 )

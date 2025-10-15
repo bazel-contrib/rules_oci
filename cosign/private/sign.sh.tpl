@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly COSIGN="{{cosign_path}}"
-readonly JQ="{{jq_path}}"
-readonly IMAGE_DIR="{{image_dir}}"
+{{BASH_RLOCATION_FUNCTION}}
+
+readonly COSIGN="$(rlocation "{{cosign_path}}")"
+readonly JQ="$(rlocation "{{jq_path}}")"
+readonly IMAGE_DIR="$(rlocation "{{image_dir}}")"
 readonly DIGEST=$("${JQ}" -r '.manifests[].digest' "${IMAGE_DIR}/index.json")
 readonly FIXED_ARGS=({{fixed_args}})
 

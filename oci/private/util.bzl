@@ -188,7 +188,7 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
-def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
+def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     """Windows cannot directly execute a shell script.
 
     Wrap with a .bat file that executes the shell script with a bash command.
@@ -196,15 +196,24 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     https://github.com/aspect-build/bazel-lib/blob/main/lib/windows_utils.bzl
     but without requiring that the script has a .runfiles folder.
 
+    Note: only works to wrap scripts generated in bazel-out. Will not wrap
+    scripts from the repo itself.
+    
     To use:
-    - add the _windows_constraint appears in the rule attrs
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
     """
-    if not ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if not windows_host(ctx):
         return bash_launcher
 
-    win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
+    if use_subdir:
+        win_launcher = ctx.actions.declare_file("%s/wrap_%s.bat" % (ctx.label.name, bash_launcher.basename.removesuffix(".sh")))
+    else:
+        win_launcher = ctx.actions.declare_file("%s.bat" % bash_launcher.basename.removesuffix(".sh"))
+    bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\")
+    if "WINDOWS\\system32" in bash_bin:
+        print("WARNING: The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference a fully featured bash (e.g. git/msys2).")
+
     ctx.actions.write(
         output = win_launcher,
         content = r"""@echo off
@@ -222,7 +231,7 @@ if defined args (
 )
 "{bash_bin}" -c "%parent_dir%{launcher} !args!"
 """.format(
-            bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
+            bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\"),
             launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
         ),
         is_executable = True,
