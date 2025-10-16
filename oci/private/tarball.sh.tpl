@@ -38,7 +38,7 @@ if [[ "${FORMAT}" != "docker" && "${FORMAT}" != "oci" ]]; then
   echo >&2 "Unknown format: ${FORMAT}. Only support docker|oci"
   exit 1
 fi
-if [[ "${FORMAT}" == "oci" && "${MEDIA_TYPE}" != "application/vnd.oci.image.manifest.v1+json" && "${MEDIA_TYPE}" != "application/vnd.docker.distribution.manifest.v2+json" ]]; then
+if [[ "${FORMAT}" == "oci" && "${MEDIA_TYPE}" != "application/vnd.oci.image.index.v1+json" && "${MEDIA_TYPE}" != "application/vnd.oci.image.manifest.v1+json" && "${MEDIA_TYPE}" != "application/vnd.docker.distribution.manifest.v2+json" ]]; then
   echo >&2 "Format oci is only supported for oci_image_index or oci_image targets but saw ${MEDIA_TYPE}"
   exit 1
 fi
@@ -48,30 +48,8 @@ if [[ "${FORMAT}" == "docker" && "${MEDIA_TYPE}" != "application/vnd.oci.image.m
 fi
 
 if [[ "${FORMAT}" == "oci" ]]; then
-  INDEX_FILE_MANIFEST_DIGESTS=$("${JQ}" -r '.manifests[] | .digest | sub(":"; "/")' "${INDEX_FILE}" | "${COREUTILS}" tr  -d '"')
-  if [[ $(wc -l <<< "${INDEX_FILE_MANIFEST_DIGESTS}") == 1 ]]; then
-    # handle oci_image targets with a single manifest
-    add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
-
-    MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json" | "${COREUTILS}" tr  -d '"')
-    MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
-    add_to_tar "${MANIFEST_BLOB_PATH}" "blobs/${MANIFEST_DIGEST}"
-
-    CONFIG_DIGEST=$(${JQ} -r '.config.digest  | sub(":"; "/")' ${MANIFEST_BLOB_PATH})
-    CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
-    add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
-
-    LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH})
-    for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYERS); do
-      # remove control characters; causing test failures on windows
-      LAYER_DIGEST=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER_DIGEST}")
-      add_to_tar "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" blobs/${LAYER_DIGEST}
-    done
-
-    add_to_tar "${IMAGE_DIR}/index.json" index.json
-    cp "${MANIFEST_BLOB_PATH}" "{{json_out}}"
-  else
-    # Handle multi-architecture image indexes.
+  if [[ "${MEDIA_TYPE}" != "application/vnd.oci.image.manifest.v1+json" ]]; then
+    # Handle oci_image_index multi-architecture image indexes.
     # Ideally the toolchains we rely on would output these for us, but they don't seem to.
     add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
 
@@ -98,17 +76,39 @@ if [[ "${FORMAT}" == "oci" ]]; then
       done
     done
 
-
     # Repeat the first manifest entry once per repo tag.
     repotags="${REPOTAGS[@]+"${REPOTAGS[@]}"}"
     "${JQ}" >"{{json_out}}" \
       -r --arg repo_tags "$repotags" \
       '.manifests[0] as $manifest | .manifests = ($repo_tags | split(" ") | map($manifest * {annotations:{"org.opencontainers.image.ref.name":.}}))' "${INDEX_FILE}"
     add_to_tar "{{json_out}}" index.json
+
+  else
+    # Handle oci_image targets with a single manifest
+    add_to_tar "${IMAGE_DIR}/oci-layout" oci-layout
+
+    MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json" | "${COREUTILS}" tr  -d '"')
+    MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
+    add_to_tar "${MANIFEST_BLOB_PATH}" "blobs/${MANIFEST_DIGEST}"
+
+    CONFIG_DIGEST=$(${JQ} -r '.config.digest  | sub(":"; "/")' ${MANIFEST_BLOB_PATH})
+    CONFIG_BLOB_PATH="${IMAGE_DIR}/blobs/${CONFIG_DIGEST}"
+    add_to_tar "${CONFIG_BLOB_PATH}" "blobs/${CONFIG_DIGEST}"
+
+    LAYERS=$(${JQ} -cr '.layers | map(.digest | sub(":"; "/"))' ${MANIFEST_BLOB_PATH})
+    for LAYER_DIGEST in $("${JQ}" -r ".[]" <<< $LAYERS); do
+      # remove control characters; causing test failures on windows
+      LAYER_DIGEST=$("${COREUTILS}" tr  -d '[:cntrl:]' <<< "${LAYER_DIGEST}")
+      add_to_tar "${IMAGE_DIR}/blobs/${LAYER_DIGEST}" blobs/${LAYER_DIGEST}
+    done
+
+    add_to_tar "${IMAGE_DIR}/index.json" index.json
+    cp "${MANIFEST_BLOB_PATH}" "{{json_out}}"
   fi
   exit 0
 fi
 
+# Handle docker format
 MANIFEST_DIGEST=$(${JQ} -r '.manifests[0].digest | sub(":"; "/")' "${IMAGE_DIR}/index.json" | "${COREUTILS}" tr  -d '"')
 MANIFEST_BLOB_PATH="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST}"
 
