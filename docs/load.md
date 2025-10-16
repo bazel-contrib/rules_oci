@@ -103,7 +103,7 @@ multirun(
 | <a id="oci_load-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="oci_load-format"></a>format |  Format of image to generate. Options are: docker, oci. Currently, when the input image is an image_index, only oci is supported, and when the input image is an image, only docker is supported. Conversions between formats may be supported in the future.   | String | optional |  `"docker"`  |
 | <a id="oci_load-image"></a>image |  Label of a directory containing an OCI layout, typically `oci_image`   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
-| <a id="oci_load-loader"></a>loader |  Alternative target for a container cli tool that will be used to load the image into the local engine when using `bazel run` on this target.<br><br>By default, we look for `docker` or `podman` on the PATH, and run the `load` command.<br><br>See the _run_template attribute for the script that calls this loader tool.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="oci_load-loader"></a>loader |  Alternative target for a container cli tool that will be used to load the image into the local engine when using `bazel run` on this target.<br><br>By default, we look for `docker` or `podman` or `nerdctl` on the PATH, and run the `load` command.<br><br>See the _run_template attribute for the script that calls this loader tool.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_load-repo_tags"></a>repo_tags |  a file containing repo_tags, one per line.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 
 

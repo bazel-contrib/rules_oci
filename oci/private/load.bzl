@@ -109,7 +109,7 @@ attrs = {
             Alternative target for a container cli tool that will be
             used to load the image into the local engine when using `bazel run` on this target.
 
-            By default, we look for `docker` or `podman` on the PATH, and run the `load` command.
+            By default, we look for `docker` or `podman` or `nerdctl` on the PATH, and run the `load` command.
 
             See the _run_template attribute for the script that calls this loader tool.
             """,
