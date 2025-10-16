@@ -2,7 +2,6 @@
 
 module(
     name = "rules_oci",
-    bazel_compatibility = [">=6.5.0"],
     compatibility_level = 1,
 )
 
