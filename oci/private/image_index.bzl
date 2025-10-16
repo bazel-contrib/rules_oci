@@ -1,6 +1,6 @@
 "Implementation details for oci_image_index rule"
 
-load("//oci/private:util.bzl", "util")
+load("//oci/private:util.bzl", "util", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
 
 _DOC = """Build a multi-architecture OCI compatible container image.
 
@@ -139,7 +139,7 @@ def _oci_image_index_impl(ctx):
 
 oci_image_index = rule(
     implementation = _oci_image_index_impl,
-    attrs = _attrs,
+    attrs = _attrs | IS_EXEC_PLATFORM_WINDOWS_ATTRS,
     doc = _DOC,
     toolchains = [
         "@aspect_bazel_lib//lib:jq_toolchain_type",

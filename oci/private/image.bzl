@@ -2,7 +2,7 @@
 
 load("@aspect_bazel_lib//lib:resource_sets.bzl", "resource_set", "resource_set_attr")
 load("@bazel_features//:features.bzl", "bazel_features")
-load("util.bzl", "util", "windows_host")
+load("util.bzl", "util", "is_windows_exec", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
 
 _ACCEPTED_TAR_EXTENSIONS = [
     ".tar",
@@ -96,7 +96,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_descriptor_sh": attr.label(default = "descriptor.sh.tpl", executable = True, cfg = "exec", allow_single_file = True),
-}
+} | IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _platform_str(os, arch, variant = None):
     parts = dict(os = os, architecture = arch)
@@ -261,7 +261,7 @@ def _oci_image_impl(ctx):
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
-    if windows_host(ctx):
+    if is_windows_exec(ctx):
         # See https://www.msys2.org/wiki/Porting/:
         # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
         action_env["MSYS2_ARG_CONV_EXCL"] = "*"

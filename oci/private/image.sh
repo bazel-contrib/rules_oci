@@ -48,6 +48,7 @@ function base_from() {
   # without this explicit chmod the following error occurs on windows:
   # bazel build /examples/tarball_as_base:image
   # failed to write index: cannot create oci-layout: open bazel-out/x64_windows-fastbuild/bin/examples/tarball_as_base/image/oci-layout: Access is denied.
+  # chmod is not part of coreutils
   coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
   /usr/bin/chmod +w "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"

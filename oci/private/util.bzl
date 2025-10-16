@@ -188,13 +188,44 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
-def windows_host(ctx):
-    """Returns true if the host platform is windows.
-    
-    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
-    build targets. We need to know the host platform, not the target platform.
+# From https://github.com/bazel-contrib/bazel-lib/pull/702 by thesayyn
+def _is_exec_platform_windows(ctx):
+    is_windows = ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo])
+    executable = ctx.actions.declare_file("windows_exec.bats")
+    ctx.actions.write(
+        executable,
+        content = "@noop",
+    )
+
+    return [
+        DefaultInfo(executable = executable),
+        OutputGroupInfo(windows = depset()) if is_windows else OutputGroupInfo(),
+    ]
+
+is_exec_platform_windows = rule(
+    implementation = _is_exec_platform_windows,
+    attrs = {
+        "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    },
+)
+
+IS_EXEC_PLATFORM_WINDOWS_ATTRS = {
+    "_is_platform_windows_exec": attr.label(
+        default = "//oci/private:is_exec_platform_windows",
+        executable = True,
+        cfg = "exec",
+    ),
+}
+
+def is_windows_exec(ctx):
+    """Utility function for checking if the action run on windows.
+
+    Args:
+        ctx: rule context
     """
-    return ctx.configuration.host_path_separator == ";"
+
+    outputgroupinfo = ctx.attr._is_platform_windows_exec[OutputGroupInfo]
+    return hasattr(outputgroupinfo, "windows")
 
 def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     """Windows cannot directly execute a shell script.
@@ -211,7 +242,7 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
     """
-    if not windows_host(ctx):
+    if not is_windows_exec(ctx):
         return bash_launcher
 
     if use_subdir:

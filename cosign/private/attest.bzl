@@ -2,6 +2,7 @@
 
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("@aspect_bazel_lib//lib:windows_utils.bzl", "create_windows_native_launcher_script")
+load("//oci/private:util.bzl", "is_windows_exec", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
 
 _DOC = """Attest an oci_image using cosign binary at a remote registry.
 
@@ -56,15 +57,7 @@ _attrs = {
     """),
     "_attest_sh_tpl": attr.label(default = "attest.sh.tpl", allow_single_file = True),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
-}
-
-def _windows_host(ctx):
-    """Returns true if the host platform is windows.
-    
-    The typical approach using ctx.target_platform_has_constraint does not work for transitioned
-    build targets. We need to know the host platform, not the target platform.
-    """
-    return ctx.configuration.host_path_separator == ";"
+} | IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _cosign_attest_impl(ctx):
     cosign = ctx.toolchains["@rules_oci//cosign:toolchain_type"]
@@ -97,7 +90,7 @@ def _cosign_attest_impl(ctx):
         },
     )
 
-    executable = create_windows_native_launcher_script(ctx, bash_launcher) if _windows_host(ctx) else bash_launcher
+    executable = create_windows_native_launcher_script(ctx, bash_launcher) if is_windows_exec(ctx) else bash_launcher
     runfiles = ctx.runfiles(files = [ctx.file.image, ctx.file.predicate, bash_launcher])
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(jq.default.default_runfiles)

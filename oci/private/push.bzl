@@ -1,6 +1,6 @@
 "Implementation details for the push rule"
 
-load("//oci/private:util.bzl", "util", "windows_host")
+load("//oci/private:util.bzl", "util", "is_windows_exec", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("@aspect_bazel_lib//lib:windows_utils.bzl", "create_windows_native_launcher_script")
 
@@ -201,7 +201,7 @@ _attrs = {
         default = "@jq_toolchains//:resolved_toolchain",
     ),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
-}
+} | IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _quote_args(args):
     return ["\"{}\"".format(arg) for arg in args]
@@ -247,7 +247,7 @@ def _impl(ctx):
         substitutions = substitutions,
     )
     files.append(bash_launcher)
-    executable = create_windows_native_launcher_script(ctx, bash_launcher) if windows_host(ctx) else bash_launcher
+    executable = create_windows_native_launcher_script(ctx, bash_launcher) if is_windows_exec(ctx) else bash_launcher
     runfiles = ctx.runfiles(files = files)
     runfiles = runfiles.merge(jq.default.default_runfiles)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
