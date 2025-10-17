@@ -35,15 +35,18 @@ jobs:
           )
           printf -v j '{%s},' "${a[@]}"
           echo "res=[${j%,}]" | tee -a $GITHUB_OUTPUT
-      - id: os
-        name: Prepare 'os' matrix axis
-        run: |
-          a=( ubuntu macos windows )
-          printf -v j '"%s",' "${a[@]}"
-          echo "res=[${j%,}]" | tee -a $GITHUB_OUTPUT
+      - id: linux
+        run: echo "os=ubuntu" >> $GITHUB_OUTPUT
+      - id: macos
+        run: echo "os=macos" >> $GITHUB_OUTPUT
+        # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
+        if: ${{ env.TC_CLOUD_TOKEN != '' }}
+      - id: windows
+        run: echo "os=windows" >> $GITHUB_OUTPUT
     outputs:
       bazel-version: ${{ steps.bazel-version.outputs.res }}
-      os: ${{ steps.os.outputs.res }}
+      # Will look like ["ubuntu", "macos", "windows"]
+      os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
     runs-on: ${{ matrix.os }}-latest
@@ -89,7 +92,7 @@ jobs:
               major: 6
           - folder: examples/dockerfile
             os: windows
-          # e2e/assertion. Requires bzlmod. Skip macos (save CI minutes).
+          # e2e/assertion. Requires bzlmod. Skip macos (save CI minutes). Skip windows (BATS tests don't work reliably)
           - folder: e2e/assertion
             bzlmod: 0
           - folder: e2e/assertion
