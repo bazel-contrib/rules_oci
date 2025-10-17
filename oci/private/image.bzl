@@ -152,7 +152,7 @@ def _oci_image_impl(ctx):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
     regctl = ctx.toolchains["@rules_oci//oci:regctl_toolchain_type"]
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
     zstd = ctx.toolchains["@aspect_bazel_lib//lib:zstd_toolchain_type"]
 
@@ -301,7 +301,7 @@ oci_image = rule(
     attrs = dict(_attrs, **resource_set_attr),
     doc = _DOC,
     toolchains = [
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
         "@aspect_bazel_lib//lib:zstd_toolchain_type",
         "@rules_oci//oci:regctl_toolchain_type",

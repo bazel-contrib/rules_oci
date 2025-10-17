@@ -148,9 +148,9 @@ def _get_workspace_root_path(ctx, file):
     return file.root.path
 
 def _load_impl(ctx):
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
-    bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
+    bsdtar = ctx.toolchains["@tar.bzl//tar/toolchain:type"]
 
     image = ctx.file.image
     repo_tags = ctx.file.repo_tags
@@ -258,8 +258,8 @@ oci_load = rule(
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@aspect_bazel_lib//lib:tar_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
+        "@tar.bzl//tar/toolchain:type",
     ],
     executable = True,
 )

@@ -20,7 +20,7 @@ object App {
 ```
 
 In this example, I will not use bzlmod and fall back to the `WORKSPACE` file, as `rules_scala` doesn't support bzlmod yet. This file setups 
-the `rules_scala` according to the documentation so that we can build scala targets. Next, it configures `aspect_bazel_lib` so that we can have access to `tar` rule needed later. Finally, it configures `rules_oci` and pulls the base image with Java 17.
+the `rules_scala` according to the documentation so that we can build scala targets. Next, it configures `bazel_lib` so that we can have access to `tar` rule needed later. Finally, it configures `rules_oci` and pulls the base image with Java 17.
 
 **WORKSPACE**
 
@@ -72,21 +72,21 @@ scalatest_repositories()
 scalatest_toolchain()
 
 http_archive(
-    name = "aspect_bazel_lib",
+    name = "bazel_lib",
     sha256 = "6d758a8f646ecee7a3e294fbe4386daafbe0e5966723009c290d493f227c390b",
     strip_prefix = "bazel-lib-2.7.7",
     url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.7.7/bazel-lib-v2.7.7.tar.gz",
 )
 
-load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies", "aspect_bazel_lib_register_toolchains")
+load("@aspect_bazel_lib//lib:repositories.bzl", "bazel_lib_dependencies", "bazel_lib_register_toolchains")
 
 # Required bazel-lib dependencies
 
-aspect_bazel_lib_dependencies()
+bazel_lib_dependencies()
 
 # Register bazel-lib toolchains
 
-aspect_bazel_lib_register_toolchains()
+bazel_lib_register_toolchains()
 
 http_archive(
     name = "rules_oci",
@@ -181,7 +181,7 @@ Complete `BUILD.bazel` file
 
 ```python
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_binary")
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
 scala_binary(

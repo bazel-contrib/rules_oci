@@ -103,7 +103,7 @@ def _oci_image_index_impl(ctx):
     if len(ctx.attr.platforms) > 0 and len(ctx.attr.images) != len(ctx.attr.platforms):
         fail("platforms can only be specified when there is exactly one image in the images attribute.")
 
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
     bash_launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
@@ -142,7 +142,7 @@ oci_image_index = rule(
     attrs = _attrs | IS_EXEC_PLATFORM_WINDOWS_ATTRS,
     doc = _DOC,
     toolchains = [
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
         "@bazel_tools//tools/sh:toolchain_type",
     ],

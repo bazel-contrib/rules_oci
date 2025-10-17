@@ -57,7 +57,7 @@ _attrs = {
 
 def _cosign_sign_impl(ctx):
     cosign = ctx.toolchains["@rules_oci//cosign:toolchain_type"]
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
 
     if ctx.attr.repository and (ctx.attr.repository.find(":") != -1 or ctx.attr.repository.find("@") != -1):
         fail("repository attribute should not contain digest or tag.")
@@ -98,6 +98,6 @@ cosign_sign = rule(
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
         "@rules_oci//cosign:toolchain_type",
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
     ],
 )

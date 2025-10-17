@@ -2,14 +2,17 @@
 
 module(
     name = "rules_oci",
+    # align with https://github.com/bazel-contrib/bazel-lib/pull/1160
+    bazel_compatibility = [">=6.5.0"],
     compatibility_level = 1,
 )
 
-bazel_dep(name = "aspect_bazel_lib", version = "2.21.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
 bazel_dep(name = "bazel_features", version = "1.10.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.1")
 bazel_dep(name = "platforms", version = "0.0.8")
-bazel_dep(name = "tar.bzl", version = "0.5.5")
+bazel_dep(name = "tar.bzl", version = "0.5.6")
+bazel_dep(name = "jq.bzl", version = "0.4.0")
 
 oci = use_extension("//oci:extensions.bzl", "oci")
 oci.toolchains()
@@ -24,10 +27,11 @@ use_repo(zstd, "zstd_toolchains")
 
 register_toolchains("@zstd_toolchains//:all")
 
-bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
-bazel_lib.jq()
-bazel_lib.tar()
-use_repo(bazel_lib, "bsd_tar_toolchains", "jq_toolchains")
+jq_toolchains = use_extension("@jq.bzl//jq:extensions.bzl", "toolchains")
+use_repo(jq_toolchains, "jq_toolchains")
+
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar_toolchains, "bsd_tar_toolchains")
 
 # Dev dependencies
 
