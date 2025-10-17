@@ -23,12 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: bazel_7
+      - id: bazel_8
         run: echo "bazelversion=$(head -n 1 .bazelversion)" >> $GITHUB_OUTPUT
-      - id: bazel_6
-        run: echo "bazelversion=6.4.0" >> $GITHUB_OUTPUT
+      - id: bazel_7
+        run: echo "bazelversion=7.6.2" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["<version from .bazelversion>", "6.4.0"]
+      # Will look like ["<version from .bazelversion>", "7.6.2"]
       bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
 
   matrix-prep-os:
@@ -74,13 +74,13 @@ jobs:
           - os: macos-13
             folder: e2e/assertion
           - os: macos-13
-            bazelversion: 6.4.0
+            bazelversion: 7.6.2
           - folder: .
-            bazelversion: 6.4.0
+            bazelversion: 7.6.2
           - folder: examples/dockerfile
             bzlmodEnabled: false
           - folder: examples/dockerfile
-            bazelversion: 6.4.0
+            bazelversion: 7.6.2
           # e2e/assertion is bzlmod only but it has test for both cases.
           - folder: e2e/assertion
             bzlmodEnabled: false
@@ -91,7 +91,7 @@ jobs:
           - folder: .
             bzlmodEnabled: false
           # This is tested on Buildkite using Aspect Workflows
-          - bazelversion: 7.4.1
+          - bazelversion: 7.6.2
             folder: .
             os: ubuntu-latest
     # Steps represent a sequence of tasks that will be executed as part of the job
@@ -121,12 +121,12 @@ jobs:
         # Add --config needs_credential_helpers to add additional credential helpers
         # to fetch from registries with HTTP headers set by credential helpers.
         id: set_credential_helper_flag
-        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        if: matrix.bazelversion == '7.6.2' && matrix.folder == '.'
         run: echo "credential_helper_flag=--config=needs_credential_helpers" >> $GITHUB_OUTPUT
 
       - name: Setup crane for credential helpers to use
         uses: imjasonh/setup-crane@v0.3
-        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        if: matrix.bazelversion == '7.6.2' && matrix.folder == '.'
         with:
           version: "v0.19.1"
 
