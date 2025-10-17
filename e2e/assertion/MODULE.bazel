@@ -5,6 +5,7 @@ bazel_dep(name = "gazelle", version = "0.42.0")
 bazel_dep(name = "aspect_bazel_lib", version = "2.7.2")
 bazel_dep(name = "rules_oci", version = "0.0.0")
 bazel_dep(name = "external_wksp", version = "1.0")
+bazel_dep(name = "rules_jvm_external", version = "5.3")
 
 local_path_override(
     module_name = "rules_oci",
