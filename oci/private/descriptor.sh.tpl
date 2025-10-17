@@ -11,25 +11,29 @@ set -o pipefail -o errexit -o nounset
 # See: https://github.com/opencontainers/image-spec/blob/main/descriptor.md
 
 # shellcheck disable=SC2153
-PATH="$HPATH:$PATH"
 archive="$1"
 output="$2"
 label="$3"
 
-digest="$(regctl digest <"$archive")"
+readonly ZSTD="{{zstd_path}}"
+readonly JQ="{{jq_path}}"
+readonly REGCTL="{{regctl_path}}"
+readonly COREUTILS="{{coreutils_path}}"
+
+digest=$(${REGCTL} digest <"$archive")
 diffid="$digest"
-size=$(coreutils wc -c "$archive" | coreutils cut -f1 -d' ')
+size=$(${COREUTILS} wc -c "$archive" | ${COREUTILS} cut -f1 -d' ')
 compression=
 
-if [[ $(coreutils od -An -t x1 --read-bytes 2 "$archive") == " 1f 8b" ]]; then
+if [[ $(${COREUTILS} od -An -t x1 --read-bytes 2 "$archive") == " 1f 8b" ]]; then
     compression="gzip"
-    diffid=$(zstd --decompress --format=gzip <"$archive" | regctl digest)
+    diffid=$(${ZSTD} --decompress --format=gzip <"$archive" | ${REGCTL} digest)
 elif zstd -t <"$archive" 2>/dev/null; then
     compression="zstd"
-    diffid=$(zstd --decompress --format=zstd <"$archive" | regctl digest)
+    diffid=$(${ZSTD} --decompress --format=zstd <"$archive" | ${REGCTL} digest)
 fi
 
-jq -n \
+${JQ} -n \
     --arg compression "$compression" \
     --arg diffid "$diffid" \
     --arg digest "$digest" \

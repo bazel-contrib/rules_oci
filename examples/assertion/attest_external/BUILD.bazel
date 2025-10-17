@@ -1,5 +1,10 @@
 load("//cosign:defs.bzl", "cosign_attest")
 
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 cosign_attest(
     name = "attest",
     image = "@empty_image",
@@ -12,12 +17,12 @@ sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
-        "$(JQ_BIN)",
-        "$(COSIGN_BIN)",
-        "$(CRANE_BIN)",
-        "$(location :attest)",
-        "$(location @empty_image)",
-        "$(location @example_sbom)",
+        "$(rlocationpath @jq_toolchains//:resolved_toolchain)",
+        "$(rlocationpath @oci_cosign_toolchains//:current_toolchain)",
+        "$(rlocationpath @oci_crane_toolchains//:current_toolchain)",
+        "$(rlocationpath :attest)",
+        "$(rlocationpath @empty_image)",
+        "$(rlocationpath @example_sbom)",
     ],
     data = [
         ":attest",
@@ -26,10 +31,13 @@ sh_test(
         "@jq_toolchains//:resolved_toolchain",
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
+        "@bazel_tools//tools/bash/runfiles",
     ],
     toolchains = [
         "@oci_cosign_toolchains//:current_toolchain",
         "@oci_crane_toolchains//:current_toolchain",
         "@jq_toolchains//:resolved_toolchain",
     ],
+    # the diff command is not available on windows
+    target_compatible_with = NOT_WINDOWS,    
 )

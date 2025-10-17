@@ -20,6 +20,8 @@ def _cosign_repo_impl(repository_ctx):
         version = repository_ctx.attr.cosign_version,
         platform = platform,
     )
+    if ("windows" in repository_ctx.attr.platform):
+        url += ".exe"
     repository_ctx.download(
         url = url,
         output = "cosign",
