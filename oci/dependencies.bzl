@@ -8,7 +8,6 @@ load("@aspect_bazel_lib//lib:repositories.bzl", "aspect_bazel_lib_dependencies",
 load("@bazel_tools//tools/build_defs/repo:http.bzl", _http_archive = "http_archive")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 load("@platforms//host:extension.bzl", "host_platform_repo")
-load("@rules_shell//shell:repositories.bzl", "rules_shell_dependencies", "rules_shell_toolchains")
 
 def http_archive(**kwargs):
     maybe(_http_archive, **kwargs)
@@ -47,12 +46,6 @@ def rules_oci_dependencies():
     # Required bazel-lib dependencies
 
     aspect_bazel_lib_dependencies()
-
-    # Required rules_shell dependencies
-
-    rules_shell_dependencies()
-
-    rules_shell_toolchains()
 
     # Register bazel-lib toolchains
 
