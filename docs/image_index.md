@@ -11,6 +11,8 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_image_index_rule
 
 <pre>
+load("@rules_oci//oci:defs.bzl", "oci_image_index_rule")
+
 oci_image_index_rule(<a href="#oci_image_index_rule-name">name</a>, <a href="#oci_image_index_rule-images">images</a>, <a href="#oci_image_index_rule-platforms">platforms</a>)
 </pre>
 
@@ -86,7 +88,9 @@ oci_image_index(
 ## oci_image_index
 
 <pre>
-oci_image_index(<a href="#oci_image_index-name">name</a>, <a href="#oci_image_index-kwargs">kwargs</a>)
+load("@rules_oci//oci:defs.bzl", "oci_image_index")
+
+oci_image_index(<a href="#oci_image_index-name">name</a>, <a href="#oci_image_index-kwargs">**kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_image_index_rule](#oci_image_index_rule).

@@ -11,6 +11,8 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_push_rule
 
 <pre>
+load("@rules_oci//oci:defs.bzl", "oci_push_rule")
+
 oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-remote_tags">remote_tags</a>, <a href="#oci_push_rule-repository">repository</a>, <a href="#oci_push_rule-repository_file">repository_file</a>)
 </pre>
 
@@ -167,7 +169,9 @@ multirun(
 ## oci_push
 
 <pre>
-oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-remote_tags">remote_tags</a>, <a href="#oci_push-kwargs">kwargs</a>)
+load("@rules_oci//oci:defs.bzl", "oci_push")
+
+oci_push(<a href="#oci_push-name">name</a>, <a href="#oci_push-remote_tags">remote_tags</a>, <a href="#oci_push-kwargs">**kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_push_rule](#oci_push_rule).
