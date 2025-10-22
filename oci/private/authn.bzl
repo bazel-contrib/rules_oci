@@ -372,7 +372,7 @@ def _get_token(rctx, state, registry, repository):
             token = ""
             if "token" in auth:
                 token = auth["token"]
-            if "access_token" in auth:
+            if "access_token" in auth and auth["access_token"]:
                 token = auth["access_token"]
             if token == "":
                 if allow_fail:
