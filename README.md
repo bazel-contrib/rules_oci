@@ -1,11 +1,28 @@
 # Bazel rules for OCI container images
 
-Bazel rules based on the Open Containers Initiative: <https://opencontainers.org/>
+Very simple Bazel rules based on the Open Containers Initiative specification: <https://opencontainers.org/>
 
-Please let us know about your success stories on our adoption discussion!
-<https://github.com/bazel-contrib/rules_oci/discussions/299>
+Status: Unfunded, stable in maintenance mode.
 
-_Need help?_ This ruleset has support provided by [Aspect Build](https://www.aspect.build/services).
+## Design Principles
+
+- Keep a tight complexity budget for the project so we are able to commit to effective maintenance without any dedicated funding.
+  - Use only off-the-shelf, pre-built layer and container manipulation tools.
+  - Use `DefaultInfo` to hand information between rules, meaning that files and directories are inputs/outputs for each action.
+- Stay true to the specification, and only the specification.
+  - Don't write language-specific rules, as we cannot be experts on all languages, nor can users deal with the versioning issues
+  that come with dependencies we would be forced to take on the rules for those languages.
+  - Don't be docker-specific, now that it has a commercial license and other container runtimes exist ([podman](https://podman.io/) for example).
+  - Use our toolchain hermetically: don't assume there is a docker pre-installed on the machine.
+
+## Comparison with rules_img
+
+As described above, rules_oci is built for maintainability on top of standard container tools.
+This means it doesn't attempt to make all the optimizations that are possible with rules_img.
+
+For use with remote cache and remote execution, the use of files and directories as action input/output means that lots of bytes are sent over the network.
+For these cases, we recommend trying rules_img.
+See https://github.com/bazel-contrib/rules_img/blob/main/docs/migration-from-rules_oci.md to migrate from rules_oci to rules_img.
 
 ## Comparison with rules_docker
 
@@ -15,17 +32,6 @@ However, some other use cases such as `container_run_and*\*` rules have no equiv
 You might still decide to use rules_docker, and perhaps even volunteer to help maintain it.
 
 You can find a migration guide at <https://docs.aspect.build/guides/rules_oci_migration>.
-
-## Design
-
-We started from first principles and avoided some pitfalls we learned from rules_docker:
-
-- Use a toolchain consisting of off-the-shelf, pre-built layer and container manipulation tools.
-- Don't write language-specific rules, as we cannot be experts on all languages, nor can users deal with the versioning issues
-  that come with dependencies we would be forced to take on the rules for those languages.
-- Don't be docker-specific, now that it has a commercial license and other container runtimes exist ([podman](https://podman.io/) for example).
-- Use our toolchain hermetically: don't assume there is a docker pre-installed on the machine.
-- Keep a tight complexity budget for the project so we are able to commit to effective maintenance.
 
 [rules_docker]: https://github.com/bazelbuild/rules_docker
 
