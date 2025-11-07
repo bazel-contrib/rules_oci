@@ -25,7 +25,7 @@ docker run --rm my-repository:latest
 ## oci_load
 
 <pre>
-oci_load(<a href="#oci_load-name">name</a>, <a href="#oci_load-format">format</a>, <a href="#oci_load-image">image</a>, <a href="#oci_load-loader">loader</a>, <a href="#oci_load-repo_tags">repo_tags</a>)
+oci_load(<a href="#oci_load-name">name</a>, <a href="#oci_load-format">format</a>, <a href="#oci_load-image">image</a>, <a href="#oci_load-loader">loader</a>, <a href="#oci_load-repo_tags">repo_tags</a>, <a href="#oci_load-tarball_name">tarball_name</a>)
 </pre>
 
 Loads an OCI layout into a container daemon without needing to publish the image first.
@@ -105,5 +105,6 @@ multirun(
 | <a id="oci_load-image"></a>image |  Label of a directory containing an OCI layout, typically `oci_image`   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 | <a id="oci_load-loader"></a>loader |  Alternative target for a container cli tool that will be used to load the image into the local engine when using `bazel run` on this target.<br><br>By default, we look for `docker` or `podman` or `nerdctl` on the PATH, and run the `load` command.<br><br>See the _run_template attribute for the script that calls this loader tool.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_load-repo_tags"></a>repo_tags |  a file containing repo_tags, one per line.   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
+| <a id="oci_load-tarball_name"></a>tarball_name |  Name of the tarball file to generate.   | String | optional |  `"tarball.tar"`  |
 
 

@@ -118,6 +118,10 @@ attrs = {
         executable = True,
         cfg = "target",
     ),
+    "tarball_name": attr.string(
+        default = "tarball.tar",
+        doc = "Name of the tarball file to generate.",
+    ),
     "_run_template": attr.label(
         default = Label("//oci/private:load.sh.tpl"),
         doc = """ \
@@ -199,7 +203,7 @@ def _load_impl(ctx):
 
     # This action produces a large output and should rarely be used as it puts load on the cache.
     # It will only run if the "tarball" output_group is explicitly requested
-    tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
+    tarball = ctx.actions.declare_file("{}/{}".format(ctx.label.name, ctx.attr.tarball_name))
     tar_inputs = depset(direct = mtree_outputs, transitive = [mtree_inputs])
     tar_args = ctx.actions.args()
     tar_args.add_all(["--create", "--no-xattr", "--no-mac-metadata"])
