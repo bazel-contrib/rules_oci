@@ -13,7 +13,7 @@ readonly OUTPUT="{{output}}"
 readonly REF="ocidir://$OUTPUT:intermediate"
 # shellcheck disable=SC2016
 readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | reduce .[] as $match (
-    {parts: [], prev: 0}; 
+    {parts: [], prev: 0};
     {parts: (.parts + [$raw[.prev:$match.offset], ($envs[] | select(.key == $match.captures[0].string)).value ]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
 
@@ -21,8 +21,8 @@ function base_from_scratch() {
   local platform="$1"
   # Create a new manifest
   jq -n '{
-    schemaVersion: 2, 
-    mediaType: "application/vnd.oci.image.manifest.v1+json", 
+    schemaVersion: 2,
+    mediaType: "application/vnd.oci.image.manifest.v1+json",
     config: { mediaType: "application/vnd.oci.image.config.v1+json", size: 0 },
     layers: []
   }' | update_manifest
@@ -49,25 +49,25 @@ function base_from() {
 }
 
 function get_config() {
-  regctl blob get "$REF" "$(regctl manifest get "$REF" --format "{{.Config.Digest}}")"
+  regctl blob get "$REF" "$(regctl manifest get "$REF" --format "{{.Config.Digest}}" 2>/dev/null)" 2>/dev/null
 }
 
 function update_config() {
   local digest=
   local config=
   config="$(coreutils cat -)"
-  digest="$(echo -n "$config" | regctl blob put "$REF")"
+  digest="$(echo -n "$config" | regctl blob put "$REF" 2>/dev/null)"
   # The embedded .config.data must be kept up to date or dropped. Making the optimal choice is subtle; dropping is always at least correct.
   get_manifest | jq '.config.digest = $digest | .config.size = $size | del(.config.data)' --arg digest "$digest" --argjson size "${#config}" | update_manifest >/dev/null
   echo "$digest"
 }
 
 function get_manifest() {
-  regctl manifest get "$REF" --format "raw"
+  regctl manifest get "$REF" --format "raw" 2>/dev/null
 }
 
 function update_manifest() {
-  regctl manifest put "$REF"
+  regctl manifest put "$REF" 2>/dev/null
 }
 
 function add_layer() {
@@ -102,7 +102,7 @@ function add_layer() {
       --argjson desc "${desc}" \
       --arg media_type "${media_type}" | update_manifest
 
-  local digest_path= 
+  local digest_path=
   local output_path=
   digest_path="$(jq -r '.digest | sub(":"; "/")' <<< "$desc")"
   output_path="$OUTPUT/blobs/$digest_path"
