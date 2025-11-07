@@ -210,15 +210,13 @@ def _impl(ctx):
     crane = ctx.attr._crane[0][platform_common.ToolchainInfo]
     jq = ctx.attr._jq[0][platform_common.ToolchainInfo]
 
-    if ctx.attr.repository and ctx.attr.repository_file:
-        fail("must specify exactly one of 'repository_file' or 'repository'")
-
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
 
-    _, _, _, maybe_digest, maybe_tag = util.parse_image(ctx.attr.repository)
-    if maybe_digest or maybe_tag:
-        fail("`repository` attribute should not contain digest or tag. got: {}".format(ctx.attr.repository))
+    if ctx.attr.repository:
+        _, _, _, maybe_digest, maybe_tag = util.parse_image(ctx.attr.repository)
+        if maybe_digest or maybe_tag:
+            fail("`repository` attribute should not contain digest or tag. got: {}".format(ctx.attr.repository))
 
     executable = ctx.actions.declare_file("push_%s.sh" % ctx.label.name)
     files = [ctx.file.image]
