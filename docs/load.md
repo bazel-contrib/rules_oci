@@ -25,6 +25,8 @@ docker run --rm my-repository:latest
 ## oci_load
 
 <pre>
+load("@rules_oci//oci/private:load.bzl", "oci_load")
+
 oci_load(<a href="#oci_load-name">name</a>, <a href="#oci_load-format">format</a>, <a href="#oci_load-image">image</a>, <a href="#oci_load-loader">loader</a>, <a href="#oci_load-repo_tags">repo_tags</a>)
 </pre>
 
