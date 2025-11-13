@@ -11,6 +11,8 @@ load("@rules_oci//oci:defs.bzl", ...)
 ## oci_image_rule
 
 <pre>
+load("@rules_oci//oci:defs.bzl", "oci_image_rule")
+
 oci_image_rule(<a href="#oci_image_rule-name">name</a>, <a href="#oci_image_rule-annotations">annotations</a>, <a href="#oci_image_rule-architecture">architecture</a>, <a href="#oci_image_rule-base">base</a>, <a href="#oci_image_rule-cmd">cmd</a>, <a href="#oci_image_rule-created">created</a>, <a href="#oci_image_rule-entrypoint">entrypoint</a>, <a href="#oci_image_rule-env">env</a>, <a href="#oci_image_rule-exposed_ports">exposed_ports</a>,
                <a href="#oci_image_rule-labels">labels</a>, <a href="#oci_image_rule-os">os</a>, <a href="#oci_image_rule-resource_set">resource_set</a>, <a href="#oci_image_rule-tars">tars</a>, <a href="#oci_image_rule-user">user</a>, <a href="#oci_image_rule-variant">variant</a>, <a href="#oci_image_rule-volumes">volumes</a>, <a href="#oci_image_rule-workdir">workdir</a>)
 </pre>
@@ -91,7 +93,10 @@ oci_image(
 ## oci_image
 
 <pre>
-oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-created">created</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-exposed_ports">exposed_ports</a>, <a href="#oci_image-volumes">volumes</a>, <a href="#oci_image-kwargs">kwargs</a>)
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+oci_image(<a href="#oci_image-name">name</a>, <a href="#oci_image-created">created</a>, <a href="#oci_image-labels">labels</a>, <a href="#oci_image-annotations">annotations</a>, <a href="#oci_image-env">env</a>, <a href="#oci_image-cmd">cmd</a>, <a href="#oci_image-entrypoint">entrypoint</a>, <a href="#oci_image-exposed_ports">exposed_ports</a>, <a href="#oci_image-volumes">volumes</a>,
+          <a href="#oci_image-kwargs">**kwargs</a>)
 </pre>
 
 Macro wrapper around [oci_image_rule](#oci_image_rule).
