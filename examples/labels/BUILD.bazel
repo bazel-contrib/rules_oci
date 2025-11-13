@@ -1,5 +1,5 @@
 load("@aspect_bazel_lib//lib:expand_template.bzl", "expand_template")
-load("@aspect_bazel_lib//lib:tar.bzl", "tar")
+load("@tar.bzl//tar:tar.bzl", "tar")
 load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//examples:assert.bzl", "assert_oci_config")
 

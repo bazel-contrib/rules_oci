@@ -88,12 +88,12 @@ sh_test(
     name = "test",
     srcs = ["test.bash"],
     args = [
-        "$(CRANE_BIN)",
-        "$(location :push_image)",
-        "$(location :push_image_index)",
-        "$(location :push_image_repository_file)",
-        "$(location :push_image_wo_tags)",
-        "$(location :push_image_wo_repository)",
+        "$(rlocationpath @oci_crane_toolchains//:current_toolchain)",
+        "$(rlocationpath :push_image)",
+        "$(rlocationpath :push_image_index)",
+        "$(rlocationpath :push_image_repository_file)",
+        "$(rlocationpath :push_image_wo_tags)",
+        "$(rlocationpath :push_image_wo_repository)",
     ],
     data = [
         ":push_image",
@@ -102,6 +102,7 @@ sh_test(
         ":push_image_wo_tags",
         ":push_image_wo_repository",
         "@oci_crane_toolchains//:current_toolchain",
+        "@bazel_tools//tools/bash/runfiles",
     ],
     toolchains = [
         "@oci_crane_toolchains//:current_toolchain",
@@ -111,7 +112,7 @@ sh_test(
 sh_test(
     name = "test_push_image_wo_repository_fails",
     srcs = ["test_push_image_wo_repository_fails.bash"],
-    args = ["$(location :push_image_wo_repository)"],
+    args = ["$(rlocationpath :push_image_wo_repository)"],
     data = [
         ":push_image_wo_repository",
     ],

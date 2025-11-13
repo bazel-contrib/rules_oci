@@ -20,7 +20,7 @@ docker run --rm my-repository:latest
 """
 
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
-load("//oci/private:util.bzl", "util")
+load("//oci/private:util.bzl", "util", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
 
 doc = """Loads an OCI layout into a container daemon without needing to publish the image first.
 
@@ -130,8 +130,7 @@ attrs = {
     ),
     "_tarball_sh": attr.label(allow_single_file = True, default = "//oci/private:tarball.sh.tpl"),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
-}
+} | IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _get_workspace_name(ctx, file):
     label = getattr(file, "owner", None)
@@ -149,9 +148,9 @@ def _get_workspace_root_path(ctx, file):
     return file.root.path
 
 def _load_impl(ctx):
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
-    bsdtar = ctx.toolchains["@aspect_bazel_lib//lib:tar_toolchain_type"]
+    bsdtar = ctx.toolchains["@tar.bzl//tar/toolchain:type"]
 
     image = ctx.file.image
     repo_tags = ctx.file.repo_tags
@@ -259,8 +258,8 @@ oci_load = rule(
     toolchains = [
         "@bazel_tools//tools/sh:toolchain_type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@aspect_bazel_lib//lib:tar_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
+        "@tar.bzl//tar/toolchain:type",
     ],
     executable = True,
 )

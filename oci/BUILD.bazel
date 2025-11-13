@@ -55,7 +55,7 @@ bzl_library(
         "//oci/private:push",
         "@aspect_bazel_lib//lib:copy_file",
         "@aspect_bazel_lib//lib:directory_path",
-        "@aspect_bazel_lib//lib:jq",
+        "@jq.bzl//jq:jq",
         "@bazel_skylib//lib:types",
         "@bazel_skylib//rules:write_file",
     ],

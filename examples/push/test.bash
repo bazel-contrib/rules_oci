@@ -1,12 +1,23 @@
 #!/usr/bin/env bash
 set -o pipefail -o errexit -o nounset
 
-readonly CRANE="${1/external\//../}"
-readonly PUSH_IMAGE="$2"
-readonly PUSH_IMAGE_INDEX="$3"
-readonly PUSH_IMAGE_REPOSITORY_FILE="$4"
-readonly PUSH_IMAGE_WO_TAGS="$5"
-readonly PUSH_IMAGE_WO_REPOSITORY="$6"
+# --- begin runfiles.bash initialization v3 ---
+# Copy-pasted from the Bazel Bash runfiles library v3.
+set -uo pipefail; set +e; f=bazel_tools/tools/bash/runfiles/runfiles.bash
+source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
+  source "$0.runfiles/$f" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "$0.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  source "$(grep -sm1 "^$f " "$0.exe.runfiles_manifest" | cut -f2- -d' ')" 2>/dev/null || \
+  { echo>&2 "ERROR: runfiles.bash initializer cannot find $f. An executable rule may have forgotten to expose it in the runfiles, or the binary may require RUNFILES_DIR to be set."; exit 1; }; f=; set -e
+# --- end runfiles.bash initialization v3 ---
+
+readonly CRANE="$(rlocation $1)"
+readonly PUSH_IMAGE="$(rlocation $2)"
+readonly PUSH_IMAGE_INDEX="$(rlocation $3)"
+readonly PUSH_IMAGE_REPOSITORY_FILE="$(rlocation $4)"
+readonly PUSH_IMAGE_WO_TAGS="$(rlocation $5)"
+readonly PUSH_IMAGE_WO_REPOSITORY="$(rlocation $6)"
 
 # start a registry
 output=$(mktemp)
@@ -33,7 +44,7 @@ REPOSITORY="${REGISTRY}/local-index"
 REPOSITORY="${REGISTRY}/local-wo-tags" 
 "${PUSH_IMAGE_WO_TAGS}" --repository "${REPOSITORY}"
 TAGS=$("${CRANE}" ls "$REPOSITORY")
-if [ -n "${TAGS}" ]; then 
+if [ -n "${TAGS:-}" ]; then 
     echo "image is not supposed to have any tags but got"
     echo "${TAGS}"
     exit 1
@@ -41,7 +52,7 @@ fi
 
 
 # should push image to the repository defined in the file
-set -ex
+set -e
 REPOSITORY="${REGISTRY}/repository-file"
 "${PUSH_IMAGE_REPOSITORY_FILE}" --repository "${REPOSITORY}"
 "${CRANE}" digest "$REPOSITORY:latest"

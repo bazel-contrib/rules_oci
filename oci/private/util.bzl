@@ -188,7 +188,46 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
-def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
+# From https://github.com/bazel-contrib/bazel-lib/pull/702 by thesayyn
+def _is_exec_platform_windows(ctx):
+    is_windows = ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo])
+    executable = ctx.actions.declare_file("windows_exec.bats")
+    ctx.actions.write(
+        executable,
+        content = "@noop",
+    )
+
+    return [
+        DefaultInfo(executable = executable),
+        OutputGroupInfo(windows = depset()) if is_windows else OutputGroupInfo(),
+    ]
+
+is_exec_platform_windows = rule(
+    implementation = _is_exec_platform_windows,
+    attrs = {
+        "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+    },
+)
+
+IS_EXEC_PLATFORM_WINDOWS_ATTRS = {
+    "_is_platform_windows_exec": attr.label(
+        default = "//oci/private:is_exec_platform_windows",
+        executable = True,
+        cfg = "exec",
+    ),
+}
+
+def is_windows_exec(ctx):
+    """Utility function for checking if the action run on windows.
+
+    Args:
+        ctx: rule context
+    """
+
+    outputgroupinfo = ctx.attr._is_platform_windows_exec[OutputGroupInfo]
+    return hasattr(outputgroupinfo, "windows")
+
+def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, use_subdir=False):
     """Windows cannot directly execute a shell script.
 
     Wrap with a .bat file that executes the shell script with a bash command.
@@ -196,15 +235,26 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     https://github.com/aspect-build/bazel-lib/blob/main/lib/windows_utils.bzl
     but without requiring that the script has a .runfiles folder.
 
+    Note: only works to wrap scripts generated in bazel-out. Will not wrap
+    scripts from the repo itself.
+    
     To use:
-    - add the _windows_constraint appears in the rule attrs
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
     """
-    if not ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if not is_windows_exec(ctx):
         return bash_launcher
 
-    win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
+    if use_subdir:
+        win_launcher = ctx.actions.declare_file("%s/wrap_%s.bat" % (ctx.label.name, bash_launcher.basename.removesuffix(".sh")))
+    else:
+        win_launcher = ctx.actions.declare_file("%s.bat" % bash_launcher.basename.removesuffix(".sh"))
+    bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path.replace("/", "\\")
+    if "WINDOWS\\system32" in bash_bin:
+        print("WARNING: The bash binary is in the system32 directory, which may cause issues with the launcher script. Configure BAZEL_SH to reference a fully featured bash (e.g. git/msys2).")
+    if bash_bin == "\\bin\\bash":
+        print("WARNING: The bash binary path looks like a Unix path. Configure BAZEL_SH to reference a Windows path.")
+
     ctx.actions.write(
         output = win_launcher,
         content = r"""@echo off
@@ -222,7 +272,7 @@ if defined args (
 )
 "{bash_bin}" -c "%parent_dir%{launcher} !args!"
 """.format(
-            bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
+            bash_bin = bash_bin,
             launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
         ),
         is_executable = True,

@@ -1,5 +1,7 @@
 "Implementation details for oci_image_index rule"
 
+load("//oci/private:util.bzl", "util", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
+
 _DOC = """Build a multi-architecture OCI compatible container image.
 
 It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/main/image-index.md).
@@ -101,13 +103,13 @@ def _oci_image_index_impl(ctx):
     if len(ctx.attr.platforms) > 0 and len(ctx.attr.images) != len(ctx.attr.platforms):
         fail("platforms can only be specified when there is exactly one image in the images attribute.")
 
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
-    launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
+    bash_launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
         template = ctx.file._image_index_sh_tpl,
-        output = launcher,
+        output = bash_launcher,
         is_executable = True,
         substitutions = {
             "{{jq_path}}": jq.jqinfo.bin.path,
@@ -121,11 +123,12 @@ def _oci_image_index_impl(ctx):
     args.add(output.path, format = "--output=%s")
     args.add_all(ctx.files.images, map_each = _expand_image_to_args, expand_directories = False)
 
+    executable = util.maybe_wrap_launcher_for_windows(ctx, bash_launcher)
     ctx.actions.run(
-        inputs = ctx.files.images,
+        inputs = ctx.files.images + [bash_launcher],
         arguments = [args],
         outputs = [output],
-        executable = launcher,
+        executable = executable,
         tools = [jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",
@@ -136,10 +139,11 @@ def _oci_image_index_impl(ctx):
 
 oci_image_index = rule(
     implementation = _oci_image_index_impl,
-    attrs = _attrs,
+    attrs = _attrs | IS_EXEC_PLATFORM_WINDOWS_ATTRS,
     doc = _DOC,
     toolchains = [
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+        "@bazel_tools//tools/sh:toolchain_type",
     ],
 )

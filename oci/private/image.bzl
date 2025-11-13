@@ -2,7 +2,7 @@
 
 load("@aspect_bazel_lib//lib:resource_sets.bzl", "resource_set", "resource_set_attr")
 load("@bazel_features//:features.bzl", "bazel_features")
-load("util.bzl", "util")
+load("util.bzl", "util", "is_windows_exec", "IS_EXEC_PLATFORM_WINDOWS_ATTRS")
 
 _ACCEPTED_TAR_EXTENSIONS = [
     ".tar",
@@ -95,9 +95,8 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
-    "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
-}
+    "_descriptor_sh": attr.label(default = "descriptor.sh.tpl", executable = True, cfg = "exec", allow_single_file = True),
+} | IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _platform_str(os, arch, variant = None):
     parts = dict(os = os, architecture = arch)
@@ -106,24 +105,35 @@ def _platform_str(os, arch, variant = None):
     return json.encode(parts)
 
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
+    # Represents either manifest.json or index.json depending on the image format
+    bash_launcher = ctx.actions.declare_file("%s.%s.descriptor.sh" % (ctx.label.name, idx))
     descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
+
+    substitutions = {
+        "{{zstd_path}}": zstd.zstdinfo.binary.path,
+        "{{jq_path}}": jq.jqinfo.bin.path,
+        "{{coreutils_path}}": coreutils.coreutils_info.bin.path,
+        "{{regctl_path}}": regctl.regctl_info.binary.path,
+    }
+
+    ctx.actions.expand_template(
+        template = ctx.file._descriptor_sh,
+        output = bash_launcher,
+        is_executable = True,
+        substitutions = substitutions,
+    )
+
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
     args.add(layer.owner)
+    executable = util.maybe_wrap_launcher_for_windows(ctx, bash_launcher)
+    inputs = [bash_launcher]
     ctx.actions.run(
-        executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh),
-        inputs = [layer],
+        executable = executable,       
+        inputs = [layer] + inputs,
         outputs = [descriptor],
         arguments = [args],
-        env = {
-            "HPATH": ":".join([
-                zstd.zstdinfo.binary.dirname,
-                jq.jqinfo.bin.dirname,
-                coreutils.coreutils_info.bin.dirname,
-                regctl.regctl_info.binary.dirname,
-            ]),
-        },
         tools = [
             jq.jqinfo.bin,
             zstd.zstdinfo.binary,
@@ -142,7 +152,7 @@ def _oci_image_impl(ctx):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
     regctl = ctx.toolchains["@rules_oci//oci:regctl_toolchain_type"]
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    jq = ctx.toolchains["@jq.bzl//jq/toolchain:type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
     zstd = ctx.toolchains["@aspect_bazel_lib//lib:zstd_toolchain_type"]
 
@@ -152,6 +162,9 @@ def _oci_image_impl(ctx):
 
     # create the image builder
     builder = ctx.actions.declare_file("image_%s.sh" % ctx.label.name)
+    # pass the platform json via template to avoid issues with escaping via bat wrappers
+    platform_str = _platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant) if not ctx.attr.base else "0"
+    platform_str = platform_str.replace('"', '\\"')
     ctx.actions.expand_template(
         template = ctx.file._image_sh,
         output = builder,
@@ -162,6 +175,7 @@ def _oci_image_impl(ctx):
             "{{coreutils_path}}": coreutils.coreutils_info.bin.dirname,
             "{{output}}": output.path,
             "{{treeartifact_symlinks}}": str(int(use_symlinks)),
+            "{{scratch}}": platform_str,
         },
     )
 
@@ -183,7 +197,7 @@ def _oci_image_impl(ctx):
             transitive_inputs.append(base_default_info.files)
     else:
         # create a scratch base image with given os/arch[/variant]
-        args.add(_platform_str(ctx.attr.os, ctx.attr.architecture, ctx.attr.variant), format = "--scratch=%s")
+        args.add("--scratch=true")
 
     # If tree artifact symlinks are supported also add tars into runfiles.
     if use_symlinks:
@@ -238,10 +252,16 @@ def _oci_image_impl(ctx):
     if ctx.attr.workdir:
         args.add(ctx.attr.workdir, format = "--workdir=%s")
 
+    # todo: remove if not needed
+    #args.set_param_file_format("multiline")
+    args.use_param_file("@%s", use_always=True)
+    # without this on windows the args are quoted and the quotes end up in the bash script and upset the parsing
+    # eg unknown argument '--scratch=true'
+    args.set_param_file_format("multiline")
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
-    if ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if is_windows_exec(ctx):
         # See https://www.msys2.org/wiki/Porting/:
         # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
         action_env["MSYS2_ARG_CONV_EXCL"] = "*"
@@ -249,13 +269,16 @@ def _oci_image_impl(ctx):
         # This one is for Windows Git MSys
         action_env["MSYS_NO_PATHCONV"] = "1"
 
+    executable = util.maybe_wrap_launcher_for_windows(ctx, builder)
     ctx.actions.run(
         inputs = depset(inputs, transitive = transitive_inputs),
         arguments = [args],
         outputs = [output],
         env = action_env,
-        executable = util.maybe_wrap_launcher_for_windows(ctx, builder),
+        executable = executable,
         tools = [
+            executable,
+            builder,
             regctl.regctl_info.binary,
             jq.jqinfo.bin,
             coreutils.coreutils_info.bin,
@@ -278,7 +301,7 @@ oci_image = rule(
     attrs = dict(_attrs, **resource_set_attr),
     doc = _DOC,
     toolchains = [
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
+        "@jq.bzl//jq/toolchain:type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
         "@aspect_bazel_lib//lib:zstd_toolchain_type",
         "@rules_oci//oci:regctl_toolchain_type",

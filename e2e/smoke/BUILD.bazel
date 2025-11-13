@@ -49,7 +49,8 @@ filegroup(
 container_structure_test(
     name = "test",
     configs = ["test.yaml"],
-    image = ":image",
+    driver = "tar",
+    image = ":tarball.tar",
 )
 
 genrule(
@@ -72,11 +73,18 @@ assert_json_matches(
     filter1 = ".[0].RepoTags",
 )
 
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 genrule(
     name = "docker_created",
     srcs = [":tarball.tar"],
     outs = ["docker_created.txt"],
     cmd = "docker load -i $(location :tarball.tar) && docker inspect --format='{{{{.Created}}}}' {} > $@".format(tags[0]),
+    # todo: find a way to run this without requiring OS installation of docker
+    target_compatible_with = NOT_WINDOWS,
 )
 
 diff_test(

@@ -9,6 +9,8 @@ COSIGN_VERSIONS = {
         "linux-arm64": "sha256-VqFkgL3VbseJq6plkkQC9rksAEHwaIWZWFPAVWe3bzQ=",
         "linux-ppc64le": "sha256-vn642hpl2gu7YaEVp+E88FsjN57pdpFZl0uK1pDU8Fc=",
         "linux-s390x": "sha256-6AybLpHQBp2XqQabBcR9yj+eGbRlLEx+bKMx14e6CXI=",
+        "windows-amd64": "sha256-BJAm2uMkbW6oIBUS7D7846qwx/HTONUuJsUl3QK0GKA=",
+        "windows-arm64": "sha256-ABnfxLMtY8E5KqJkrtIlPB4ML7CSFvjizCabv7i7SbU=",
     },
     "v2.2.3": {
         "darwin-amd64": "sha256-JCn0sCf8MRpjJOnbb7OpN9VZ3GHekGocLQ0eBnFoXkw=",
@@ -18,6 +20,8 @@ COSIGN_VERSIONS = {
         "linux-arm64": "sha256-sIjWdvDAEjuMNI4Y1CHPlmAg7cSXekhhFaEmQ96pmj8=",
         "linux-ppc64le": "sha256-IaAWkdvfyzUbTpTM9QGk6HNyLPX+b2epc172bstBlB0=",
         "linux-s390x": "sha256-1yzyiRkNKMacuVxeMhOaoZgf/KCoQyfImgErsfOoBR0=",
+        "windows-amd64": "sha256-9/Jy1WxYCw7Jb1m/6fiOxfQrbhld8AnONBdCjg4N6tE=",
+        "windows-arm64": "sha256-Adj8SzLWM8E5KqJkrtIlPB4ML7CSFvjizCabs7i7SbU=",
     },
     "v2.0.2": {
         "darwin-amd64": "sha256-D1HL4ZoxW5GehwQvBIUzGCFyLst/ziLMG4gO1IM/yLA=",

@@ -1,4 +1,5 @@
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load("util.bzl", "is_exec_platform_windows")
 
 exports_files(
     glob(["*.bzl"]),
@@ -20,6 +21,7 @@ bzl_library(
     deps = [
         ":util",
         "@aspect_bazel_lib//lib:paths",
+        "@aspect_bazel_lib//lib:windows_utils",
     ],
 )
 
@@ -106,4 +108,9 @@ bzl_library(
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:versions",
     ],
+)
+
+is_exec_platform_windows(
+    name = "is_exec_platform_windows",
+    visibility = ["//visibility:public"],
 )

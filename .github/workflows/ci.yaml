@@ -18,47 +18,46 @@ concurrency:
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
 jobs:
-  matrix-prep-bazelversion:
-    # Prepares the 'bazelversion' axis of the test matrix
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - id: bazel_7
-        run: echo "bazelversion=$(head -n 1 .bazelversion)" >> $GITHUB_OUTPUT
-      - id: bazel_6
-        run: echo "bazelversion=6.4.0" >> $GITHUB_OUTPUT
-    outputs:
-      # Will look like ["<version from .bazelversion>", "6.4.0"]
-      bazelversions: ${{ toJSON(steps.*.outputs.bazelversion) }}
-
-  matrix-prep-os:
-    # Prepares the 'os' axis of the test matrix
+  matrix-prep:
     runs-on: ubuntu-latest
     env:
       TC_CLOUD_TOKEN: ${{ secrets.TC_CLOUD_TOKEN }}
     steps:
+      - uses: actions/checkout@v4
+      - id: bazel-version
+        name: Prepare 'bazel-version' matrix axis
+        run: |
+          v=$(head -n 1 .bazelversion)
+          m=${v::1}
+          a=(
+            "major:$m, version:\"$v\""
+            "major:6, version:\"6.5.0\""
+          )
+          printf -v j '{%s},' "${a[@]}"
+          echo "res=[${j%,}]" | tee -a $GITHUB_OUTPUT
       - id: linux
-        run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
+        run: echo "os=ubuntu" >> $GITHUB_OUTPUT
       - id: macos
-        run: echo "os=macos-13" >> $GITHUB_OUTPUT
+        run: echo "os=macos" >> $GITHUB_OUTPUT
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
+      - id: windows
+        run: echo "os=windows" >> $GITHUB_OUTPUT
     outputs:
-      # Will look like ["ubuntu-latest", "macos-13"]
+      bazel-version: ${{ steps.bazel-version.outputs.res }}
+      # Will look like ["ubuntu", "macos", "windows"]
       os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
-    # The type of runner that the job will run on
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
     needs:
-      - matrix-prep-bazelversion
-      - matrix-prep-os
-
+      - matrix-prep
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJSON(needs.matrix-prep-os.outputs.os) }}
-        bazelversion: ${{ fromJSON(needs.matrix-prep-bazelversion.outputs.bazelversions) }}
+        bazel-version: ${{ fromJSON(needs.matrix-prep.outputs.bazel-version) }}
+        bzlmod: [1, 0]
+        os: ${{ fromJSON(needs.matrix-prep.outputs.os) }}
         folder:
           - .
           - e2e/wasm
@@ -66,34 +65,46 @@ jobs:
           - e2e/assertion
           - examples/dockerfile
 
-        bzlmodEnabled: [true, false]
         exclude:
-          # macos is expensive (billed at 10X) so don't test these
-          - os: macos-13
-            folder: e2e/wasm
-          - os: macos-13
-            folder: e2e/assertion
-          - os: macos-13
-            bazelversion: 6.4.0
+          # Don't test MacOS and Windows against secondary bazel version to minimize minutes (billed at 10X and 2X respectively)
+          # https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions#included-storage-and-minutes
+          - os: macos
+            bazel-version:
+              major: 6
+          - os: windows
+            bazel-version:
+              major: 6
+          # Root workspace. Requires bzlmod and bazel 7+. Ubuntu-bazel-7 is tested on Buildkite using Aspect Workflows
           - folder: .
-            bazelversion: 6.4.0
+            bzlmod: 0
+          - folder: .
+            bazel-version:
+              major: 6
+          - folder: .
+            bazel-version:
+              major: 7
+            os: ubuntu
+          # examples/dockerfile. Requires bzlmod and bazel 7+. Skip windows (todo: buildx not supported)
           - folder: examples/dockerfile
-            bzlmodEnabled: false
+            bzlmod: 0
           - folder: examples/dockerfile
-            bazelversion: 6.4.0
-          # e2e/assertion is bzlmod only but it has test for both cases.
+            bazel-version:
+              major: 6
+          - folder: examples/dockerfile
+            os: windows
+          # e2e/assertion. Requires bzlmod. Skip macos (save CI minutes). Skip windows (BATS tests don't work reliably)
           - folder: e2e/assertion
-            bzlmodEnabled: false
-          # TODO: fix
+            bzlmod: 0
+          - folder: e2e/assertion
+            os: macos
+          # e2e/wasm. Requires workspace (todo: bzlmod). Skip macos (save CI minutes). Skip windows (todo: configure WASM C++ toolchains on Windows)
           - folder: e2e/wasm
-            bzlmodEnabled: true
-          # Don't test the root module with WORKSPACE at all
-          - folder: .
-            bzlmodEnabled: false
-          # This is tested on Buildkite using Aspect Workflows
-          - bazelversion: 7.4.1
-            folder: .
-            os: ubuntu-latest
+            bzlmod: 1
+          - folder: e2e/wasm
+            os: macos
+          - folder: e2e/wasm
+            os: windows
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -103,9 +114,9 @@ jobs:
         with:
           path: |
             ~/.cache/bazel-repo
-          key: bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ matrix.bazelversion }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'WORKSPACE.bzlmod','MODULE.bzl') }}
+          key: bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ matrix.bazel-version }}-${{ hashFiles('**/BUILD.bazel', '**/*.bzl', 'WORKSPACE', 'WORKSPACE.bzlmod','MODULE.bzl') }}
           restore-keys: |
-            bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ matrix.bazelversion }}
+            bazel-cache-${{ matrix.os }}-${{ matrix.folder }}-${{ matrix.bazel-version }}
             bazel-cache-${{ matrix.os }}-${{ matrix.folder }}
             bazel-cache-${{ matrix.os }}
             bazel-cache-
@@ -114,37 +125,38 @@ jobs:
         # Store the --enable_bzlmod flag that we add to the test command below
         # only when we're running bzlmod in our test matrix.
         id: set_bzlmod_flag
-        if: matrix.bzlmodEnabled
+        if: matrix.bzlmod == '1'
         run: echo "bzlmod_flag=--enable_bzlmod" >> $GITHUB_OUTPUT
 
       - name: Set credential helpers flag
         # Add --config needs_credential_helpers to add additional credential helpers
         # to fetch from registries with HTTP headers set by credential helpers.
         id: set_credential_helper_flag
-        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        if: matrix.bazel-version == '6.5.0' && matrix.folder == '.'
         run: echo "credential_helper_flag=--config=needs_credential_helpers" >> $GITHUB_OUTPUT
 
       - name: Setup crane for credential helpers to use
         uses: imjasonh/setup-crane@v0.3
-        if: matrix.bazelversion == '6.4.0' && matrix.folder == '.'
+        if: matrix.bazel-version == '6.5.0' && matrix.folder == '.'
         with:
           version: "v0.19.1"
 
       - name: Configure Bazel version
         working-directory: ${{ matrix.folder }}
-        run: echo "${{ matrix.bazelversion }}" > .bazelversion
+        run: echo "${{ matrix.bazel-version.version }}" > .bazelversion
 
       - name: Configure TestContainers cloud
-        if: ${{ matrix.os == 'macos-13' }}
+        if: ${{ matrix.os == 'macos' }}
         uses: atomicjar/testcontainers-cloud-setup-action@main
         with:
           wait: true
           token: ${{ secrets.TC_CLOUD_TOKEN }}
 
-      - run: man xargs
+      # this causes windows failure; why is this here?
+      # - run: man xargs
 
       - name: Configure Remote Docker Host
-        if: ${{ matrix.os == 'macos-13' }}
+        if: ${{ matrix.os == 'macos' }}
         run: |
           echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
           curl -fsSL https://download.docker.com/mac/static/stable/x86_64/docker-23.0.0.tgz | tar -xOvf - docker/docker > /usr/local/bin/docker
@@ -152,6 +164,7 @@ jobs:
 
       - name: bazel test //...
         working-directory: ${{ matrix.folder }}
+        shell: bash
         run: |
           bazel \
           --bazelrc=$GITHUB_WORKSPACE/.github/workflows/ci.bazelrc \

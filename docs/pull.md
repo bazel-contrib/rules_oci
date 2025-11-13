@@ -161,6 +161,8 @@ In this example, we provide a `www_authenticate_challenges` attribute to the `oc
 ## oci_pull
 
 <pre>
+load("@rules_oci//oci:pull.bzl", "oci_pull")
+
 oci_pull(<a href="#oci_pull-name">name</a>, <a href="#oci_pull-www_authenticate_challenges">www_authenticate_challenges</a>, <a href="#oci_pull-image">image</a>, <a href="#oci_pull-repository">repository</a>, <a href="#oci_pull-registry">registry</a>, <a href="#oci_pull-platforms">platforms</a>, <a href="#oci_pull-digest">digest</a>, <a href="#oci_pull-tag">tag</a>,
          <a href="#oci_pull-reproducible">reproducible</a>, <a href="#oci_pull-is_bzlmod">is_bzlmod</a>, <a href="#oci_pull-config">config</a>, <a href="#oci_pull-bazel_tags">bazel_tags</a>)
 </pre>
