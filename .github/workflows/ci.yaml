@@ -150,7 +150,7 @@ jobs:
           curl -fsSL https://download.docker.com/mac/static/stable/x86_64/docker-23.0.0.tgz | tar -xOvf - docker/docker > /usr/local/bin/docker
           chmod +x /usr/local/bin/docker
 
-      - name: bazel test //...
+      - name: bazel test --test_output=all //...
         working-directory: ${{ matrix.folder }}
         run: |
           bazel \
