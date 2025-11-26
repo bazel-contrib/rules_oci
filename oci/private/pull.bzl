@@ -55,10 +55,8 @@ Unable to retrieve the image manifest. This could be due to
 *) If there is a configured URL Rewriter, check that it does not block the request.
 """
 
-# The `mediaType` field is optional for manifests.
-# When omitted, use this as a default value.
-# https://specs.opencontainers.org/image-spec/manifest/#image-manifest-property-descriptions
 _DEFAULT_MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json"
+_DEFAULT_INDEX_MEDIA_TYPE = "application/vnd.oci.image.index.v1+json"
 
 # Supported media types
 # * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
@@ -66,7 +64,7 @@ _DEFAULT_MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json"
 _SUPPORTED_MEDIA_TYPES = {
     "index": [
         "application/vnd.docker.distribution.manifest.list.v2+json",
-        "application/vnd.oci.image.index.v1+json",
+        _DEFAULT_INDEX_MEDIA_TYPE,
     ],
     "manifest": [
         "application/vnd.docker.distribution.manifest.v2+json",
@@ -78,6 +76,23 @@ _DOWNLOAD_HEADERS = {
     "Accept": ",".join(_SUPPORTED_MEDIA_TYPES["index"] + _SUPPORTED_MEDIA_TYPES["manifest"]),
     "Docker-Distribution-API-Version": "registry/2.0",
 }
+
+def _determine_media_type(manifest):
+    """Determine the media type of a manifest.
+
+    In the absence of an explicit media type, infer a default value based on other properties.
+    Image manifests have a required `config` field:
+    https://specs.opencontainers.org/image-spec/manifest/#image-manifest-property-descriptions.
+    Image indices have a required `manifests` field:
+    https://specs.opencontainers.org/image-spec/image-index/#image-index-property-descriptions
+    """
+    if "mediaType" in manifest:
+        return manifest["mediaType"]
+    if "config" in manifest:
+        return _DEFAULT_MANIFEST_MEDIA_TYPE
+    if "manifests" in manifest:
+        return _DEFAULT_INDEX_MEDIA_TYPE
+    fail("Unable to determine media type")
 
 def _config_path(rctx):
     if rctx.attr.config:
@@ -209,7 +224,7 @@ def _oci_pull_impl(rctx):
     downloader = _create_downloader(rctx, au)
 
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
-    media_type = manifest.get("mediaType", _DEFAULT_MANIFEST_MEDIA_TYPE)
+    media_type = _determine_media_type(manifest)
 
     if media_type in _SUPPORTED_MEDIA_TYPES["manifest"]:
         # copy manifest.json to blobs with its digest.
@@ -254,7 +269,7 @@ def _oci_pull_impl(rctx):
         # ```
         # See https://github.com/bazel-contrib/rules_oci/pull/596 for more details on this race codition.
         manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "platform-manifest.json")
-        media_type = manifest.get("mediaType", _DEFAULT_MANIFEST_MEDIA_TYPE)
+        media_type = _determine_media_type(manifest)
 
         # copy platform-manifest.json to blobs with its digest.
         rctx.template(_digest_into_blob_path(digest), "platform-manifest.json")
@@ -359,7 +374,7 @@ def _oci_alias_impl(rctx):
     available_platforms = []
 
     manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
-    media_type = manifest.get("mediaType", _DEFAULT_MANIFEST_MEDIA_TYPE)
+    media_type = _determine_media_type(manifest)
     rctx.file("digest.txt", digest)
 
     if rctx.attr.platforms:
