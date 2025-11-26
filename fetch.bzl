@@ -195,6 +195,14 @@ def fetch_images():
         image = "nvcr.io/nvidia/k8s-device-plugin",
     )
 
+    # Helm chart lacking `mediaType` in manifest.
+    # https://github.com/bazel-contrib/rules_oci/issues/839
+    oci_pull(
+        name = "envoyproxy_gateway_helm",
+        digest = "sha256:905eced000d4b2acb78f802f5d03af32a08d30478808c20d522ffa735476bc5d",
+        image = "docker.io/envoyproxy/gateway-helm",
+    )
+
     _DEB_TO_LAYER = """\
 genrule(
     name = "layer",

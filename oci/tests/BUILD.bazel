@@ -79,6 +79,7 @@ build_test(
         "@es_kibana_image",
         "@quay_clair_image",
         "@nvidia_k8s_device_plugin_image",
+        "@envoyproxy_gateway_helm",
     ],
 )
 
