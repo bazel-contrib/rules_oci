@@ -55,6 +55,11 @@ Unable to retrieve the image manifest. This could be due to
 *) If there is a configured URL Rewriter, check that it does not block the request.
 """
 
+# The `mediaType` field is optional for manifests.
+# When omitted, use this as a default value.
+# https://specs.opencontainers.org/image-spec/manifest/#image-manifest-property-descriptions
+_DEFAULT_MANIFEST_MEDIA_TYPE = "application/vnd.oci.image.manifest.v1+json"
+
 # Supported media types
 # * OCI spec: https://github.com/opencontainers/image-spec/blob/main/media-types.md
 # * Docker spec: https://github.com/distribution/distribution/blob/main/docs/spec/manifest-v2-2.md#media-types
@@ -65,7 +70,7 @@ _SUPPORTED_MEDIA_TYPES = {
     ],
     "manifest": [
         "application/vnd.docker.distribution.manifest.v2+json",
-        "application/vnd.oci.image.manifest.v1+json",
+        _DEFAULT_MANIFEST_MEDIA_TYPE,
     ],
 }
 
@@ -204,12 +209,13 @@ def _oci_pull_impl(rctx):
     downloader = _create_downloader(rctx, au)
 
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
+    media_type = manifest.get("mediaType", _DEFAULT_MANIFEST_MEDIA_TYPE)
 
-    if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
+    if media_type in _SUPPORTED_MEDIA_TYPES["manifest"]:
         # copy manifest.json to blobs with its digest.
         rctx.template(_digest_into_blob_path(digest), "manifest.json")
 
-    elif manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+    elif media_type in _SUPPORTED_MEDIA_TYPES["index"]:
         # image index manifest: download the image manifest for the target platform.
         if not rctx.attr.platform:
             fail("{}/{} is a multi-architecture image, so attribute 'platforms' is required.".format(
@@ -248,11 +254,12 @@ def _oci_pull_impl(rctx):
         # ```
         # See https://github.com/bazel-contrib/rules_oci/pull/596 for more details on this race codition.
         manifest, size, digest = downloader.download_manifest(matching_manifest["digest"], "platform-manifest.json")
+        media_type = manifest.get("mediaType", _DEFAULT_MANIFEST_MEDIA_TYPE)
 
         # copy platform-manifest.json to blobs with its digest.
         rctx.template(_digest_into_blob_path(digest), "platform-manifest.json")
     else:
-        fail("Unrecognized mediaType {} in manifest file".format(manifest["mediaType"]))
+        fail("Unrecognized mediaType {} in manifest file".format(media_type))
 
     config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
     downloader.download_blob(manifest["config"]["digest"], config_output_path, block = True)
@@ -275,7 +282,7 @@ def _oci_pull_impl(rctx):
             r.wait()
 
     rctx.file("index.json", util.build_manifest_json(
-        media_type = manifest["mediaType"],
+        media_type = media_type,
         size = size,
         digest = digest,
         platform = rctx.attr.platform,
@@ -352,17 +359,18 @@ def _oci_alias_impl(rctx):
     available_platforms = []
 
     manifest, _, digest = downloader.download_manifest(rctx.attr.identifier, "mf.json")
+    media_type = manifest.get("mediaType", _DEFAULT_MANIFEST_MEDIA_TYPE)
     rctx.file("digest.txt", digest)
 
     if rctx.attr.platforms:
-        if manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["index"]:
+        if media_type in _SUPPORTED_MEDIA_TYPES["index"]:
             # multi arch image.
             for submanifest in manifest["manifests"]:
                 parts = [submanifest["platform"]["os"], submanifest["platform"]["architecture"]]
                 if "variant" in submanifest["platform"]:
                     parts.append(submanifest["platform"]["variant"])
                 available_platforms.append('"{}"'.format("/".join(parts)))
-        elif manifest["mediaType"] in _SUPPORTED_MEDIA_TYPES["manifest"]:
+        elif media_type in _SUPPORTED_MEDIA_TYPES["manifest"]:
             # single arch image where the user specified the platform.
             config_output_path = _digest_into_blob_path(manifest["config"]["digest"])
             downloader.download_blob(manifest["config"]["digest"], config_output_path, block = True)
