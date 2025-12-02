@@ -19,3 +19,5 @@ bcr_test_module:
         - "//..."
         # This test requires a docker daemon, not available on BCR CI
         - "-//:test"
+        - "-//:docker_created"
+        - "-//:test_created"
