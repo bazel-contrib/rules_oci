@@ -1,6 +1,11 @@
 load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
 
+NOT_WINDOWS = select({
+    "@platforms//os:windows": ["@platforms//:incompatible"],
+    "//conditions:default": [],
+})
+
 # Pluck out the regctl tool from the toolchain.
 filegroup(
     name = "regctl",
@@ -43,4 +48,5 @@ oci_load(
     name = "load",
     image = ":image",
     repo_tags = ["example:latest"],
+    target_compatible_with = NOT_WINDOWS,
 )

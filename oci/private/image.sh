@@ -16,6 +16,7 @@ readonly ENV_EXPAND_FILTER='[$raw | match("\\${?([a-zA-Z0-9_]+)}?"; "gm")] | red
     {parts: [], prev: 0};
     {parts: (.parts + [$raw[.prev:$match.offset], ($envs[] | select(.key == $match.captures[0].string)).value ]), prev: ($match.offset + $match.length)}
 ) | .parts + [$raw[.prev:]] | join("")'
+readonly SCRATCH="{{scratch}}"
 
 function base_from_scratch() {
   local platform="$1"
@@ -44,7 +45,12 @@ function base_from() {
       coreutils cp --no-preserve=mode "$blob" "$OUTPUT/blobs/$relative_to_blobs"
     fi
   done
-  coreutils cp --no-preserve=mode "$path/oci-layout" "$OUTPUT/oci-layout"
+  # without this explicit chmod the following error occurs on windows:
+  # bazel build /examples/tarball_as_base:image
+  # failed to write index: cannot create oci-layout: open bazel-out/x64_windows-fastbuild/bin/examples/tarball_as_base/image/oci-layout: Access is denied.
+  # chmod is not part of coreutils
+  coreutils cp "$path/oci-layout" "$OUTPUT/oci-layout"
+  /usr/bin/chmod +w "$OUTPUT/oci-layout"
   jq '.manifests[0].annotations["org.opencontainers.image.ref.name"] = "intermediate"' "$path/index.json" >"$OUTPUT/index.json"
 }
 
@@ -117,10 +123,30 @@ function add_layer() {
 
 CONFIG="{}"
 
+# Expand @params file if present
+ARGS=()
 for ARG in "$@"; do
+  if [[ "$ARG" == @* ]]; then
+    PARAMS_FILE="${ARG#@}"
+    if [[ -f "$PARAMS_FILE" ]]; then
+      while IFS= read -r line || [ -n "$line" ]; do
+        # skip empty lines and comments
+        [[ -z "$line" || "$line" =~ ^# ]] && continue
+        ARGS+=("$line")
+      done < "$PARAMS_FILE"
+    else
+      echo "Params file $PARAMS_FILE not found" >&2
+      exit 1
+    fi
+  else
+    ARGS+=("$ARG")
+  fi
+done
+
+for ARG in "${ARGS[@]}"; do
   case "$ARG" in
   --scratch=*)
-    base_from_scratch "${ARG#--scratch=}"
+    base_from_scratch "${SCRATCH}"
     ;;
   --from=*)
     base_from "${ARG#--from=}"
@@ -133,6 +159,8 @@ for ARG in "$@"; do
     # Get environment from existing config
     env=$(get_config | jq '(.config.Env // []) | map(. | split("=") | {"key": .[0], "value": .[1:] | join("=")})')
     while IFS= read -r expansion || [ -n "$expansion" ]; do
+      # Strip carriage return from Windows line endings
+      expansion="${expansion%$'\r'}"
       # collect all characters until a `=` is encountered
       key="${expansion%%=*}"
       # skip `length(k) + 1` to collect the rest.

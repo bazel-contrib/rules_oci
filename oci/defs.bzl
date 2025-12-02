@@ -8,7 +8,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
-load("@aspect_bazel_lib//lib:jq.bzl", "jq")
+load("@jq.bzl//jq:jq.bzl", "jq")
 load("@aspect_bazel_lib//lib:utils.bzl", "propagate_common_rule_attributes")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
