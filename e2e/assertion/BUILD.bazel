@@ -35,7 +35,6 @@ load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
     )
     for (name, flags) in [
         ("bzlmod", "--enable_bzlmod"),
-        ("nobzlmod", "--noenable_bzlmod"),
     ]
 ]
 
@@ -65,7 +64,6 @@ load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
     )
     for (name, flags) in [
         ("bzlmod", "--enable_bzlmod"),
-        ("nobzlmod", "--noenable_bzlmod"),
     ]
 ]
 
@@ -95,8 +93,6 @@ load("@aspect_bazel_lib//lib:bats.bzl", "bats_test")
     )
     for (name, flags) in [
         ("bzlmod_legacy_runfiles", "--enable_bzlmod --legacy_external_runfiles"),
-        ("nobzlmod_legacy_runfiles", "--noenable_bzlmod --legacy_external_runfiles"),
         ("bzlmod_nolegacy_runfiles", "--enable_bzlmod --nolegacy_external_runfiles"),
-        ("nobzlmod_nolegacy_runfiles", "--noenable_bzlmod --nolegacy_external_runfiles"),
     ]
 ]
