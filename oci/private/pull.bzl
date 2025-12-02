@@ -35,7 +35,7 @@ _IMAGE_REFERENCE_ATTRS = {
 }
 
 SCHEMA1_ERROR = """\
-The registry sent a manifest with schemaVersion=1. 
+The registry sent a manifest with schemaVersion=1.
 This commonly occurs when fetching from a registry that needs the Docker-Distribution-API-Version header to be set.
 See: https://github.com/bazel-contrib/rules_oci/blob/main/docs/pull.md#authentication-using-credential-helpers
 """
@@ -265,12 +265,19 @@ def _oci_pull_impl(rctx):
 
     # download all layers
     # TODO: we should avoid eager-download of the layers ("shallow pull")
-    results = []
+    results = {}
     for layer in manifest["layers"]:
-        results.append(downloader.download_blob(layer["digest"], _digest_into_blob_path(layer["digest"]), block = False))
+        # Skip downloading of duplicate layers.
+        if layer["digest"] in results:
+            continue
+        results[layer["digest"]] = downloader.download_blob(
+            layer["digest"],
+            _digest_into_blob_path(layer["digest"]),
+            block = False,
+        )
 
     # wait for all downloads to complete, if download is asynchronous
-    for r in results:
+    for r in results.values():
         if hasattr(r, "wait"):
             r.wait()
 
