@@ -3,7 +3,7 @@ bcr_test_module:
   matrix:
     bazel: ["6.x", "7.x"]
     # TODO(#97): add windows
-    platform: ["debian10", "ubuntu2004"]
+    platform: ["debian11", "ubuntu2204"]
   tasks:
     test_linux:
       name: "Run test module"
