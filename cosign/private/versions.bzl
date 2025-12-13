@@ -1,23 +1,14 @@
 "Mirrored versions/integrity hashes of cosign binaries"
 
-COSIGN_VERSIONS = {
-     "v3.0.2": {
-        "darwin-amd64": "sha256-D8K28WuQCr39oxU7EfxDWoy+ODDo6CD+itX+QUmltHI=",
-        "darwin-arm64": "sha256-OCOwRN4YTaIeMAvF4g3SnT+pJDrzunDEpdoXEvM4XUY=",
-        "linux-amd64": "sha256-RtvctUZ6Pf7CUmkj0LM2XkDI2dwA7CPVrKNDdEnoy/0=",
-        "linux-arm": "sha256-Bn3ySDFe4MSvHO2xzOZa2Cb3hL4R74iv2NNuh8BxYrY=",
-        "linux-arm64": "sha256-F/14RzfKVNfYo0PILabF1tve6XHmZkTZI9GwV/uX1+0=",
-        "linux-ppc64le": "sha256-ZQrv6dK/DuUoLo5Ap/yT721m73GKg6w8PsBrIreX/wA=",
-        "linux-s390x": "sha256-9FMxz6XftvkIpe1PIPb9pPMXFgKNbw3P+cd18AbUht8=",
-    },
-    "v3.0.1": {
-        "darwin-amd64": "sha256-JgwXS4DWQBp9JwMQnrMvagvb3dKskdMmjclqUSONlqs=",
-        "darwin-arm64": "sha256-2tKhYdkfuhmdHrrn5WUqTC3UEsuxq2tMyK1qFTeDGf4=",
-        "linux-amd64": "sha256-I8n/iJZy8DZ2tnNTneB9WtTo78gkejrVXJvAAWmqIwU=",
-        "linux-arm": "sha256-CtqwbdfIbbc7qYYQ38DmwSgvpPkJd65J2C5kTBErwlg=",
-        "linux-arm64": "sha256-j1u2iZEY1SHXsSJS8G1YCPuk5ssKI/8SDtbBTXyHhjo=",
-        "linux-ppc64le": "sha256-gu0eLEs3kn/DnEiN0YcfKlHqQBQKjHkR7ZACa42L8s0=",
-        "linux-s390x": "sha256-bjCuXjMBQZeoiLlJJyjkmq9yND4x4m2o97NyBRjo9t8=",
+COSIGN_VERSIONS = { 
+      "v3.0.3": {
+        "darwin-amd64": "sha256-bHWYHoXggac/C0CH9Y4K1f1HEscbN/oLatd0wflluvo=",
+        "darwin-arm64": "sha256-ODSeRai7DR7Tp6/7i90unVl87gi2gAw5WpJrTZrbhNI=",
+        "linux-amd64": "sha256-BSNjoOI+Ln7VNkE1G4tCCRjn4I+cHYpCo904d6eKLhA=",
+        "linux-arm": "sha256-jsA4XsTQiMsmxA6s8P0cP4tS12/dYByrmjcdztwaWfw=",
+        "linux-arm64": "sha256-gTmCMTYgMePHr9anUIxXBJRgzX4Cc28evomkUhAiU+U=",
+        "linux-ppc64le": "sha256-avntN40on/0bzptt4CpHol+b8y0Bovaw9D8Pu1RPFMY=",
+        "linux-s390x": "sha256-6M2hu2tnGeRv5yqJeJhSlxoijTZAY8yWHQZcPNTj20s=",
     },
     "v2.6.1": {
         "darwin-amd64": "sha256-8e0nh8yWSP08ZE/LJ55D8/Vdpjt4jWmlJ6oUrZf/3KE=",
