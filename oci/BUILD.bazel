@@ -78,6 +78,7 @@ bzl_library(
     deps = [
         ":pull",
         ":repositories",
+        "//oci/private:util",
     ],
 )
 

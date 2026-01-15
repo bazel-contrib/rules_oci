@@ -2,6 +2,7 @@
 
 load(":pull.bzl", "oci_pull")
 load(":repositories.bzl", "oci_register_toolchains")
+load("//oci/private:util.bzl", "util")
 
 # TODO: it sucks that the API of the oci_pull macro has to be repeated here.
 pull = tag_class(attrs = {
@@ -44,6 +45,14 @@ def _oci_extension(module_ctx):
         for pull in mod.tags.pull:
             if not pull.reproducible:
                 reproducible = False
+            elif not pull.digest:
+                if not pull.image:
+                    reproducible = False
+                else:
+                    _, _, _, digest, _ = util.parse_image(pull.image)
+                    if not digest:
+                        reproducible = False
+
             oci_pull(
                 name = pull.name,
                 image = pull.image,
