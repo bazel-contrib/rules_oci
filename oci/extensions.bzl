@@ -39,8 +39,11 @@ Overriding the default is only permitted in the root module.
 def _oci_extension(module_ctx):
     root_direct_deps = []
     root_direct_dev_deps = []
+    reproducible = True
     for mod in module_ctx.modules:
         for pull in mod.tags.pull:
+            if not pull.reproducible:
+                reproducible = False
             oci_pull(
                 name = pull.name,
                 image = pull.image,
@@ -77,9 +80,11 @@ def _oci_extension(module_ctx):
 
     # Allow use_repo calls to be automatically managed by `bazel mod tidy`. See
     # https://docs.google.com/document/d/1dj8SN5L6nwhNOufNqjBhYkk5f-BJI_FPYWKxlB3GAmA/edit#heading=h.5mcn15i0e1ch
+
     return module_ctx.extension_metadata(
         root_module_direct_deps = root_direct_deps,
         root_module_direct_dev_deps = root_direct_dev_deps,
+        reproducible = reproducible,
     )
 
 oci = module_extension(
