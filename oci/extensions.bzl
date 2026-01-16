@@ -2,7 +2,6 @@
 
 load(":pull.bzl", "oci_pull")
 load(":repositories.bzl", "oci_register_toolchains")
-load("//oci/private:util.bzl", "util")
 
 # TODO: it sucks that the API of the oci_pull macro has to be repeated here.
 pull = tag_class(attrs = {
