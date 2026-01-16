@@ -43,15 +43,8 @@ def _oci_extension(module_ctx):
     reproducible = True
     for mod in module_ctx.modules:
         for pull in mod.tags.pull:
-            if not pull.reproducible:
+            if not pull.reproducible or not pull.digest:
                 reproducible = False
-            elif not pull.digest:
-                if not pull.image:
-                    reproducible = False
-                else:
-                    _, _, _, digest, _ = util.parse_image(pull.image)
-                    if not digest:
-                        reproducible = False
 
             oci_pull(
                 name = pull.name,
@@ -89,7 +82,6 @@ def _oci_extension(module_ctx):
 
     # Allow use_repo calls to be automatically managed by `bazel mod tidy`. See
     # https://docs.google.com/document/d/1dj8SN5L6nwhNOufNqjBhYkk5f-BJI_FPYWKxlB3GAmA/edit#heading=h.5mcn15i0e1ch
-
     return module_ctx.extension_metadata(
         root_module_direct_deps = root_direct_deps,
         root_module_direct_dev_deps = root_direct_dev_deps,
