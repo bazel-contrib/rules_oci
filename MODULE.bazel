@@ -5,7 +5,7 @@ module(
     compatibility_level = 1,
 )
 
-bazel_dep(name = "aspect_bazel_lib", version = "2.7.2")
+bazel_dep(name = "aspect_bazel_lib", version = "2.19.3")
 bazel_dep(name = "bazel_features", version = "1.10.0")
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
@@ -34,7 +34,6 @@ use_repo(tar, "bsd_tar_toolchains")
 register_toolchains("@bsd_tar_toolchains//:all")
 
 # Dev dependencies
-
 bazel_dep(name = "bazel_env.bzl", version = "0.3.1", dev_dependency = True)
 bazel_dep(name = "rules_go", version = "0.46.0", dev_dependency = True, repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.35.0", dev_dependency = True, repo_name = "bazel_gazelle")
