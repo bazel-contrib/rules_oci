@@ -53,7 +53,7 @@ oci_layout_buildx_workaround = rule(
 BUILDX_RULE = """
 def buildx(name, dockerfile, path = ".", srcs = [], build_context = [], execution_requirements = {"local": "1"}, tags = ["manual"], visibility = []):
     \"\"\"
-    Run BuildX to produce OCI base image using a Dockerfile. 
+    Run BuildX to produce OCI base image using a Dockerfile.
 
     Args:
         name: name of the target
@@ -72,7 +72,7 @@ def buildx(name, dockerfile, path = ".", srcs = [], build_context = [], executio
     for context in build_context:
         context_srcs = context_srcs + context["srcs"]
         context_args.append("--build-context={}={}".format(context["replace"], context["store"]))
-    
+
 
     copy_file(
         name = name + "_dockerfile",
@@ -125,7 +125,7 @@ def context_sources(replace, sources, override_path = None):
     store = "$(location %s)" % sources
     if override_path:
         store = override_path
-        
+
     return {
         "replace": replace,
         "store": store,
@@ -137,6 +137,17 @@ context = struct(
     sources = context_sources
 )
 """
+
+def _check_builder_exists(raw_docker_output_json_lines, search_name):
+    lines = [line for line in raw_docker_output_json_lines.split("\n") if line.strip()]
+
+    builders = [json.decode(line) for line in lines]
+
+    for builder in builders:
+        if builder["Name"] == search_name:
+            return True
+
+    return False
 
 def _impl_configure_buildx(rctx):
     has_docker = False
@@ -152,8 +163,8 @@ def _impl_configure_buildx(rctx):
     if has_docker:
         buildx = rctx.path(rctx.attr.buildx)
 
-        r = rctx.execute([buildx, "ls"])
-        if not builder_name in r.stdout:
+        r = rctx.execute([buildx, "ls", "--format", "json"])
+        if not _check_builder_exists(r.stdout, builder_name):
             r = rctx.execute([buildx, "create", "--name", builder_name, "--driver", "docker-container", "--use", "--bootstrap"])
             if r.return_code != 0:
                 fail("Failed to create buildx driver %s: \nSTDERR:\n%s\nsSTDOUT:\n%s" % (builder_name, r.stderr, r.stdout))
