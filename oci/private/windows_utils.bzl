@@ -16,13 +16,13 @@ def _is_exec_platform_windows(ctx):
 is_exec_platform_windows = rule(
     implementation = _is_exec_platform_windows,
     attrs = {
-        "_windows_constraint": attr.label(default = "@platforms//os:windows"),
+        "_windows_constraint": attr.label(default = Label("@platforms//os:windows")),
     },
 )
 
 IS_EXEC_PLATFORM_WINDOWS_ATTRS = {
     "_is_platform_windows_exec": attr.label(
-        default = "//oci/private:is_exec_platform_windows",
+        default = Label("//oci/private:is_exec_platform_windows"),
         executable = True,
         cfg = "exec",
     ),

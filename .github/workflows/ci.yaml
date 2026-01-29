@@ -44,7 +44,7 @@ jobs:
         # Don't run MacOS if there is no TestContainers API token which is the case on forks. We need it for container tests.
         if: ${{ env.TC_CLOUD_TOKEN != '' }}
     outputs:
-      # Will look like ["ubuntu-latest", "macos-13"]
+      # Will look like ["ubuntu-latest", "macos-15"]
       os: ${{ toJSON(steps.*.outputs.os) }}
 
   test:
@@ -69,11 +69,13 @@ jobs:
         bzlmodEnabled: [true, false]
         exclude:
           # macos is expensive (billed at 10X) so don't test these
-          - os: macos-13
+          - os: macos-15
             folder: e2e/wasm
-          - os: macos-13
+          - os: macos-15
             folder: e2e/assertion
-          - os: macos-13
+          - os: macos-15
+            folder: e2e/smoke
+          - os: macos-15
             bazelversion: 7.6.2
           - folder: .
             bazelversion: 7.6.2
@@ -135,7 +137,7 @@ jobs:
         run: echo "${{ matrix.bazelversion }}" > .bazelversion
 
       - name: Configure TestContainers cloud
-        if: ${{ matrix.os == 'macos-13' }}
+        if: ${{ matrix.os == 'macos-15' }}
         uses: atomicjar/testcontainers-cloud-setup-action@main
         with:
           wait: true
@@ -144,7 +146,7 @@ jobs:
       - run: man xargs
 
       - name: Configure Remote Docker Host
-        if: ${{ matrix.os == 'macos-13' }}
+        if: ${{ matrix.os == 'macos-15' }}
         run: |
           echo "DOCKER_HOST=$(grep 'tc.host' ~/.testcontainers.properties | cut -d '=' -f2 | xargs)" >> $GITHUB_ENV
           curl -fsSL https://download.docker.com/mac/static/stable/x86_64/docker-23.0.0.tgz | tar -xOvf - docker/docker > /usr/local/bin/docker
