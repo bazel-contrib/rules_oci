@@ -22,7 +22,7 @@ is_exec_platform_windows = rule(
 
 IS_EXEC_PLATFORM_WINDOWS_ATTRS = {
     "_is_platform_windows_exec": attr.label(
-        default = "@aspect_bazel_lib//lib/private:is_platform_windows_exec",
+        default = "//oci/private:is_exec_platform_windows",
         executable = True,
         cfg = "exec",
     ),
