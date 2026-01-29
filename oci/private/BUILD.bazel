@@ -1,4 +1,10 @@
 load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+load(":windows_utils.bzl", "is_exec_platform_windows")
+
+is_exec_platform_windows(
+    name = "is_exec_platform_windows",
+    visibility = ["//visibility:public"],
+)
 
 exports_files(
     glob(["*.bzl"]),
@@ -103,7 +109,14 @@ bzl_library(
     srcs = ["util.bzl"],
     visibility = ["//oci:__subpackages__"],
     deps = [
+        ":windows_utils",
         "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:versions",
     ],
+)
+
+bzl_library(
+    name = "windows_utils",
+    srcs = ["windows_utils.bzl"],
+    visibility = ["//oci:__subpackages__"],
 )

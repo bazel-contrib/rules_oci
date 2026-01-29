@@ -96,8 +96,7 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
     "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
-}
+} | util.IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _platform_str(os, arch, variant = None):
     parts = dict(os = os, architecture = arch)
@@ -241,7 +240,7 @@ def _oci_image_impl(ctx):
     action_env = {}
 
     # Windows: Don't convert arguments like --entrypoint=/some/bin to --entrypoint=C:/msys64/some/bin
-    if ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if util.is_windows_exec(ctx):
         # See https://www.msys2.org/wiki/Porting/:
         # > Setting MSYS2_ARG_CONV_EXCL=* prevents any path transformation.
         action_env["MSYS2_ARG_CONV_EXCL"] = "*"

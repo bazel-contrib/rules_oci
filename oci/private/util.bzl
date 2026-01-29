@@ -2,6 +2,7 @@
 
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:versions.bzl", "versions")
+load(":windows_utils.bzl", "IS_EXEC_PLATFORM_WINDOWS_ATTRS", "is_windows_exec")
 
 _IMAGE_PLATFORM_VARIANT_DEFAULTS = {
     "linux/arm64": "v8",
@@ -197,11 +198,11 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     but without requiring that the script has a .runfiles folder.
 
     To use:
-    - add the _windows_constraint appears in the rule attrs
+    - add IS_EXEC_PLATFORM_WINDOWS_ATTRS to the rule attrs
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
     """
-    if not ctx.target_platform_has_constraint(ctx.attr._windows_constraint[platform_common.ConstraintValueInfo]):
+    if not is_windows_exec(ctx):
         return bash_launcher
 
     win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
@@ -295,4 +296,6 @@ util = struct(
     build_manifest_json = _build_manifest_json,
     assert_crane_version_at_least = _assert_crane_version_at_least,
     platform_triplet = _platform_triplet,
+    is_windows_exec = is_windows_exec,
+    IS_EXEC_PLATFORM_WINDOWS_ATTRS = IS_EXEC_PLATFORM_WINDOWS_ATTRS,
 )

@@ -176,12 +176,11 @@ _attrs = {
         allow_single_file = True,
     ),
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
-    "_windows_constraint": attr.label(default = "@platforms//os:windows"),
     "_jq": attr.label(
         default = "@jq_toolchains//:resolved_toolchain",
         cfg = "exec",
     ),
-}
+} | util.IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _quote_args(args):
     return ["\"{}\"".format(arg) for arg in args]
