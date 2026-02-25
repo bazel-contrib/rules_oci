@@ -13,7 +13,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 <pre>
 load("@rules_oci//oci:defs.bzl", "oci_push_rule")
 
-oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-remote_tags">remote_tags</a>, <a href="#oci_push_rule-repository">repository</a>, <a href="#oci_push_rule-repository_file">repository_file</a>)
+oci_push_rule(<a href="#oci_push_rule-name">name</a>, <a href="#oci_push_rule-image">image</a>, <a href="#oci_push_rule-remote_tags">remote_tags</a>, <a href="#oci_push_rule-repository">repository</a>, <a href="#oci_push_rule-repository_file">repository_file</a>, <a href="#oci_push_rule-tag_platform_images">tag_platform_images</a>)
 </pre>
 
 Push an oci_image or oci_image_index to a remote registry.
@@ -162,6 +162,7 @@ multirun(
 | <a id="oci_push_rule-remote_tags"></a>remote_tags |  a text file containing tags, one per line. These are passed to [`crane tag`]( https://github.com/google/go-containerregistry/blob/main/cmd/crane/doc/crane_tag.md)   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 | <a id="oci_push_rule-repository"></a>repository |  Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`. Digests and tags are not allowed. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.   | String | optional |  `""`  |
 | <a id="oci_push_rule-repository_file"></a>repository_file |  The same as 'repository' but in a file. This allows pushing to different repositories based on stamping. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="oci_push_rule-tag_platform_images"></a>tag_platform_images |  If true, tag platform specific images with each remote tag and an additional '-${os}-${arch}' suffix. This is useful for platforms that cannot handle OCI image indexes and instead require a reference to a platform specific image.   | Boolean | optional |  `False`  |
 
 
 <a id="oci_push"></a>
