@@ -14,9 +14,10 @@ load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
 load("//oci/private:image_index.bzl", _oci_image_index = "oci_image_index")
-load("//oci/private:load.bzl", _oci_tarball = "oci_load")
+load("//oci/private:load.bzl", _oci_load = "oci_load", _oci_tarball = "oci_tarball")
 load("//oci/private:push.bzl", _oci_push = "oci_push")
 
+oci_load_rule = _oci_load
 oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
 oci_image_index_rule = _oci_image_index
@@ -246,8 +247,57 @@ def oci_push(name, remote_tags = None, **kwargs):
         **kwargs
     )
 
+def _write_repo_tags(name, repo_tags, forwarded_kwargs):
+    """Convert a list of repo_tags to a file label if needed.
+
+    Args:
+        name: rule name, used to derive the write_file target name
+        repo_tags: a list of strings or a label
+        forwarded_kwargs: common rule attributes to forward
+
+    Returns:
+        The repo_tags argument, either unchanged (if already a label) or
+        converted to a label pointing to the generated file.
+    """
+    if types.is_list(repo_tags):
+        tags_label = "{}_write_tags".format(name)
+        write_file(
+            name = tags_label,
+            out = "{}.tags.txt".format(name),
+            content = repo_tags,
+            **forwarded_kwargs
+        )
+        return tags_label
+    return repo_tags
+
 def oci_load(name, repo_tags = None, **kwargs):
+    """Macro wrapper around [oci_load_rule](#oci_load_rule).
+
+    Allows the repo_tags attribute to be a list of strings in addition to a text file.
+
+    Args:
+        name: name of resulting oci_load_rule
+        repo_tags: a list of repository:tag to specify when loading the image,
+            or a label of a file containing tags one-per-line.
+            See [stamped_tags](https://github.com/bazel-contrib/rules_oci/blob/main/examples/push/stamp_tags.bzl)
+            as one example of a way to produce such a file.
+        **kwargs: other named arguments to [oci_load_rule](#oci_load_rule) and
+            [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
+    """
+    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+    repo_tags = _write_repo_tags(name, repo_tags, forwarded_kwargs)
+
+    oci_load_rule(
+        name = name,
+        repo_tags = repo_tags,
+        **kwargs
+    )
+
+def oci_tarball(name, repo_tags = None, **kwargs):
     """Macro wrapper around [oci_tarball_rule](#oci_tarball_rule).
+
+    Produces a tarball from an OCI image as the default output, without the
+    `bazel run` loader machinery of `oci_load`.
 
     Allows the repo_tags attribute to be a list of strings in addition to a text file.
 
@@ -261,16 +311,7 @@ def oci_load(name, repo_tags = None, **kwargs):
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
-
-    if types.is_list(repo_tags):
-        tags_label = "{}_write_tags".format(name)
-        write_file(
-            name = tags_label,
-            out = "{}.tags.txt".format(name),
-            content = repo_tags,
-            **forwarded_kwargs
-        )
-        repo_tags = tags_label
+    repo_tags = _write_repo_tags(name, repo_tags, forwarded_kwargs)
 
     oci_tarball_rule(
         name = name,
