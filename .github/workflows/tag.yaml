@@ -39,6 +39,8 @@ jobs:
     with:
       tag_name: ${{ needs.tag.outputs.new-tag-version }}
     if: needs.tag.outputs.new-tag == 'true' && needs.tag.outputs.new-tag-version-type != 'major'
+    secrets:
+      BCR_PUBLISH_TOKEN: ${{ secrets.BCR_PUBLISH_TOKEN }}
     permissions:
       contents: write # allow create release
       id-token: write

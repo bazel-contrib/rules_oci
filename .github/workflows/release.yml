@@ -8,6 +8,9 @@ on:
       tag_name:
         required: true
         type: string
+    secrets:
+      BCR_PUBLISH_TOKEN:
+        required: true
   # Or, developers can manually push a tag from their clone
   push:
     tags:
@@ -29,4 +32,4 @@ jobs:
     with:
       tag_name: ${{ inputs.tag_name || github.ref_name }}
     secrets:
-      publish_token: ${{ secrets.BCR_PUBLISH_TOKEN }}
+      BCR_PUBLISH_TOKEN: ${{ secrets.BCR_PUBLISH_TOKEN }}
