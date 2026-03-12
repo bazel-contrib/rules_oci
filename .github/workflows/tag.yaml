@@ -41,3 +41,5 @@ jobs:
     if: needs.tag.outputs.new-tag == 'true' && needs.tag.outputs.new-tag-version-type != 'major'
     permissions:
       contents: write # allow create release
+      id-token: write
+      attestations: write
