@@ -36,3 +36,4 @@ mtree_contents="${mtree_contents//"$manifest_root"/$manifest_runfiles_prefix}"
 "$CONTAINER_CLI" load --input <(
     "$TAR" --cd "$RUNFILES_DIR" --create --no-xattr --no-mac-metadata @- <<< "$mtree_contents"
 )
+wait $!
