@@ -52,6 +52,15 @@ bzl_library(
     ],
 )
 
+# package_metadata doesn't have any bzl_library targets
+# so one is made here.
+bzl_library(
+    name = "package_metadata",
+    srcs = [
+        "@package_metadata//rules:srcs",
+    ],
+)
+
 bzl_library(
     name = "pull",
     srcs = ["pull.bzl"],
@@ -60,8 +69,10 @@ bzl_library(
         "//oci:__subpackages__",
     ],
     deps = [
+        ":package_metadata",
         "//oci/private:authn",
         "//oci/private:util",
+        "@aspect_bazel_lib//lib:copy_to_directory",
         "@bazel_skylib//lib:dicts",
     ],
 )
