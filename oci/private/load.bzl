@@ -147,7 +147,16 @@ def _get_workspace_root_path(ctx, file):
         return file.root.path + "/external/" + ws
     return file.root.path
 
-def _load_impl(ctx):
+def _create_tarball(ctx):
+    """Shared logic for generating the mtree spec and tarball from an OCI image.
+
+    Args:
+        ctx: The rule context. Must have image, repo_tags, format, _tarball_sh attrs
+            and the required toolchains.
+
+    Returns:
+        A struct with fields: tarball, mtree_spec, manifest_json, mtree_inputs, mtree_outputs.
+    """
     jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
     coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
     bsdtar = ctx.toolchains["@tar.bzl//tar/toolchain:type"]
@@ -157,7 +166,7 @@ def _load_impl(ctx):
     repo_tags = ctx.file.repo_tags
 
     mtree_spec = ctx.actions.declare_file("{}/tarball.spec".format(ctx.label.name))
-    executable = ctx.actions.declare_file("{}/load.sh".format(ctx.label.name))
+    executable = ctx.actions.declare_file("{}/tarball_gen.sh".format(ctx.label.name))
     manifest_json = ctx.actions.declare_file("{}/manifest.json".format(ctx.label.name))
 
     # Represents either manifest.json or index.json depending on the image format
@@ -197,8 +206,6 @@ def _load_impl(ctx):
         mnemonic = "OCITarballManifest",
     )
 
-    # This action produces a large output and should rarely be used as it puts load on the cache.
-    # It will only run if the "tarball" output_group is explicitly requested
     tarball = ctx.actions.declare_file("{}/tarball.tar".format(ctx.label.name))
     tar_inputs = depset(direct = mtree_outputs, transitive = [mtree_inputs, bsdtar_target.default.files])
     tar_args = ctx.actions.args()
@@ -213,6 +220,19 @@ def _load_impl(ctx):
         mnemonic = "OCITarball",
     )
 
+    return struct(
+        tarball = tarball,
+        mtree_spec = mtree_spec,
+        manifest_json = manifest_json,
+        mtree_inputs = mtree_inputs,
+        mtree_outputs = mtree_outputs,
+        tar_inputs = tar_inputs,
+    )
+
+def _load_impl(ctx):
+    result = _create_tarball(ctx)
+    bsdtar_target = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
+
     # Create an executable runner script that will create the tarball at runtime,
     # as opposed to at build to avoid uploading large artifacts to remote cache.
     runnable_loader = ctx.actions.declare_file(ctx.label.name + ".sh")
@@ -220,7 +240,7 @@ def _load_impl(ctx):
     runtime_deps = []
     if ctx.executable.loader:
         runtime_deps.append(ctx.executable.loader)
-    runfiles = ctx.runfiles(runtime_deps, transitive_files = tar_inputs)
+    runfiles = ctx.runfiles(runtime_deps, transitive_files = result.tar_inputs)
     runfiles = runfiles.merge(ctx.attr.image[DefaultInfo].default_runfiles)
     runfiles = runfiles.merge(ctx.attr._runfiles.default_runfiles)
     if ctx.executable.loader:
@@ -232,14 +252,14 @@ def _load_impl(ctx):
         substitutions = {
             "{{BASH_RLOCATION_FUNCTION}}": BASH_RLOCATION_FUNCTION,
             "{{tar}}": to_rlocation_path(ctx, bsdtar_target.tarinfo.binary),
-            "{{mtree_path}}": to_rlocation_path(ctx, mtree_spec),
+            "{{mtree_path}}": to_rlocation_path(ctx, result.mtree_spec),
             "{{loader}}": to_rlocation_path(ctx, ctx.executable.loader) if ctx.executable.loader else "",
             # This rule could be declared in external workspace than current execution context(e.g. main_wksp -> external_wksp -> rules_oci).
             # In such cases we need to handle manifest_json and image in a workspace-aware way(when --nolegacy_external_runfiles flag is set).
-            "{{manifest_root}}": _get_workspace_root_path(ctx, manifest_json),
-            "{{image_root}}": _get_workspace_root_path(ctx, image),
-            "{{image_runfiles_prefix}}": _get_runfiles_prefix(ctx, image),
-            "{{manifest_runfiles_prefix}}": _get_runfiles_prefix(ctx, manifest_json),
+            "{{manifest_root}}": _get_workspace_root_path(ctx, result.manifest_json),
+            "{{image_root}}": _get_workspace_root_path(ctx, ctx.file.image),
+            "{{image_runfiles_prefix}}": _get_runfiles_prefix(ctx, ctx.file.image),
+            "{{manifest_runfiles_prefix}}": _get_runfiles_prefix(ctx, result.manifest_json),
         },
         is_executable = True,
     )
@@ -249,19 +269,66 @@ def _load_impl(ctx):
             runfiles = runfiles,
             executable = runnable_loader,
         ),
-        OutputGroupInfo(tarball = depset([tarball])),
+        OutputGroupInfo(tarball = depset([result.tarball])),
     ]
+
+_TOOLCHAINS = [
+    "@bazel_tools//tools/sh:toolchain_type",
+    "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+    "@aspect_bazel_lib//lib:jq_toolchain_type",
+    "@tar.bzl//tar/toolchain:type",
+    "@tar.bzl//tar/toolchain:target_type",
+]
 
 oci_load = rule(
     implementation = _load_impl,
     attrs = attrs,
     doc = doc,
-    toolchains = [
-        "@bazel_tools//tools/sh:toolchain_type",
-        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@tar.bzl//tar/toolchain:type",
-        "@tar.bzl//tar/toolchain:target_type",
-    ],
+    toolchains = _TOOLCHAINS,
     executable = True,
+)
+
+# Attributes shared between oci_load and oci_tarball
+_tarball_attrs = {
+    "format": attrs["format"],
+    "image": attrs["image"],
+    "repo_tags": attrs["repo_tags"],
+    "_tarball_sh": attrs["_tarball_sh"],
+} | util.IS_EXEC_PLATFORM_WINDOWS_ATTRS
+
+tarball_doc = """Produces a tarball from an OCI layout.
+
+Unlike `oci_load`, this rule produces the tarball as its default output,
+making it suitable for use as an input to other rules or for direct consumption.
+
+Passing anything other than oci_image to the image attribute will lead to build time errors.
+
+```starlark
+oci_tarball(
+    name = "my_tarball",
+    image = ":image",
+    repo_tags = ["my-repository:latest"],
+)
+```
+
+### When using `format = "oci"`
+
+When using format = oci, containerd image store needs to be enabled in order for the oci style tarballs to work.
+
+On docker desktop this can be enabled by visiting `Settings (cog icon) -> Features in development -> Use containerd for pulling and storing images`
+
+For more information, see https://docs.docker.com/desktop/containerd/
+"""
+
+def _tarball_impl(ctx):
+    result = _create_tarball(ctx)
+    return [
+        DefaultInfo(files = depset([result.tarball])),
+    ]
+
+oci_tarball = rule(
+    implementation = _tarball_impl,
+    attrs = _tarball_attrs,
+    doc = tarball_doc,
+    toolchains = _TOOLCHAINS,
 )
