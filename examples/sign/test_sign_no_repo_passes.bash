@@ -28,13 +28,15 @@ readonly DIGEST
 COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair 
 
 # Sign the image at remote registry
-echo "y" | COSIGN_PASSWORD=123 "${IMAGE_SIGNER_NO_REPO}" --repository="${REPOSITORY}" --key=cosign.key
+# v3 requires opt-out of tlog upload and TUF signing config for local testing.
+echo "y" | COSIGN_PASSWORD=123 "${IMAGE_SIGNER_NO_REPO}" --repository="${REPOSITORY}" --key=cosign.key \
+  --tlog-upload=false --use-signing-config=false
 
 # Now push the image
 REF=$("${CRANE}" push "${IMAGE}" "${REPOSITORY}")
 
 # Verify using the Tag
-"${COSIGN}" verify "${REPOSITORY}:latest" --key=cosign.pub
+"${COSIGN}" verify "${REPOSITORY}:latest" --key=cosign.pub --insecure-ignore-tlog
 
 # Verify using the Digest
-"${COSIGN}" verify "${REF}" --key=cosign.pub
+"${COSIGN}" verify "${REF}" --key=cosign.pub --insecure-ignore-tlog

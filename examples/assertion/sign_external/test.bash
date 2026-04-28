@@ -27,13 +27,15 @@ readonly DIGEST=$("$JQ" -r '.manifests[0].digest' "$IMAGE/index.json")
 COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair 
 
 # Sign the image at remote registry
-COSIGN_PASSWORD=123 "${IMAGE_SIGNER}" --repository="${REPOSITORY}" --key=cosign.key -y
+# v3 requires opt-out of tlog upload and TUF signing config for local testing.
+COSIGN_PASSWORD=123 "${IMAGE_SIGNER}" --repository="${REPOSITORY}" --key=cosign.key -y \
+  --tlog-upload=false --use-signing-config=false
 
 # Now push the image
 REF=$("${CRANE}" push "${IMAGE}" "${REPOSITORY}")
 
 # Verify using the Tag
-"${COSIGN}" verify "${REPOSITORY}:latest" --key=cosign.pub
+"${COSIGN}" verify "${REPOSITORY}:latest" --key=cosign.pub --insecure-ignore-tlog
 
 # Verify using the Digest
-"${COSIGN}" verify "${REF}" --key=cosign.pub
+"${COSIGN}" verify "${REF}" --key=cosign.pub --insecure-ignore-tlog

@@ -46,7 +46,7 @@ Then run `bazel run :attest_no_repo -- --repository=index.docker.io/org/test`
 
 _attrs = {
     "image": attr.label(allow_single_file = True, mandatory = True, doc = "Label to an oci_image"),
-    "type": attr.string(values = ["slsaprovenance", "link", "spdx", "vuln", "custom"], mandatory = True, doc = "Type of predicate. Acceptable values are (slsaprovenance|link|spdx|vuln|custom)"),
+    "type": attr.string(values = ["slsaprovenance", "slsaprovenance02", "slsaprovenance1", "link", "spdx", "spdxjson", "cyclonedx", "vuln", "openvex", "custom"], mandatory = True, doc = "Type of predicate. Acceptable values are (slsaprovenance|slsaprovenance02|slsaprovenance1|link|spdx|spdxjson|cyclonedx|vuln|openvex|custom)"),
     "predicate": attr.label(allow_single_file = True, mandatory = True, doc = "Label to the predicate file. Only files are allowed. eg: sbom.spdx, in-toto.json"),
     "repository": attr.string(doc = """        Repository URL where the image will be signed at, e.g.: `index.docker.io/<user>/image`.
         Digests and tags are not allowed. If this attribute is not set, the repository must be passed at runtime via the `--repository` flag.
