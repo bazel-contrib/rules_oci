@@ -78,9 +78,13 @@ _attrs = {
     ),
     "platforms": attr.label_list(
         doc = """This feature is highly EXPERIMENTAL and not subject to our usual SemVer guarantees.
-A list of platform targets to build the image for. If specified, only one image can be specified in the images attribute.      
+A list of platform targets to build the image for. If specified, only one image can be specified in the images attribute.
 """,
         providers = [platform_common.PlatformInfo],
+    ),
+    "annotations": attr.label(
+        doc = "A file containing a dictionary of annotations to apply to the index manifest. Each line should be in the form `name=value`.",
+        allow_single_file = True,
     ),
     "_image_index_sh_tpl": attr.label(default = "image_index.sh.tpl", allow_single_file = True),
     "_allowlist_function_transition": attr.label(
@@ -121,8 +125,13 @@ def _oci_image_index_impl(ctx):
     args.add(output.path, format = "--output=%s")
     args.add_all(ctx.files.images, map_each = _expand_image_to_args, expand_directories = False)
 
+    inputs = list(ctx.files.images)
+    if ctx.attr.annotations:
+        args.add(ctx.file.annotations.path, format = "--annotations=%s")
+        inputs.append(ctx.file.annotations)
+
     ctx.actions.run(
-        inputs = ctx.files.images,
+        inputs = inputs,
         arguments = [args],
         outputs = [output],
         executable = launcher,

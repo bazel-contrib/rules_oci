@@ -60,7 +60,7 @@ def _digest(name, **kwargs):
         **kwargs
     )
 
-def oci_image_index(name, **kwargs):
+def oci_image_index(name, annotations = None, **kwargs):
     """Macro wrapper around [oci_image_index_rule](#oci_image_index_rule).
 
     Produces a target `[name].digest`, whose default output is a file containing the sha256 digest of the resulting image.
@@ -68,13 +68,26 @@ def oci_image_index(name, **kwargs):
 
     Args:
         name: name of resulting oci_image_index_rule
+        annotations: Annotations to apply to the index manifest.
+            May either be specified as a file (key=value pairs, one per line) or a dict of strings to specify values inline.
         **kwargs: other named arguments to [oci_image_index_rule](#oci_image_index_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
 
+    if types.is_dict(annotations):
+        annotations_label = "{}_write_annotations".format(name)
+        write_file(
+            name = annotations_label,
+            out = "{}.annotations.txt".format(name),
+            content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
+            **forwarded_kwargs
+        )
+        annotations = annotations_label
+
     oci_image_index_rule(
         name = name,
+        annotations = annotations,
         **kwargs
     )
 

@@ -50,16 +50,24 @@ function create_oci_layout() {
 
 CURRENT_IMAGE=""
 OUTPUT=""
+ANNOTATIONS=""
 
 for ARG in "$@"; do
     case "$ARG" in
         (--output=*) OUTPUT="${ARG#--output=}"; create_oci_layout "$OUTPUT" ;;
         (--image=*) CURRENT_IMAGE="${ARG#--image=}"; add_image "$CURRENT_IMAGE" "$OUTPUT" ;;
         (--blob=*) copy_blob "${CURRENT_IMAGE}" "$OUTPUT" "${ARG#--blob=}" ;;
+        (--annotations=*) ANNOTATIONS="${ARG#--annotations=}" ;;
         (*) echo "Unknown argument ${ARG}"; exit 1;;
     esac
 done
 
+if [[ -n "${ANNOTATIONS}" ]]; then
+    "${JQ}" --rawfile annotations "${ANNOTATIONS}" \
+            '.annotations += ([($annotations | split("\n") | .[] | select(. != ""))] | map(. | split("=")) | map({key: .[0], value: .[1:] | join("=")}) | from_entries)' \
+            "${OUTPUT}/manifest_list.json" > "${OUTPUT}/manifest_list.new.json"
+    "${COREUTILS}" cp --no-preserve=mode "${OUTPUT}/manifest_list.new.json" "${OUTPUT}/manifest_list.json"
+fi
 
 checksum=$("${COREUTILS}" sha256sum "${OUTPUT}/manifest_list.json" | "${COREUTILS}" cut -f 1 -d " ")
 size=$("${COREUTILS}" wc -c < "${OUTPUT}/manifest_list.json")
