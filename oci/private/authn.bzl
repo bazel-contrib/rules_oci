@@ -127,7 +127,10 @@ echo %1 | docker-credential-{} get """.format(helper_name),
 #!/usr/bin/env bash
 exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         )
-    result = rctx.execute([rctx.path(executable), raw_host])
+    result = rctx.execute(
+        [rctx.path(executable), raw_host],
+        working_directory = str(rctx.workspace_root),
+    )
     if result.return_code:
         if not allow_fail:
             fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
