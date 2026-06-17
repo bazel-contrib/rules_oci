@@ -4,8 +4,8 @@ load("//oci:defs.bzl", "oci_image")
 
 copy_file(
     name = "sbom",
-    src = "sbom.spdx",
-    out = "sbom_generated.spdx",
+    src = "sbom.spdx.json",
+    out = "sbom_generated.spdx.json",
 )
 
 oci_image(
@@ -18,9 +18,9 @@ oci_image(
 cosign_attest(
     name = "attest",
     image = ":image",
-    predicate = ":sbom_generated.spdx",
+    predicate = ":sbom_generated.spdx.json",
     repository = "test",
-    type = "spdx",
+    type = "spdxjson",
 )
 
 sh_test(
@@ -32,10 +32,10 @@ sh_test(
         "$(CRANE_BIN)",
         "$(location :attest)",
         "$(location :image)",
-        "$(location sbom.spdx)",
+        "$(location sbom.spdx.json)",
     ],
     data = [
-        "sbom.spdx",
+        "sbom.spdx.json",
         ":attest",
         ":image",
         "@jq_toolchains//:resolved_toolchain",
@@ -52,8 +52,8 @@ sh_test(
 cosign_attest(
     name = "attest_no_repo",
     image = ":image",
-    predicate = ":sbom_generated.spdx",
-    type = "spdx",
+    predicate = ":sbom_generated.spdx.json",
+    type = "spdxjson",
 )
 
 sh_test(
@@ -72,10 +72,10 @@ sh_test(
         "$(CRANE_BIN)",
         "$(location :attest_no_repo)",
         "$(location :image)",
-        "$(location sbom.spdx)",
+        "$(location sbom.spdx.json)",
     ],
     data = [
-        "sbom.spdx",
+        "sbom.spdx.json",
         ":attest_no_repo",
         ":image",
         "@jq_toolchains//:resolved_toolchain",

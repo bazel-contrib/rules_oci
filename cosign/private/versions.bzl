@@ -1,6 +1,15 @@
 "Mirrored versions/integrity hashes of cosign binaries"
 
 COSIGN_VERSIONS = {
+    "v3.0.6": {
+        "darwin-amd64": "sha256-TD56+DctPKMpbmL6VvI/y7VyHMasGCeQDTmPEQ180oA=",
+        "darwin-arm64": "sha256-X63QEq5jgaain/hqfTmqhzh4hS8Qc/yQsVmVlh7PsIQ=",
+        "linux-amd64": "sha256-yVbl38rFPVK88Fg2DVeUcvDB0tm2n1UgniVv53g/THQ=",
+        "linux-arm": "sha256-Z70l0y2v9WZMr1EgjJXe/LKtesEpbzlPpne7i6zuYvU=",
+        "linux-arm64": "sha256-vtrJLow3KYZOE9ShcEgAfPr6edXeypk6Q6kP/gGO8rg=",
+        "linux-ppc64le": "sha256-CMPl4KCcRA9J6aadhjnTf77FIuyMXArIBSQ7CY5upRI=",
+        "linux-s390x": "sha256-PPS3aSWO2cw8KpMmjA1cHMP70JSvjfIQNcusj7DXwIg=",
+    },
     "v2.6.1": {
         "darwin-amd64": "sha256-8e0nh8yWSP08ZE/LJ55D8/Vdpjt4jWmlJ6oUrZf/3KE=",
         "darwin-arm64": "sha256-VARwUs9G9ApcPJWlENsnbhZLp34Jauocobcz93A1lok=",

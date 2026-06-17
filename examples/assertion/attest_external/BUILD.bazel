@@ -5,7 +5,7 @@ cosign_attest(
     image = "@empty_image",
     predicate = "@example_sbom",
     repository = "test",
-    type = "spdx",
+    type = "spdxjson",
 )
 
 sh_test(

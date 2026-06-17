@@ -25,9 +25,15 @@ COSIGN_PASSWORD=123 "${COSIGN}" generate-key-pair
 REF=$("${CRANE}" push "${IMAGE_PATH}" "${REPOSITORY}")
 
 # attach the sbom
-COSIGN_PASSWORD=123 "${ATTACHER}" --repository "${REPOSITORY}" --key=cosign.key -y
+# v3 requires opt-out of tlog upload and TUF signing config for local testing.
+COSIGN_PASSWORD=123 "${ATTACHER}" --repository "${REPOSITORY}" --key=cosign.key -y \
+  --tlog-upload=false --use-signing-config=false
 
 # download the sbom
-"${COSIGN}" verify-attestation "$REF" --key=cosign.pub --type spdx | "${JQ}" -r '.payload' | base64 --decode | "${JQ}" -r '.predicate' > "$TEST_TMPDIR/download.sbom" 
+"${COSIGN}" verify-attestation "$REF" --key=cosign.pub --type spdxjson \
+  --insecure-ignore-tlog | "${JQ}" -r '.payload' | base64 --decode | "${JQ}" -r '.predicate' > "$TEST_TMPDIR/download.sbom"
 
-diff -u --ignore-space-change --strip-trailing-cr "$SBOM_PATH"  "$TEST_TMPDIR/download.sbom" || (echo "FAIL: downloaded SBOM does not match the original" && exit 1)
+# Normalize JSON before comparing (key ordering may differ after round-trip)
+"${JQ}" -S '.' "$TEST_TMPDIR/download.sbom" > "$TEST_TMPDIR/normalized_download.json"
+"${JQ}" -S '.' "$SBOM_PATH" > "$TEST_TMPDIR/normalized_original.json"
+diff "$TEST_TMPDIR/normalized_original.json" "$TEST_TMPDIR/normalized_download.json" || (echo "FAIL: downloaded SBOM does not match the original" && exit 1)
