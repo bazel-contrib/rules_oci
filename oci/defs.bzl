@@ -9,7 +9,7 @@ load("@rules_oci//oci:defs.bzl", ...)
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
 load("@aspect_bazel_lib//lib:directory_path.bzl", "directory_path")
 load("@aspect_bazel_lib//lib:jq.bzl", "jq")
-load("@aspect_bazel_lib//lib:utils.bzl", "propagate_common_rule_attributes")
+load("@aspect_bazel_lib//lib:utils.bzl", "propagate_common_rule_attributes", "propagate_well_known_tags")
 load("@bazel_skylib//lib:types.bzl", "types")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("//oci/private:image.bzl", _oci_image = "oci_image")
@@ -21,6 +21,23 @@ oci_tarball_rule = _oci_tarball
 oci_image_rule = _oci_image
 oci_image_index_rule = _oci_image_index
 oci_push_rule = _oci_push
+
+def _propagate_to_internal_target(forwarded_kwargs):
+    """Common rule attributes for implementation-detail targets.
+
+    The `write_file`/`copy_file`/`directory_path` targets created by these macros are
+    implementation details, so they should not inherit the full set of user-provided
+    `tags`. We keep only the "well known" tags that affect execution/caching (e.g.
+    `no-remote-cache`, `no-remote-exec`, `local`) so remote execution and
+    Build-without-the-Bytes behavior is preserved, and force `manual` so the internal
+    targets aren't matched by `:all` / `...` target patterns.
+    """
+    internal_kwargs = dict(forwarded_kwargs)
+    tags = propagate_well_known_tags(internal_kwargs.get("tags", []))
+    if "manual" not in tags:
+        tags = tags + ["manual"]
+    internal_kwargs["tags"] = tags
+    return internal_kwargs
 
 def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
     label = "{}_write_{}".format(name, kind)
@@ -34,23 +51,26 @@ def _write_nl_seperated_file(name, kind, elems, forwarded_kwargs):
     return label
 
 def _digest(name, **kwargs):
+    internal_kwargs = _propagate_to_internal_target(kwargs)
+
     # `oci_image_rule` and `oci_image_index_rule` produce a directory as default output.
     # Label for the [name]/index.json file
     directory_path(
         name = "{}_index_json".format(name),
         directory = name,
         path = "index.json",
-        **kwargs
+        **internal_kwargs
     )
 
     copy_file(
         name = "{}_index_json_cp".format(name),
         src = "{}_index_json".format(name),
         out = "{}_index.json".format(name),
-        **kwargs
+        **internal_kwargs
     )
 
-    # Matches the [name].digest target produced by rules_docker container_image
+    # Matches the [name].digest target produced by rules_docker container_image.
+    # This is a documented, user-facing output, so it keeps the full set of tags.
     jq(
         name = name + ".digest",
         args = ["--raw-output"],
@@ -129,6 +149,7 @@ def oci_image(
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
     forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+    internal_kwargs = _propagate_to_internal_target(forwarded_kwargs)
 
     if types.is_dict(annotations):
         annotations_label = "{}_write_annotations".format(name)
@@ -136,7 +157,7 @@ def oci_image(
             name = annotations_label,
             out = "{}.annotations.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in annotations.items()],
-            **forwarded_kwargs
+            **internal_kwargs
         )
         annotations = annotations_label
 
@@ -146,7 +167,7 @@ def oci_image(
             name = labels_label,
             out = "{}.labels.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in labels.items()],
-            **forwarded_kwargs
+            **internal_kwargs
         )
         labels = labels_label
 
@@ -156,7 +177,7 @@ def oci_image(
             name = env_label,
             out = "{}.env.txt".format(name),
             content = ["{}={}".format(key, value) for (key, value) in env.items()],
-            **forwarded_kwargs
+            **internal_kwargs
         )
         env = env_label
 
@@ -165,7 +186,7 @@ def oci_image(
             name = name,
             kind = "cmd",
             elems = cmd,
-            forwarded_kwargs = forwarded_kwargs,
+            forwarded_kwargs = internal_kwargs,
         )
 
     if types.is_list(entrypoint):
@@ -173,7 +194,7 @@ def oci_image(
             name = name,
             kind = "entrypoint",
             elems = entrypoint,
-            forwarded_kwargs = forwarded_kwargs,
+            forwarded_kwargs = internal_kwargs,
         )
 
     if types.is_list(exposed_ports):
@@ -182,7 +203,7 @@ def oci_image(
             name = exposed_ports_label,
             out = "{}.exposed_ports.txt".format(name),
             content = [",".join(exposed_ports)],
-            **forwarded_kwargs
+            **internal_kwargs
         )
         exposed_ports = exposed_ports_label
 
@@ -192,7 +213,7 @@ def oci_image(
             name = volumes_label,
             out = "{}.volumes.txt".format(name),
             content = [",".join(volumes)],
-            **forwarded_kwargs
+            **internal_kwargs
         )
         volumes = volumes_label
 
@@ -228,7 +249,7 @@ def oci_push(name, remote_tags = None, **kwargs):
         **kwargs: other named arguments to [oci_push_rule](#oci_push_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
-    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+    internal_kwargs = _propagate_to_internal_target(propagate_common_rule_attributes(kwargs))
 
     if types.is_list(remote_tags):
         tags_label = "{}_write_tags".format(name)
@@ -236,7 +257,7 @@ def oci_push(name, remote_tags = None, **kwargs):
             name = tags_label,
             out = "{}.tags.txt".format(name),
             content = remote_tags,
-            **forwarded_kwargs
+            **internal_kwargs
         )
         remote_tags = tags_label
 
@@ -260,7 +281,7 @@ def oci_load(name, repo_tags = None, **kwargs):
         **kwargs: other named arguments to [oci_tarball_rule](#oci_tarball_rule) and
             [common rule attributes](https://bazel.build/reference/be/common-definitions#common-attributes).
     """
-    forwarded_kwargs = propagate_common_rule_attributes(kwargs)
+    internal_kwargs = _propagate_to_internal_target(propagate_common_rule_attributes(kwargs))
 
     if types.is_list(repo_tags):
         tags_label = "{}_write_tags".format(name)
@@ -268,7 +289,7 @@ def oci_load(name, repo_tags = None, **kwargs):
             name = tags_label,
             out = "{}.tags.txt".format(name),
             content = repo_tags,
-            **forwarded_kwargs
+            **internal_kwargs
         )
         repo_tags = tags_label
 
