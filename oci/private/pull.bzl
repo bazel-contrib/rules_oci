@@ -108,6 +108,18 @@ def _config_path(rctx):
 def _is_tag(str):
     return str.find(":") == -1
 
+# The only digest algorithm `_download` hands to the Bazel downloader as an integrity check.
+# `oci_pull` documents `sha512:` and friends as valid too, but those are fetched unverified.
+_VERIFIED_DIGEST_PREFIX = "sha256:"
+
+def _is_verified_digest(identifier):
+    """Whether `identifier` pins content that the downloader actually verifies.
+
+    Stricter than `not _is_tag(identifier)`: a digest in an algorithm we do not check is no more
+    trustworthy than a tag, since nothing detects a registry serving different bytes.
+    """
+    return identifier.startswith(_VERIFIED_DIGEST_PREFIX)
+
 def _digest_into_blob_path(digest):
     "convert sha256:deadbeef into sha256/deadbeef"
     digest_path = digest.replace(":", "/", 1)
@@ -133,8 +145,8 @@ def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fai
 
     sha256 = ""
 
-    if identifier.startswith("sha256:"):
-        sha256 = identifier[len("sha256:"):]
+    if _is_verified_digest(identifier):
+        sha256 = identifier[len(_VERIFIED_DIGEST_PREFIX):]
     else:
         util.warning(rctx, "Fetching from {}@{} without an integrity hash, result will not be cached.".format(rctx.attr.repository, identifier))
 
@@ -344,10 +356,11 @@ repo(
 )
 """)
 
-    # Pulling by digest is reproducible: every downloaded blob is checked against a digest that
-    # is derived from the `identifier` attribute. Pulling by tag is not, since the registry is
-    # free to move the tag to different content at any time.
-    return util.repo_metadata(rctx, reproducible = not _is_tag(rctx.attr.identifier))
+    # Pulling by a verified digest is reproducible: every downloaded blob is checked against a
+    # digest derived from the `identifier` attribute. A tag is not, since the registry is free to
+    # move it to different content at any time, and neither is a digest in an algorithm we cannot
+    # check - in both cases nothing would notice the registry serving different bytes.
+    return util.repo_metadata(rctx, reproducible = _is_verified_digest(rctx.attr.identifier))
 
 oci_pull = repository_rule(
     implementation = _oci_pull_impl,
@@ -479,9 +492,10 @@ buildozer 'set digest "{digest}"' 'remove tag' 'remove platforms' {optional_plat
 
     rctx.file("BUILD.bazel", content = build)
 
-    # Same as oci_pull: only a digest pins the content this repo describes. Note the generated
-    # `digest.txt` is derived from `identifier`, so with a tag it can change between fetches.
-    return util.repo_metadata(rctx, reproducible = not _is_tag(rctx.attr.identifier))
+    # Same as oci_pull: only a verified digest pins the content this repo describes. Note the
+    # generated `digest.txt` is derived from `identifier`, so with a tag it can change between
+    # fetches.
+    return util.repo_metadata(rctx, reproducible = _is_verified_digest(rctx.attr.identifier))
 
 oci_alias = repository_rule(
     implementation = _oci_alias_impl,
