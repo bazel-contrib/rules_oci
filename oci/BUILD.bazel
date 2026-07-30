@@ -26,6 +26,7 @@ bzl_library(
     deps = [
         "//oci/private:load",
         "//oci/private:toolchains_repo",
+        "//oci/private:util",
         "//oci/private:versions",
         "@aspect_bazel_lib//lib:repositories",
         "@bazel_features//:bzl_files",

@@ -344,6 +344,11 @@ repo(
 )
 """)
 
+    # Pulling by digest is reproducible: every downloaded blob is checked against a digest that
+    # is derived from the `identifier` attribute. Pulling by tag is not, since the registry is
+    # free to move the tag to different content at any time.
+    return util.repo_metadata(rctx, reproducible = not _is_tag(rctx.attr.identifier))
+
 oci_pull = repository_rule(
     implementation = _oci_pull_impl,
     attrs = dicts.add(
@@ -473,6 +478,10 @@ buildozer 'set digest "{digest}"' 'remove tag' 'remove platforms' {optional_plat
         )
 
     rctx.file("BUILD.bazel", content = build)
+
+    # Same as oci_pull: only a digest pins the content this repo describes. Note the generated
+    # `digest.txt` is derived from `identifier`, so with a tag it can change between fetches.
+    return util.repo_metadata(rctx, reproducible = not _is_tag(rctx.attr.identifier))
 
 oci_alias = repository_rule(
     implementation = _oci_alias_impl,

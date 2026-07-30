@@ -10,6 +10,7 @@ load(
 load("@bazel_features//:deps.bzl", "bazel_features_deps")
 load("@tar.bzl//tar:extensions.bzl", tar_toolchains_setup = "create_repositories")
 load("//oci/private:toolchains_repo.bzl", "PLATFORMS", "toolchains_repo")
+load("//oci/private:util.bzl", "util")
 load("//oci/private:versions.bzl", "CRANE_VERSIONS", "REGCTL_VERSIONS")
 
 CRANE_BUILD_TMPL = """\
@@ -42,6 +43,10 @@ def _crane_repo_impl(repository_ctx):
             version = repository_ctx.attr.crane_version,
         ),
     )
+
+    # Reproducible: the download is pinned by an integrity hash and the generated BUILD file is
+    # derived solely from the rule's attributes.
+    return util.repo_metadata(repository_ctx, reproducible = True)
 
 crane_repositories = repository_rule(
     _crane_repo_impl,
@@ -84,6 +89,9 @@ def _regctl_repo_impl(rctx):
         integrity = REGCTL_VERSIONS[REGCTL_VERSION][platform],
     )
     rctx.file("BUILD.bazel", REGCTL_BUILD_TMPL.format(ext = ext))
+
+    # Reproducible for the same reason as _crane_repo_impl.
+    return util.repo_metadata(rctx, reproducible = True)
 
 regctl_repositories = repository_rule(
     _regctl_repo_impl,
