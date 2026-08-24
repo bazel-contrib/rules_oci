@@ -38,7 +38,7 @@ cosign_repositories = repository_rule(
 )
 
 # Wrapper macro around everything above, this is the primary API
-def cosign_register_toolchains(name, register = True):
+def cosign_register_toolchains(name, version = None, register = True):
     """Convenience macro for users which does typical setup.
 
     - create a repository for each built-in platform like "cosign_linux_amd64" -
@@ -49,15 +49,17 @@ def cosign_register_toolchains(name, register = True):
 
     Args:
         name: base name for cosign repository, like "oci_cosign"
+        version: version of cosign to fetch, like "v3.1.3". Defaults to latest mirrored version.
         register: whether to call native.register_toolchains: True for workspace, False for bzlmod
     """
     toolchain_name = "{name}_toolchains".format(name = name)
+    cosign_version = version if version else COSIGN_VERSIONS.keys()[0]
 
     for platform in PLATFORMS.keys():
         cosign_repositories(
             name = "{name}_{platform}".format(name = name, platform = platform),
             platform = platform,
-            cosign_version = COSIGN_VERSIONS.keys()[0],
+            cosign_version = cosign_version,
         )
         if register:
             native.register_toolchains("@{}//:{}_toolchain".format(toolchain_name, platform))
