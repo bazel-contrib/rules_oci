@@ -36,6 +36,15 @@ register_toolchains("@bsd_tar_toolchains//:all")
 
 # Dev dependencies
 
+cosign = use_extension("//cosign:extensions.bzl", "cosign", dev_dependency = True)
+cosign.toolchains()
+use_repo(cosign, "oci_cosign_toolchains")
+
+register_toolchains(
+    "@oci_cosign_toolchains//:all",
+    dev_dependency = True,
+)
+
 bazel_dep(name = "bazel_env.bzl", version = "0.3.1", dev_dependency = True)
 bazel_dep(name = "rules_go", version = "0.46.0", dev_dependency = True, repo_name = "io_bazel_rules_go")
 bazel_dep(name = "gazelle", version = "0.35.0", dev_dependency = True, repo_name = "bazel_gazelle")
