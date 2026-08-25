@@ -28,6 +28,10 @@ TAGS=()
 # global crane flags to be passed with every crane invocation
 GLOBAL_FLAGS=()
 
+# tag platform specific images as ${tag}-${os}-${arch} (for use with
+# AWS Lambda and other platforms that cannot handle multiarch OCI images).
+TAG_PLATFORM_IMAGES="{{tag_platform_images}}"
+
 # this will hold args specific to `crane push``
 ARGS=()
 
@@ -35,6 +39,9 @@ while (( $# > 0 )); do
   case $1 in
     (--allow-nondistributable-artifacts|--insecure|-v|--verbose)
       GLOBAL_FLAGS+=( "$1" )
+      shift;;
+    (-i|--tag-platform-images)
+      TAG_PLATFORM_IMAGES=1
       shift;;
     (--platform)
       GLOBAL_FLAGS+=( "--platform" "$2" )
@@ -65,16 +72,38 @@ if [[ -z "${REPOSITORY}" ]]; then
   exit 1
 fi
 
-DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
+MANIFEST_DIGEST=$("${JQ}" -r '.manifests[0].digest' "${IMAGE_DIR}/index.json")
+MANIFEST_FILE="${IMAGE_DIR}/blobs/${MANIFEST_DIGEST%%:*}/${MANIFEST_DIGEST##*:}"
+IMAGE_DIGESTS=$(${JQ} -r '.manifests[]? | [ .digest, .platform.os, .platform.architecture ] | @tsv ' "${MANIFEST_FILE}")
 
 REFS=$(mktemp)
-"${CRANE}" push "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" "${IMAGE_DIR}" "${REPOSITORY}@${DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
+"${CRANE}" push "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" "${IMAGE_DIR}" "${REPOSITORY}@${MANIFEST_DIGEST}" "${ARGS[@]+"${ARGS[@]}"}" --image-refs "${REFS}"
 
 for tag in "${TAGS[@]+"${TAGS[@]}"}"
 do
   "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}") "${tag}"
+  if [[ ${TAG_PLATFORM_IMAGES} -eq 1 ]]; then
+    echo "${IMAGE_DIGESTS}" | while read digest os arch ; do
+      if [[ -n "${os}" && -n "${arch}" ]]; then
+        "${CRANE}" tag "${REPOSITORY}@${digest}" "${tag}-${os}-${arch}"
+      fi
+    done
+  fi
 done
 
 if [[ -e "${TAGS_FILE:-}" ]]; then
-  cat "${TAGS_FILE}" | xargs -r -n1 "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}")
+  readarray -t tags < "${TAGS_FILE}"
+  for tag in "${tags[@]}"; do
+    if [[ -z "${tag}" ]]; then
+        continue
+    fi
+    "${CRANE}" tag "${GLOBAL_FLAGS[@]+"${GLOBAL_FLAGS[@]}"}" $(cat "${REFS}") "${tag}"
+    if [[ ${TAG_PLATFORM_IMAGES} -eq 1 ]]; then
+      echo "${IMAGE_DIGESTS}" | while read digest os arch ; do
+        if [[ -n "${os}" && -n "${arch}" ]]; then
+          "${CRANE}" tag "${REPOSITORY}@${digest}" "${tag}-${os}-${arch}"
+        fi
+      done
+    fi
+  done
 fi
