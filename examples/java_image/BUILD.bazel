@@ -1,0 +1,49 @@
+load("@rules_java//java:defs.bzl", "java_binary")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@tar.bzl", "tar")
+load("//examples:assert.bzl", "assert_oci_config", "assert_oci_image_command")
+
+java_binary(
+    name = "app",
+    srcs = ["App.java"],
+    main_class = "com.example.myproject.App",
+)
+
+tar(
+    name = "layer",
+    srcs = [":app_deploy.jar"],
+)
+
+oci_image(
+    name = "image",
+    base = "@distroless_java",
+    entrypoint = [
+        "java",
+        "-jar",
+        "/examples/java_image/app_deploy.jar",
+    ],
+    tars = [":layer"],
+)
+
+oci_load(
+    name = "load",
+    image = ":image",
+    repo_tags = ["example/java:latest"],
+)
+
+assert_oci_image_command(
+    name = "assert_output",
+    exit_code_eq = 0,
+    image = ":image",
+    output_eq = "Hello, World!\n",
+)
+
+assert_oci_config(
+    name = "assert_image_metadata",
+    entrypoint_eq = [
+        "java",
+        "-jar",
+        "/examples/java_image/app_deploy.jar",
+    ],
+    image = ":image",
+)
