@@ -21,4 +21,5 @@ oci_image(
 
 ## Example
 
-[A simple example using a deploy.jar](https://github.com/aspect-build/bazel-examples/tree/main/oci_java_image)
+[A simple example using a deploy.jar](https://github.com/bazel-contrib/rules_oci/tree/main/examples/java_image)
+
