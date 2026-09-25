@@ -140,6 +140,16 @@ multirun(
 [rules_multirun]: https://github.com/keith/rules_multirun
 """
 
+# Select the host platform for tools used by the locally run push script
+def _push_transition_impl(_, _attr):
+    return {"//command_line_option:extra_execution_platforms": ["@platforms//host:host"]}
+
+_push_transition = transition(
+    implementation = _push_transition_impl,
+    inputs = [],
+    outputs = ["//command_line_option:extra_execution_platforms"],
+)
+
 _attrs = {
     "image": attr.label(
         allow_single_file = True,
@@ -169,7 +179,7 @@ _attrs = {
     ),
     "_crane": attr.label(
         default = "@oci_crane_toolchains//:current_toolchain",
-        cfg = "exec",
+        cfg = _push_transition,
     ),
     "_push_sh_tpl": attr.label(
         default = "push.sh.tpl",
@@ -178,7 +188,10 @@ _attrs = {
     "_runfiles": attr.label(default = "@bazel_tools//tools/bash/runfiles"),
     "_jq": attr.label(
         default = "@jq_toolchains//:resolved_toolchain",
-        cfg = "exec",
+        cfg = _push_transition,
+    ),
+    "_allowlist_function_transition": attr.label(
+        default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
     ),
 } | util.IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
@@ -186,8 +199,8 @@ def _quote_args(args):
     return ["\"{}\"".format(arg) for arg in args]
 
 def _impl(ctx):
-    crane = ctx.attr._crane[platform_common.ToolchainInfo]
-    jq = ctx.attr._jq[platform_common.ToolchainInfo]
+    crane = ctx.attr._crane[0][platform_common.ToolchainInfo]
+    jq = ctx.attr._jq[0][platform_common.ToolchainInfo]
 
     if not ctx.file.image.is_directory:
         fail("image attribute must be a oci_image or oci_image_index")
