@@ -17,6 +17,8 @@ This guidance tells us how to avoid that: we put the toolchain targets in the al
 with only the toolchain attribute pointing into the platform-specific repositories.
 """
 
+load(":util.bzl", "util")
+
 # Add more platforms as needed to mirror all the binaries
 # published by the upstream project.
 PLATFORMS = {
@@ -135,6 +137,10 @@ def _toolchains_repo_impl(repository_ctx):
         )
 
     repository_ctx.file("BUILD.bazel", build_content)
+
+    # Reproducible: the generated files are templated purely from the rule's attributes and the
+    # PLATFORMS constant.
+    return util.repo_metadata(repository_ctx, reproducible = True)
 
 toolchains_repo = repository_rule(
     _toolchains_repo_impl,

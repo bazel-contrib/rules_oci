@@ -2,7 +2,22 @@
 
 load("@aspect_bazel_lib//lib:base64.bzl", "base64")
 load("@aspect_bazel_lib//lib:repo_utils.bzl", "repo_utils")
+load("@bazel_skylib//lib:versions.bzl", "versions")
 load(":util.bzl", "util")
+
+# Environment variables that decide where the credential file is, or how it is used.
+_AUTH_ENV_VARS = [
+    "DOCKER_CONFIG",
+    "REGISTRY_AUTH_FILE",
+    "XDG_RUNTIME_DIR",
+    "HOME",
+    "OCI_ENABLE_OAUTH2_SUPPORT",
+]
+
+# Bazel 7.1 added `repository_ctx.getenv` and the `watch` parameter of `repository_ctx.read`.
+# `native.bazel_version` only exists where repo rules can run, not when this file is loaded from
+# a BUILD file, e.g. to generate docs.
+_CAN_WATCH = hasattr(native, "bazel_version") and versions.is_at_least("7.1.0", versions.get())
 
 # Unfortunately bazel downloader doesn't let us sniff the WWW-Authenticate header, therefore we need to
 # keep a map of known registries that require us to acquire a temporary token for authentication.
@@ -131,6 +146,9 @@ exec "docker-credential-{}" get <<< "$1" """.format(helper_name),
         [rctx.path(executable), raw_host],
         working_directory = str(rctx.workspace_root),
     )
+
+    # Don't leave the shim in the repo, otherwise it becomes part of the repo's contents.
+    rctx.delete(executable)
     if result.return_code:
         if not allow_fail:
             fail("credential helper failed: \nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
@@ -221,6 +239,7 @@ def _oauth2(rctx, realm, scope, service, secret):
     else:
         fail("oauth2 failed, could not find either of: curl, wget, powershell")
 
+    rctx.delete(executable)
     if result.return_code:
         fail("oauth2 failed:\nSTDOUT:\n{}\nSTDERR:\n{}".format(result.stdout, result.stderr))
     return result.stdout
@@ -402,12 +421,38 @@ def _explain(state):
         return NO_CONFIG_FOUND_ERROR
     return None
 
-def _new_auth(rctx, config_path = None):
+def _new_auth(rctx, config_path = None, reproducible = False):
+    """Create an authenticator from the host's registry credentials.
+
+    Args:
+        rctx: repository context
+        config_path: path to the credential file, or None to look it up from the environment
+        reproducible: whether the repo's contents are pinned by a digest. If so, the credential
+            file and the environment variables that locate it are not made inputs of the repo.
+    Returns:
+        a struct with `get_token` and `explain` functions
+    """
+
+    # Credentials only decide whether the registry serves the content, never what that content
+    # is. When the repo is pinned by digest, watching them would only tie the repo contents cache
+    # key to the host: its `$HOME`, and its credential file's path and bytes. When pulling by tag
+    # they are still watched, so the repo is refetched when they change, as it was when they were
+    # listed in `environ`.
+    watch = "auto"
+    if reproducible:
+        watch = "no"
+    elif _CAN_WATCH:
+        for name in _AUTH_ENV_VARS:
+            rctx.getenv(name)
+
     if not config_path:
         config_path = _get_auth_file_path(rctx)
     config = {}
     if config_path:
-        config = json.decode(rctx.read(config_path))
+        if _CAN_WATCH:
+            config = json.decode(rctx.read(config_path, watch = watch))
+        else:
+            config = json.decode(rctx.read(config_path))
     state = {
         "config": config,
         "auth": {},
@@ -420,11 +465,8 @@ def _new_auth(rctx, config_path = None):
 
 authn = struct(
     new = _new_auth,
-    ENVIRON = [
-        "DOCKER_CONFIG",
-        "REGISTRY_AUTH_FILE",
-        "XDG_RUNTIME_DIR",
-        "HOME",
-        "OCI_ENABLE_OAUTH2_SUPPORT",
-    ],
+    # Values of `environ` are part of a repo's predeclared inputs, so they would split the repo
+    # contents cache by host even for digest pulls. Where possible `_new_auth` watches them itself,
+    # and only for tag pulls.
+    ENVIRON = [] if _CAN_WATCH else _AUTH_ENV_VARS,
 )

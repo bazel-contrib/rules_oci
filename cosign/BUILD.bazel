@@ -22,6 +22,7 @@ bzl_library(
     deps = [
         "//cosign/private:versions",
         "//oci/private:toolchains_repo",
+        "//oci/private:util",
     ],
 )
 

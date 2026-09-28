@@ -108,6 +108,18 @@ def _config_path(rctx):
 def _is_tag(str):
     return str.find(":") == -1
 
+# The only digest algorithm `_download` hands to the Bazel downloader as an integrity check.
+# `oci_pull` documents `sha512:` and friends as valid too, but those are fetched unverified.
+_VERIFIED_DIGEST_PREFIX = "sha256:"
+
+def _is_verified_digest(identifier):
+    """Whether `identifier` pins content that the downloader actually verifies.
+
+    Stricter than `not _is_tag(identifier)`: a digest in an algorithm we do not check is no more
+    trustworthy than a tag, since nothing detects a registry serving different bytes.
+    """
+    return identifier.startswith(_VERIFIED_DIGEST_PREFIX)
+
 def _digest_into_blob_path(digest):
     "convert sha256:deadbeef into sha256/deadbeef"
     digest_path = digest.replace(":", "/", 1)
@@ -133,8 +145,8 @@ def _download(rctx, authn, identifier, output, resource, headers = {}, allow_fai
 
     sha256 = ""
 
-    if identifier.startswith("sha256:"):
-        sha256 = identifier[len("sha256:"):]
+    if _is_verified_digest(identifier):
+        sha256 = identifier[len(_VERIFIED_DIGEST_PREFIX):]
     else:
         util.warning(rctx, "Fetching from {}@{} without an integrity hash, result will not be cached.".format(rctx.attr.repository, identifier))
 
@@ -232,7 +244,13 @@ def _find_platform_manifest(index_mf, platform_wanted):
     return None
 
 def _oci_pull_impl(rctx):
-    au = authn.new(rctx, _config_path(rctx))
+    # Pulling by a verified digest is reproducible: every downloaded blob is checked against a
+    # digest derived from the `identifier` attribute. A tag is not, since the registry is free to
+    # move it to different content at any time, and neither is a digest in an algorithm we cannot
+    # check - in both cases nothing would notice the registry serving different bytes.
+    reproducible = _is_verified_digest(rctx.attr.identifier)
+
+    au = authn.new(rctx, _config_path(rctx), reproducible = reproducible)
     downloader = _create_downloader(rctx, au)
 
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
@@ -349,6 +367,8 @@ repo(
 )
 """)
 
+    return util.repo_metadata(rctx, reproducible = reproducible)
+
 oci_pull = repository_rule(
     implementation = _oci_pull_impl,
     attrs = dicts.add(
@@ -406,7 +426,12 @@ def _oci_alias_impl(rctx):
     if not rctx.attr.platforms and not rctx.attr.platform:
         fail("One of 'platforms' or 'platform' must be set")
 
-    au = authn.new(rctx, _config_path(rctx))
+    # Same as oci_pull: only a verified digest pins the content this repo describes. Note the
+    # generated `digest.txt` is derived from `identifier`, so with a tag it can change between
+    # fetches.
+    reproducible = _is_verified_digest(rctx.attr.identifier)
+
+    au = authn.new(rctx, _config_path(rctx), reproducible = reproducible)
     downloader = _create_downloader(rctx, au)
 
     available_platforms = []
@@ -478,6 +503,8 @@ buildozer 'set digest "{digest}"' 'remove tag' 'remove platforms' {optional_plat
         )
 
     rctx.file("BUILD.bazel", content = build)
+
+    return util.repo_metadata(rctx, reproducible = reproducible)
 
 oci_alias = repository_rule(
     implementation = _oci_alias_impl,
