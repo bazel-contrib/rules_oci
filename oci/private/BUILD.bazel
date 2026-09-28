@@ -115,6 +115,7 @@ bzl_library(
         "//oci/private:util",
         "@aspect_bazel_lib//lib:base64",
         "@aspect_bazel_lib//lib:repo_utils",
+        "@bazel_skylib//lib:versions",
     ],
 )
 

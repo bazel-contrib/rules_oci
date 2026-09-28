@@ -244,7 +244,13 @@ def _find_platform_manifest(index_mf, platform_wanted):
     return None
 
 def _oci_pull_impl(rctx):
-    au = authn.new(rctx, _config_path(rctx))
+    # Pulling by a verified digest is reproducible: every downloaded blob is checked against a
+    # digest derived from the `identifier` attribute. A tag is not, since the registry is free to
+    # move it to different content at any time, and neither is a digest in an algorithm we cannot
+    # check - in both cases nothing would notice the registry serving different bytes.
+    reproducible = _is_verified_digest(rctx.attr.identifier)
+
+    au = authn.new(rctx, _config_path(rctx), reproducible = reproducible)
     downloader = _create_downloader(rctx, au)
 
     manifest, size, digest = downloader.download_manifest(rctx.attr.identifier, "manifest.json")
@@ -356,11 +362,7 @@ repo(
 )
 """)
 
-    # Pulling by a verified digest is reproducible: every downloaded blob is checked against a
-    # digest derived from the `identifier` attribute. A tag is not, since the registry is free to
-    # move it to different content at any time, and neither is a digest in an algorithm we cannot
-    # check - in both cases nothing would notice the registry serving different bytes.
-    return util.repo_metadata(rctx, reproducible = _is_verified_digest(rctx.attr.identifier))
+    return util.repo_metadata(rctx, reproducible = reproducible)
 
 oci_pull = repository_rule(
     implementation = _oci_pull_impl,
@@ -419,7 +421,12 @@ def _oci_alias_impl(rctx):
     if not rctx.attr.platforms and not rctx.attr.platform:
         fail("One of 'platforms' or 'platform' must be set")
 
-    au = authn.new(rctx, _config_path(rctx))
+    # Same as oci_pull: only a verified digest pins the content this repo describes. Note the
+    # generated `digest.txt` is derived from `identifier`, so with a tag it can change between
+    # fetches.
+    reproducible = _is_verified_digest(rctx.attr.identifier)
+
+    au = authn.new(rctx, _config_path(rctx), reproducible = reproducible)
     downloader = _create_downloader(rctx, au)
 
     available_platforms = []
@@ -492,10 +499,7 @@ buildozer 'set digest "{digest}"' 'remove tag' 'remove platforms' {optional_plat
 
     rctx.file("BUILD.bazel", content = build)
 
-    # Same as oci_pull: only a verified digest pins the content this repo describes. Note the
-    # generated `digest.txt` is derived from `identifier`, so with a tag it can change between
-    # fetches.
-    return util.repo_metadata(rctx, reproducible = _is_verified_digest(rctx.attr.identifier))
+    return util.repo_metadata(rctx, reproducible = reproducible)
 
 oci_alias = repository_rule(
     implementation = _oci_alias_impl,
