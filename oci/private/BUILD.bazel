@@ -96,6 +96,9 @@ bzl_library(
         "//cosign:__subpackages__",
         "//oci:__subpackages__",
     ],
+    deps = [
+        ":util",
+    ],
 )
 
 bzl_library(
@@ -112,13 +115,17 @@ bzl_library(
         "//oci/private:util",
         "@aspect_bazel_lib//lib:base64",
         "@aspect_bazel_lib//lib:repo_utils",
+        "@bazel_skylib//lib:versions",
     ],
 )
 
 bzl_library(
     name = "util",
     srcs = ["util.bzl"],
-    visibility = ["//oci:__subpackages__"],
+    visibility = [
+        "//cosign:__subpackages__",
+        "//oci:__subpackages__",
+    ],
     deps = [
         ":windows_utils",
         "@bazel_skylib//lib:paths",

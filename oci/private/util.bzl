@@ -292,6 +292,33 @@ def _platform_triplet(platform_str):
         architecture, _, variant = architecture.partition("/")
     return os, architecture, variant
 
+def _repo_metadata(rctx, reproducible):
+    """Return a repo_metadata marker, or None on Bazel versions that lack the API.
+
+    Repo rules whose output is fully determined by their attributes must say so, otherwise Bazel
+    cannot store them in the repo contents cache, whether local (`--repo_contents_cache`) or
+    remote (`--experimental_remote_repo_contents_cache`).
+
+    Args:
+        rctx: repository context
+        reproducible: whether this repo can be reproducibly refetched
+    Returns:
+        a repo_metadata object, or None if the running Bazel does not support it
+    """
+
+    # Detected at runtime rather than through bazel_features: `features.bzl` loads a repository
+    # that `bazel_features_deps()` creates, so loading it from here would be a cycle for
+    # WORKSPACE users, who reach this file before that macro has had a chance to run.
+    # `repo_metadata` first appeared in Bazel 8.3.0, already carrying `reproducible`, so the
+    # presence of the method is enough to know the keyword is accepted.
+    if not hasattr(rctx, "repo_metadata"):
+        return None
+
+    # Deliberately not passing `attrs_for_reproducibility`: the attributes of the private repo
+    # rules are not what a user writes in their `oci.pull`/`oci_pull` call, so Bazel's generated
+    # advice would be wrong. `oci_alias` already prints accurate buildozer instructions instead.
+    return rctx.repo_metadata(reproducible = reproducible)
+
 util = struct(
     parse_www_authenticate = _parse_www_authenticate,
     parse_image = _parse_image,
@@ -303,6 +330,7 @@ util = struct(
     build_manifest_json = _build_manifest_json,
     assert_crane_version_at_least = _assert_crane_version_at_least,
     platform_triplet = _platform_triplet,
+    repo_metadata = _repo_metadata,
     is_windows_exec = is_windows_exec,
     IS_EXEC_PLATFORM_WINDOWS_ATTRS = IS_EXEC_PLATFORM_WINDOWS_ATTRS,
 )
