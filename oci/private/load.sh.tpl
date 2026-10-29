@@ -33,7 +33,12 @@ mtree_contents="${mtree_contents//"$image_root"/$image_runfiles_prefix}"
 mtree_contents="${mtree_contents//"$manifest_root"/$manifest_runfiles_prefix}"
 
 
-"$CONTAINER_CLI" load --input <(
-    "$TAR" --cd "$RUNFILES_DIR" --create --no-xattr --no-mac-metadata @- <<< "$mtree_contents"
-)
-wait $!
+if [ "$CONTAINER_CLI" = "podman" ]; then
+    "$TAR" --cd "$RUNFILES_DIR" --create --no-xattr --no-mac-metadata @- <<< "$mtree_contents" | \
+        "$CONTAINER_CLI" load
+else
+    "$CONTAINER_CLI" load --input <(
+        "$TAR" --cd "$RUNFILES_DIR" --create --no-xattr --no-mac-metadata @- <<< "$mtree_contents"
+    )
+    wait $!
+fi
