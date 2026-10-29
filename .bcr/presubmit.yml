@@ -1,7 +1,7 @@
 bcr_test_module:
   module_path: "e2e/smoke"
   matrix:
-    bazel: ["6.x", "7.x", "8.x"]
+    bazel: ["7.x", "8.x"]
     # TODO(#97): add windows
     platform: ["debian11", "ubuntu2204"]
   tasks:
@@ -11,6 +11,10 @@ bcr_test_module:
       platform: ${{ platform }}
       test_targets:
         - "//..."
+        # This test requires a docker daemon, not available on BCR CI
+        - "-//:test"
+        - "-//:docker_created"
+        - "-//:test_created"
     test_macos:
       name: "Run test module"
       bazel: ${{ bazel }}
