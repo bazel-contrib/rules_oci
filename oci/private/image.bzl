@@ -87,6 +87,7 @@ For Linux based systems, all of the following are valid: `user`, `uid`, `user:gr
 If `group/gid` is not specified, the default group and supplementary groups of the given `user/uid` in `/etc/passwd` from the container are applied.
 """),
     "workdir": attr.string(doc = "Sets the current working directory of the `entrypoint` process in the container. This value acts as a default and may be replaced by a working directory specified when creating a container."),
+    "stop_signal": attr.string(doc = "Sets the system call signal that is sent to the container to exit, for example `SIGQUIT` or `SIGRTMIN+3`. This value acts as a default and may be replaced by a stop signal specified when creating a container."),
     "exposed_ports": attr.label(doc = "A file containing a comma separated list of exposed ports. (e.g. 2000/tcp, 3000/udp or 4000. No protocol defaults to tcp).", allow_single_file = True),
     "volumes": attr.label(doc = "A file containing a comma separated list of volumes. (e.g. /srv/data,/srv/other-data)", allow_single_file = True),
     "os": attr.string(doc = "The name of the operating system which the image is built to run on. eg: `linux`, `windows`. See $GOOS documentation for possible values: https://go.dev/doc/install/source#environment"),
@@ -236,6 +237,9 @@ def _oci_image_impl(ctx):
 
     if ctx.attr.workdir:
         args.add(ctx.attr.workdir, format = "--workdir=%s")
+
+    if ctx.attr.stop_signal:
+        args.add(ctx.attr.stop_signal, format = "--stop-signal=%s")
 
     action_env = {}
 

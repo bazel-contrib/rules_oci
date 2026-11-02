@@ -29,6 +29,7 @@ def assert_oci_config(
         volumes_eq = None,
         user_eq = None,
         workdir_eq = None,
+        stop_signal_eq = None,
         architecture_eq = None,
         os_eq = None,
         variant_eq = None,
@@ -55,6 +56,8 @@ def assert_oci_config(
         config["Volumes"] = {volume: {} for volume in volumes_eq}
     if user_eq:
         config["User"] = user_eq
+    if stop_signal_eq:
+        config["StopSignal"] = stop_signal_eq
     if labels_eq:
         config["Labels"] = labels_eq
 
