@@ -20,12 +20,12 @@ use_repo(buildx, "buildx")
 # Fetch the base image to be used for the build.
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
-    name = "python_3_11_9-bullseye",
-    digest = "sha256:64da8e5fd98057b05db01b49289b774e9fa3b81e87b4883079f6c31fb141b252",
-    image = "python:3.11.9-bullseye",
+    name = "python_3_11_18-trixie",
+    digest = "sha256:d498b21cd3969367397f636a653b3a0a723b318a39fd4aa4f35f611efeea4732",
+    image = "python:3.11.18-trixie",
     platforms = [
         "linux/arm64/v8",
         "linux/amd64",
     ],
 )
-use_repo(oci, "python_3_11_9-bullseye", "python_3_11_9-bullseye_linux_amd64", "python_3_11_9-bullseye_linux_arm64_v8")
+use_repo(oci, "python_3_11_18-trixie", "python_3_11_18-trixie_linux_amd64", "python_3_11_18-trixie_linux_arm64_v8")
