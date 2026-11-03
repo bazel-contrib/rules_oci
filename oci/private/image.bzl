@@ -12,6 +12,15 @@ _ACCEPTED_TAR_EXTENSIONS = [
     ".tar.zst",
 ]
 
+_OCI_IMAGE_TOOLS_EXEC_GROUP = "oci_image_tools"
+_OCI_IMAGE_TOOLCHAINS = [
+    "@aspect_bazel_lib//lib:jq_toolchain_type",
+    "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+    "@aspect_bazel_lib//lib:zstd_toolchain_type",
+    "@rules_oci//oci:regctl_toolchain_type",
+    "@bazel_tools//tools/sh:toolchain_type",
+]
+
 _DOC = """Build an OCI compatible container image.
 
 Note, most users should use the wrapper macro instead of this rule directly.
@@ -95,7 +104,12 @@ If `group/gid` is not specified, the default group and supplementary groups of t
     "labels": attr.label(doc = "A file containing a dictionary of labels. Each line should be in the form `name=value`.", allow_single_file = True),
     "annotations": attr.label(doc = "A file containing a dictionary of annotations. Each line should be in the form `name=value`.", allow_single_file = True),
     "_image_sh": attr.label(default = "image.sh", allow_single_file = True),
-    "_descriptor_sh": attr.label(default = "descriptor.sh", executable = True, cfg = "exec", allow_single_file = True),
+    "_descriptor_sh": attr.label(
+        default = "descriptor.sh",
+        executable = True,
+        cfg = config.exec(exec_group = _OCI_IMAGE_TOOLS_EXEC_GROUP),
+        allow_single_file = True,
+    ),
 } | util.IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _platform_str(os, arch, variant = None):
@@ -105,13 +119,14 @@ def _platform_str(os, arch, variant = None):
     return json.encode(parts)
 
 def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
+    sh = ctx.exec_groups[_OCI_IMAGE_TOOLS_EXEC_GROUP].toolchains["@bazel_tools//tools/sh:toolchain_type"]
     descriptor = ctx.actions.declare_file("%s.%s.descriptor.json" % (ctx.label.name, idx))
     args = ctx.actions.args()
     args.add(layer)
     args.add(descriptor)
     args.add(layer.owner)
     ctx.actions.run(
-        executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh),
+        executable = util.maybe_wrap_launcher_for_windows(ctx, ctx.executable._descriptor_sh, sh),
         inputs = [layer],
         outputs = [descriptor],
         arguments = [args],
@@ -131,6 +146,7 @@ def _calculate_descriptor(ctx, idx, layer, zstd, jq, coreutils, regctl):
         ],
         mnemonic = "OCIDescriptor",
         progress_message = "OCI Descriptor %{input}",
+        exec_group = _OCI_IMAGE_TOOLS_EXEC_GROUP,
     )
     return descriptor
 
@@ -140,10 +156,12 @@ def _oci_image_impl(ctx):
     if ctx.attr.base and (ctx.attr.os or ctx.attr.architecture or ctx.attr.variant):
         fail("'os', 'architecture' and 'variant' come from the image provided by 'base' and cannot be overridden.")
 
-    regctl = ctx.toolchains["@rules_oci//oci:regctl_toolchain_type"]
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
-    zstd = ctx.toolchains["@aspect_bazel_lib//lib:zstd_toolchain_type"]
+    image_toolchains = ctx.exec_groups[_OCI_IMAGE_TOOLS_EXEC_GROUP].toolchains
+    regctl = image_toolchains["@rules_oci//oci:regctl_toolchain_type"]
+    jq = image_toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    coreutils = image_toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    zstd = image_toolchains["@aspect_bazel_lib//lib:zstd_toolchain_type"]
+    sh = image_toolchains["@bazel_tools//tools/sh:toolchain_type"]
 
     output = ctx.actions.declare_directory(ctx.label.name)
 
@@ -253,7 +271,7 @@ def _oci_image_impl(ctx):
         arguments = [args],
         outputs = [output],
         env = action_env,
-        executable = util.maybe_wrap_launcher_for_windows(ctx, builder),
+        executable = util.maybe_wrap_launcher_for_windows(ctx, builder, sh),
         tools = [
             regctl.regctl_info.binary,
             jq.jqinfo.bin,
@@ -262,7 +280,7 @@ def _oci_image_impl(ctx):
         mnemonic = "OCIImage",
         progress_message = "OCI Image %{label}",
         resource_set = resource_set(ctx.attr),
-        toolchain = None,
+        exec_group = _OCI_IMAGE_TOOLS_EXEC_GROUP,
     )
 
     return [
@@ -276,11 +294,8 @@ oci_image = rule(
     implementation = _oci_image_impl,
     attrs = dict(_attrs, **resource_set_attr),
     doc = _DOC,
-    toolchains = [
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
-        "@aspect_bazel_lib//lib:zstd_toolchain_type",
-        "@rules_oci//oci:regctl_toolchain_type",
-        "@bazel_tools//tools/sh:toolchain_type",
-    ],
+    toolchains = _OCI_IMAGE_TOOLCHAINS,
+    exec_groups = {
+        _OCI_IMAGE_TOOLS_EXEC_GROUP: exec_group(toolchains = _OCI_IMAGE_TOOLCHAINS),
+    },
 )

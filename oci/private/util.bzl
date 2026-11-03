@@ -189,7 +189,7 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
-def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
+def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, sh_toolchain = None):
     """Windows cannot directly execute a shell script.
 
     Wrap with a .bat file that executes the shell script with a bash command.
@@ -204,6 +204,9 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     """
     if not is_windows_exec(ctx):
         return bash_launcher
+
+    if sh_toolchain == None:
+        sh_toolchain = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"]
 
     win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
     ctx.actions.write(
@@ -223,7 +226,7 @@ if defined args (
 )
 "{bash_bin}" -c "%parent_dir%{launcher} !args!"
 """.format(
-            bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
+            bash_bin = sh_toolchain.path,
             launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
         ),
         is_executable = True,
