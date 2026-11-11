@@ -1,5 +1,5 @@
 load("@aspect_bazel_lib//lib:copy_file.bzl", "copy_file")
-load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains")
+load("@aspect_bazel_lib//lib:testing.bzl", "assert_contains", "assert_json_matches")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_image_index")
 load("@tar.bzl", "tar")
@@ -67,6 +67,28 @@ oci_image_index(
         ":linux_amd64",
         ":linux_arm64",
     ],
+)
+
+# The OCI image layout specification requires schemaVersion in index.json.
+# Some runtimes, for example Apple's `container` CLI, reject the layout without it.
+genrule(
+    name = "app_all_index_file",
+    srcs = [":app_all"],
+    outs = ["app_all_index_file.json"],
+    cmd = "cp $(location :app_all)/index.json $@",
+)
+
+write_file(
+    name = "expected_schema_version",
+    out = "expected_schema_version.json",
+    content = ["2"],
+)
+
+assert_json_matches(
+    name = "check_index_schema_version",
+    file1 = ":app_all_index_file",
+    file2 = ":expected_schema_version",
+    filter1 = ".schemaVersion",
 )
 
 # Exercises the `annotations` attribute (inline-dict form, just like

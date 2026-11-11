@@ -58,6 +58,8 @@ On docker desktop this can be enabled by visiting `Settings (cog icon) -> Featur
 
 For more information, see https://docs.docker.com/desktop/containerd/
 
+Apple's `container` CLI loads only OCI layout tarballs, so it requires `format = "oci"`.
+
 ### Multiple images
 
 To load more than one image into the daemon,
@@ -109,7 +111,8 @@ attrs = {
             Alternative target for a container cli tool that will be
             used to load the image into the local engine when using `bazel run` on this target.
 
-            By default, we look for `docker` or `podman` or `nerdctl` on the PATH, and run the `load` command.
+            By default, we look for `docker` or `podman` or `nerdctl` or `container` on the PATH, and run the `load` command.
+            For Apple's `container` CLI, we run `container image load`.
 
             See the _run_template attribute for the script that calls this loader tool.
             """,
