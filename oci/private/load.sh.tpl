@@ -33,7 +33,7 @@ mtree_contents="${mtree_contents//"$image_root"/$image_runfiles_prefix}"
 mtree_contents="${mtree_contents//"$manifest_root"/$manifest_runfiles_prefix}"
 
 
-"$CONTAINER_CLI" load --input <(
-    "$TAR" --cd "$RUNFILES_DIR" --create --no-xattr --no-mac-metadata @- <<< "$mtree_contents"
-)
-wait $!
+# A pipeline propagates failures from both processes via pipefail. Bash 3.2
+# cannot wait for a process substitution, even when its PID is saved in $!.
+"$TAR" --cd "$RUNFILES_DIR" --create --no-xattr --no-mac-metadata @- <<< "$mtree_contents" |
+    "$CONTAINER_CLI" load --input /dev/stdin

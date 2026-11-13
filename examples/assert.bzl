@@ -1,11 +1,12 @@
 "assertion rules to test metadata"
 
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
+load("@aspect_bazel_lib//lib:transitions.bzl", "platform_transition_filegroup")
 load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 
 # THIS LOAD STATEMENT DEPENDS ON setup_assertion_repos.bzl
-load("@docker_configure//:defs.bzl", "TARGET_COMPATIBLE_WITH")
+load("@docker_configure//:defs.bzl", "DOCKER_PLATFORM", "TARGET_COMPATIBLE_WITH")
 load("//oci:defs.bzl", "oci_load")
 
 DIGEST_CMD = """
@@ -123,6 +124,14 @@ def assert_oci_image_command(
     "assert a that a container works with the given command."
 
     tag = "oci.local/assert/" + native.package_name().replace("/", "_") + ":latest"
+    if DOCKER_PLATFORM:
+        platform_transition_filegroup(
+            name = name + "_runtime_image",
+            srcs = [image],
+            target_platform = DOCKER_PLATFORM,
+            tags = tags + ["manual"],
+        )
+        image = ":" + name + "_runtime_image"
     oci_load(
         name = name + "_tarball",
         image = image,

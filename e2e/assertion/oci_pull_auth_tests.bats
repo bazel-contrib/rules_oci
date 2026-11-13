@@ -32,7 +32,9 @@ teardown_file() {
 
 setup() {
   export DOCKER_CONFIG=$(mktemp -d)
-  bazel clean
+  # Digest-pinned repos intentionally do not watch credentials. Force a fresh
+  # fetch for each case so cached image contents cannot bypass authentication.
+  bazel clean --expunge
 }
 
 function update_assert() {
