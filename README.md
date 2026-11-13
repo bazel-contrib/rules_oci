@@ -37,6 +37,8 @@ You can find a migration guide at <https://docs.aspect.build/guides/rules_oci_mi
 
 ## Installation
 
+Requires Bazel 7 or later.
+
 See the install instructions on the release notes: <https://github.com/bazel-contrib/rules_oci/releases>
 
 To use a commit rather than a release, you can point at any SHA of the repo.
