@@ -11,13 +11,18 @@ bcr_test_module:
       platform: ${{ platform }}
       test_targets:
         - "//..."
+        # BCR workers have no Docker CLI/daemon. test_tar and test_tar_created
+        # cover metadata and creation time without Docker; GitHub CI runs both.
+        - "-//:test"
+        - "-//:docker_created"
+        - "-//:test_created"
     test_macos:
       name: "Run test module"
       bazel: ${{ bazel }}
       platform: macos
       test_targets:
         - "//..."
-        # This test requires a docker daemon, not available on BCR CI
+        # Keep the same daemonless coverage as Linux.
         - "-//:test"
         - "-//:docker_created"
         - "-//:test_created"

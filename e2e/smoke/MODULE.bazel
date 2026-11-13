@@ -11,6 +11,10 @@ local_path_override(
     path = "../..",
 )
 
+bazel_lib = use_extension("@aspect_bazel_lib//lib:extensions.bzl", "toolchains")
+bazel_lib.jq()
+use_repo(bazel_lib, "jq_toolchains")
+
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "distroless_base",
