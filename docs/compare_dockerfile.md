@@ -25,7 +25,7 @@ Let's compare them to their rules_oci counterparts:
 - `ONBUILD`     -> Not supported
 - `RUN`         -> See: https://github.com/bazel-contrib/rules_oci/issues/132
 - `SHELL`       -> Use `oci_image#entrypoint` instead.
-- `STOPSIGNAL`  -> Not supported
+- `STOPSIGNAL`  -> Use `oci_image#stop_signal`
 - `USER`        -> Not supported. Use the tar rule's mechanism for setting gid/uid
 - `VOLUME`      -> Use `oci_image#volumes`
 - `WORKDIR`     -> Use `oci_image#workdir`
