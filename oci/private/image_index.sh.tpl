@@ -30,13 +30,30 @@ function add_image() {
     done
 }
 
-function copy_blob() {
+# Adds a blob of an image to the output, as a relative symlink when `link` is 1 and a copy otherwise.
+# The rule decides which per image: a symlink only resolves in a runfiles tree when the image and
+# the index share a configuration and a repository.
+function add_blob() {
     local image_path="$1"
     local output_path="$2"
     local blob_image_relative_path="$3"
+    local link="$4"
+    local blob_path="${image_path}/${blob_image_relative_path}"
     local dest_path="${output_path}/${blob_image_relative_path}"
-    mkdirp "$("${COREUTILS}" dirname "${dest_path}")"
-    "${COREUTILS}" cp --no-preserve=mode "${image_path}/${blob_image_relative_path}" "${dest_path}"
+    # Blobs are content-addressed, so one that another image already contributed is the same blob.
+    if [[ -e "${dest_path}" || -L "${dest_path}" ]]; then
+        return
+    fi
+    local dest_dir
+    dest_dir="$("${COREUTILS}" dirname "${dest_path}")"
+    mkdirp "${dest_dir}"
+    if [[ "${link}" == "1" ]]; then
+        local relative
+        relative="$("${COREUTILS}" realpath --no-symlinks --canonicalize-missing --relative-to="${dest_dir}" "${blob_path}")"
+        "${COREUTILS}" ln --symbolic "${relative}" "${dest_path}"
+    else
+        "${COREUTILS}" cp --no-preserve=mode "${blob_path}" "${dest_path}"
+    fi
 }
 
 function create_oci_layout() {
@@ -49,14 +66,17 @@ function create_oci_layout() {
 }
 
 CURRENT_IMAGE=""
+# Whether the blobs of CURRENT_IMAGE are symlinked (1) or copied (0).
+LINK_BLOBS=0
 OUTPUT=""
 ANNOTATIONS=""
 
 for ARG in "$@"; do
     case "$ARG" in
         (--output=*) OUTPUT="${ARG#--output=}"; create_oci_layout "$OUTPUT" ;;
-        (--image=*) CURRENT_IMAGE="${ARG#--image=}"; add_image "$CURRENT_IMAGE" "$OUTPUT" ;;
-        (--blob=*) copy_blob "${CURRENT_IMAGE}" "$OUTPUT" "${ARG#--blob=}" ;;
+        (--image=*) CURRENT_IMAGE="${ARG#--image=}"; LINK_BLOBS=0; add_image "$CURRENT_IMAGE" "$OUTPUT" ;;
+        (--linked-image=*) CURRENT_IMAGE="${ARG#--linked-image=}"; LINK_BLOBS=1; add_image "$CURRENT_IMAGE" "$OUTPUT" ;;
+        (--blob=*) add_blob "${CURRENT_IMAGE}" "$OUTPUT" "${ARG#--blob=}" "${LINK_BLOBS}" ;;
         (--annotations=*) ANNOTATIONS="${ARG#--annotations=}" ;;
         (*) echo "Unknown argument ${ARG}"; exit 1;;
     esac

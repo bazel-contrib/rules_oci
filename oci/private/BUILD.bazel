@@ -50,6 +50,7 @@ bzl_library(
         "//docs:__pkg__",
         "//oci:__subpackages__",
     ],
+    deps = ["@bazel_features//:features"],
 )
 
 # package_metadata doesn't have any bzl_library targets
