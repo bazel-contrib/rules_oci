@@ -1,5 +1,7 @@
 "Implementation details for oci_image_index rule"
 
+load("@bazel_features//:features.bzl", "bazel_features")
+
 _DOC = """Build a multi-architecture OCI compatible container image.
 
 It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/main/image-index.md).
@@ -37,6 +39,11 @@ oci_image_index(
 )
 ```
 
+An index given exactly one platform is itself built in that platform's configuration rather than the
+caller's, so that it can point at the image's blobs with relative symlinks (see below). Its output
+therefore lives in that configuration's `bazel-out` directory, and its own configurable attributes are
+evaluated for that platform.
+
 ## Without using Bazel platforms
 
 ```starlark
@@ -70,6 +77,21 @@ _image_index_transition = transition(
     outputs = ["//command_line_option:platforms"],
 )
 
+def _image_index_self_transition_impl(settings, attr):
+    # An index for a single platform is built in that platform's configuration, so it shares an
+    # output directory with its image and can point at the image's blobs with relative symlinks
+    # that stay valid in runfiles trees (see _can_link_blobs). A multi-platform index spans
+    # configurations and stays in the caller's.
+    if len(attr.platforms) == 1:
+        return {"//command_line_option:platforms": str(attr.platforms[0])}
+    return {"//command_line_option:platforms": settings["//command_line_option:platforms"]}
+
+_image_index_self_transition = transition(
+    implementation = _image_index_self_transition_impl,
+    inputs = ["//command_line_option:platforms"],
+    outputs = ["//command_line_option:platforms"],
+)
+
 _attrs = {
     "images": attr.label_list(
         mandatory = True,
@@ -92,14 +114,25 @@ A list of platform targets to build the image for. If specified, only one image 
     ),
 }
 
-def _expand_image_to_args(image, expander):
-    args = [
-        "--image={}".format(image.path),
+def _expand_blobs_to_args(image, expander):
+    return [
+        "--blob={}".format(file.tree_relative_path)
+        for file in expander.expand(image)
+        if file.path.find("blobs") != -1
     ]
-    for file in expander.expand(image):
-        if file.path.find("blobs") != -1:
-            args.append("--blob={}".format(file.tree_relative_path))
-    return args
+
+def _can_link_blobs(image, output, label):
+    """Whether the index may point at the image's blobs with relative symlinks rather than copies.
+
+    A symlink has to resolve both in the execution root, where a file lives at
+    `bazel-out/<configuration>/bin/[external/<repo>/]<package>/<name>`, and in a runfiles tree,
+    where it lives at `<repo>/<package>/<name>`. The relative path between two files is the same
+    in both layouts only when they share a configuration and a repository.
+    """
+    return all([
+        file.root.path == output.root.path and file.owner.repo_name == label.repo_name
+        for file in image[DefaultInfo].files.to_list()
+    ])
 
 def _oci_image_index_impl(ctx):
     if len(ctx.attr.platforms) > 0 and len(ctx.attr.images) != len(ctx.attr.platforms):
@@ -121,9 +154,24 @@ def _oci_image_index_impl(ctx):
 
     output = ctx.actions.declare_directory(ctx.label.name)
 
+    # Like oci_image, point at blobs with relative symlinks instead of copying them where possible,
+    # so the action neither copies nor re-uploads every layer of every image. A linked image's blobs
+    # are themselves symlinks to its layers, so its files and runfiles are carried in the index's
+    # runfiles for consumers that run from a runfiles tree. A copied image is self-contained.
+    use_symlinks = bazel_features.rules.permits_treeartifact_uplevel_symlinks
+
     args = ctx.actions.args()
     args.add(output.path, format = "--output=%s")
-    args.add_all(ctx.files.images, map_each = _expand_image_to_args, expand_directories = False)
+    transitive_runfiles = []
+    for images in ctx.split_attr.images.values():
+        for image in images:
+            link = use_symlinks and _can_link_blobs(image, output, ctx.label)
+            for layout in image[DefaultInfo].files.to_list():
+                args.add(layout.path, format = "--linked-image=%s" if link else "--image=%s")
+                args.add_all([layout], map_each = _expand_blobs_to_args, expand_directories = False)
+            if link:
+                transitive_runfiles.append(image[DefaultInfo].files)
+                transitive_runfiles.append(image[DefaultInfo].default_runfiles.files)
 
     inputs = list(ctx.files.images)
     if ctx.attr.annotations:
@@ -141,11 +189,15 @@ def _oci_image_index_impl(ctx):
         toolchain = None,
     )
 
-    return DefaultInfo(files = depset([output]))
+    return DefaultInfo(
+        files = depset([output]),
+        runfiles = ctx.runfiles(transitive_files = depset(transitive = transitive_runfiles)),
+    )
 
 oci_image_index = rule(
     implementation = _oci_image_index_impl,
     attrs = _attrs,
+    cfg = _image_index_self_transition,
     doc = _DOC,
     toolchains = [
         "@aspect_bazel_lib//lib:jq_toolchain_type",
