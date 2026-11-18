@@ -154,3 +154,47 @@ assert_contains(
     actual = ":app_all_annotated_from_file_manifest",
     expected = "deadbeef",
 )
+
+# Two images that share a layer blob. oci_image_index copies that blob once:
+# on Windows a copy keeps the read-only attribute of its Bazel input, so a
+# second copy onto it failed with "Access is denied".
+tar(
+    name = "shared_layer",
+    srcs = ["say_hello_amd64.sh"],
+)
+
+[
+    oci_image(
+        name = "shared_layer_" + arch,
+        architecture = arch,
+        os = "linux",
+        tars = [":shared_layer"],
+    )
+    for arch in [
+        "amd64",
+        "arm64",
+    ]
+]
+
+sh_test(
+    name = "shared_blob_test",
+    srcs = ["shared_blob_test.bash"],
+    args = [
+        "$(rootpath //oci/private:image_index.sh.tpl)",
+        "$(JQ_BIN)",
+        "$(COREUTILS_BIN)",
+        "$(rootpath :shared_layer_amd64)",
+        "$(rootpath :shared_layer_arm64)",
+    ],
+    data = [
+        ":shared_layer_amd64",
+        ":shared_layer_arm64",
+        "//oci/private:image_index.sh.tpl",
+        "@coreutils_toolchains//:resolved_toolchain",
+        "@jq_toolchains//:resolved_toolchain",
+    ],
+    toolchains = [
+        "@coreutils_toolchains//:resolved_toolchain",
+        "@jq_toolchains//:resolved_toolchain",
+    ],
+)
