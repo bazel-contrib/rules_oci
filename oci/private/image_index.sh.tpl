@@ -35,6 +35,13 @@ function copy_blob() {
     local output_path="$2"
     local blob_image_relative_path="$3"
     local dest_path="${output_path}/${blob_image_relative_path}"
+    # Blobs are content addressed, so a blob that is already present came from
+    # an earlier image and has the same content. Copying it again is wasted work
+    # and fails on Windows, where the first copy keeps the read-only attribute
+    # of its Bazel input and so cannot be overwritten.
+    if [[ -e "${dest_path}" ]]; then
+        return
+    fi
     mkdirp "$("${COREUTILS}" dirname "${dest_path}")"
     "${COREUTILS}" cp --no-preserve=mode "${image_path}/${blob_image_relative_path}" "${dest_path}"
 }
