@@ -58,6 +58,12 @@ oci_image_index(
 ```
 """
 
+_OCI_INDEX_TOOLS_EXEC_GROUP = "oci_index_tools"
+_OCI_INDEX_TOOLCHAINS = [
+    "@aspect_bazel_lib//lib:jq_toolchain_type",
+    "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+]
+
 def _image_index_transition_impl(_, attr):
     return [
         {"//command_line_option:platforms": str(platform)}
@@ -105,8 +111,9 @@ def _oci_image_index_impl(ctx):
     if len(ctx.attr.platforms) > 0 and len(ctx.attr.images) != len(ctx.attr.platforms):
         fail("platforms can only be specified when there is exactly one image in the images attribute.")
 
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    index_toolchains = ctx.exec_groups[_OCI_INDEX_TOOLS_EXEC_GROUP].toolchains
+    jq = index_toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    coreutils = index_toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
 
     launcher = ctx.actions.declare_file("image_index_{}.sh".format(ctx.label.name))
     ctx.actions.expand_template(
@@ -138,7 +145,7 @@ def _oci_image_index_impl(ctx):
         tools = [jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",
-        toolchain = None,
+        exec_group = _OCI_INDEX_TOOLS_EXEC_GROUP,
     )
 
     return DefaultInfo(files = depset([output]))
@@ -147,8 +154,8 @@ oci_image_index = rule(
     implementation = _oci_image_index_impl,
     attrs = _attrs,
     doc = _DOC,
-    toolchains = [
-        "@aspect_bazel_lib//lib:jq_toolchain_type",
-        "@aspect_bazel_lib//lib:coreutils_toolchain_type",
-    ],
+    toolchains = _OCI_INDEX_TOOLCHAINS,
+    exec_groups = {
+        _OCI_INDEX_TOOLS_EXEC_GROUP: exec_group(toolchains = _OCI_INDEX_TOOLCHAINS),
+    },
 )

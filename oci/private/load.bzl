@@ -22,6 +22,13 @@ docker run --rm my-repository:latest
 load("@aspect_bazel_lib//lib:paths.bzl", "BASH_RLOCATION_FUNCTION", "to_rlocation_path")
 load("//oci/private:util.bzl", "util")
 
+_OCI_LOAD_MANIFEST_TOOLS_EXEC_GROUP = "oci_load_manifest_tools"
+_OCI_LOAD_MANIFEST_TOOLCHAINS = [
+    "@bazel_tools//tools/sh:toolchain_type",
+    "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+    "@aspect_bazel_lib//lib:jq_toolchain_type",
+]
+
 doc = """Loads an OCI layout into a container daemon without needing to publish the image first.
 
 Passing anything other than oci_image to the image attribute will lead to build time errors.
@@ -148,8 +155,10 @@ def _get_workspace_root_path(ctx, file):
     return file.root.path
 
 def _load_impl(ctx):
-    jq = ctx.toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
-    coreutils = ctx.toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    manifest_toolchains = ctx.exec_groups[_OCI_LOAD_MANIFEST_TOOLS_EXEC_GROUP].toolchains
+    jq = manifest_toolchains["@aspect_bazel_lib//lib:jq_toolchain_type"]
+    coreutils = manifest_toolchains["@aspect_bazel_lib//lib:coreutils_toolchain_type"]
+    sh = manifest_toolchains["@bazel_tools//tools/sh:toolchain_type"]
     bsdtar = ctx.toolchains["@tar.bzl//tar/toolchain:type"]
     bsdtar_target = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
 
@@ -187,7 +196,7 @@ def _load_impl(ctx):
     )
     mtree_outputs = [mtree_spec, manifest_json]
     ctx.actions.run(
-        executable = util.maybe_wrap_launcher_for_windows(ctx, executable),
+        executable = util.maybe_wrap_launcher_for_windows(ctx, executable, sh),
         inputs = mtree_inputs,
         outputs = mtree_outputs,
         tools = [
@@ -195,6 +204,7 @@ def _load_impl(ctx):
             coreutils.coreutils_info.bin,
         ],
         mnemonic = "OCITarballManifest",
+        exec_group = _OCI_LOAD_MANIFEST_TOOLS_EXEC_GROUP,
     )
 
     # This action produces a large output and should rarely be used as it puts load on the cache.
@@ -211,6 +221,7 @@ def _load_impl(ctx):
         outputs = [tarball],
         arguments = [tar_args],
         mnemonic = "OCITarball",
+        toolchain = "@tar.bzl//tar/toolchain:type",
     )
 
     # Create an executable runner script that will create the tarball at runtime,
@@ -263,5 +274,8 @@ oci_load = rule(
         "@tar.bzl//tar/toolchain:type",
         "@tar.bzl//tar/toolchain:target_type",
     ],
+    exec_groups = {
+        _OCI_LOAD_MANIFEST_TOOLS_EXEC_GROUP: exec_group(toolchains = _OCI_LOAD_MANIFEST_TOOLCHAINS),
+    },
     executable = True,
 )
