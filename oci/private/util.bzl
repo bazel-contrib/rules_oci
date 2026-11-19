@@ -205,8 +205,8 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, name = None):
     Args:
         ctx: the rule context
         bash_launcher: the shell script to wrap
-        name: unique name for the wrapper, needed when wrapping more than one launcher in a rule
-            instance. Defaults to the target name.
+        name: package-relative path of the wrapper, without the .bat extension. Needed when
+            wrapping more than one launcher in a rule instance. Defaults to wrap_<target name>.
 
     Returns:
         The launcher to use as the action executable.
@@ -214,7 +214,7 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, name = None):
     if not is_windows_exec(ctx):
         return bash_launcher
 
-    win_launcher = ctx.actions.declare_file("wrap_%s.bat" % (name or ctx.label.name))
+    win_launcher = ctx.actions.declare_file("%s.bat" % (name or "wrap_" + ctx.label.name))
     if bash_launcher.path.startswith(win_launcher.dirname + "/"):
         launcher = "%parent_dir%" + paths.relativize(bash_launcher.path, win_launcher.dirname)
     else:
