@@ -1,5 +1,7 @@
 "Implementation details for oci_image_index rule"
 
+load(":util.bzl", "util")
+
 _DOC = """Build a multi-architecture OCI compatible container image.
 
 It takes number of `oci_image` targets to create a fat multi-architecture image conforming to [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/main/image-index.md).
@@ -90,7 +92,7 @@ A list of platform targets to build the image for. If specified, only one image 
     "_allowlist_function_transition": attr.label(
         default = "@bazel_tools//tools/allowlists/function_transition_allowlist",
     ),
-}
+} | util.IS_EXEC_PLATFORM_WINDOWS_ATTRS
 
 def _expand_image_to_args(image, expander):
     args = [
@@ -134,8 +136,8 @@ def _oci_image_index_impl(ctx):
         inputs = inputs,
         arguments = [args],
         outputs = [output],
-        executable = launcher,
-        tools = [jq.jqinfo.bin, coreutils.coreutils_info.bin],
+        executable = util.maybe_wrap_launcher_for_windows(ctx, launcher),
+        tools = [launcher, jq.jqinfo.bin, coreutils.coreutils_info.bin],
         mnemonic = "OCIIndex",
         progress_message = "OCI Index %{label}",
         toolchain = None,
@@ -150,5 +152,6 @@ oci_image_index = rule(
     toolchains = [
         "@aspect_bazel_lib//lib:jq_toolchain_type",
         "@aspect_bazel_lib//lib:coreutils_toolchain_type",
+        "@bazel_tools//tools/sh:toolchain_type",
     ],
 )

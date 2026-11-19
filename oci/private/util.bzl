@@ -189,7 +189,7 @@ def _warning(rctx, message):
         "\033[0;33mWARNING:\033[0m {}".format(message),
     ], quiet = False)
 
-def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
+def _maybe_wrap_launcher_for_windows(ctx, bash_launcher, name = None):
     """Windows cannot directly execute a shell script.
 
     Wrap with a .bat file that executes the shell script with a bash command.
@@ -201,11 +201,24 @@ def _maybe_wrap_launcher_for_windows(ctx, bash_launcher):
     - add IS_EXEC_PLATFORM_WINDOWS_ATTRS to the rule attrs
     - make sure the bash_launcher is in the inputs to the action
     - @bazel_tools//tools/sh:toolchain_type should appear in the rules toolchains
+
+    Args:
+        ctx: the rule context
+        bash_launcher: the shell script to wrap
+        name: package-relative path of the wrapper, without the .bat extension. Needed when
+            wrapping more than one launcher in a rule instance. Defaults to wrap_<target name>.
+
+    Returns:
+        The launcher to use as the action executable.
     """
     if not is_windows_exec(ctx):
         return bash_launcher
 
-    win_launcher = ctx.actions.declare_file("wrap_%s.bat" % ctx.label.name)
+    win_launcher = ctx.actions.declare_file("%s.bat" % (name or "wrap_" + ctx.label.name))
+    if bash_launcher.path.startswith(win_launcher.dirname + "/"):
+        launcher = "%parent_dir%" + paths.relativize(bash_launcher.path, win_launcher.dirname)
+    else:
+        launcher = bash_launcher.path
     ctx.actions.write(
         output = win_launcher,
         content = r"""@echo off
@@ -221,10 +234,10 @@ if defined args (
   set args=!args:\=\\\\!
   set args=!args:"=\"!
 )
-"{bash_bin}" -c "%parent_dir%{launcher} !args!"
+"{bash_bin}" -c "{launcher} !args!"
 """.format(
             bash_bin = ctx.toolchains["@bazel_tools//tools/sh:toolchain_type"].path,
-            launcher = paths.relativize(bash_launcher.path, win_launcher.dirname),
+            launcher = launcher,
         ),
         is_executable = True,
     )

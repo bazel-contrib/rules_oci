@@ -1,7 +1,9 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@aspect_bazel_lib//lib:run_binary.bzl", "run_binary")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
+load("//oci:defs.bzl", "oci_image")
 load(":pull_tests.bzl", "parse_image_test", "parse_www_authenticate_test")
+load(":windows_wrap_tests.bzl", "windows_wrappers_test")
 
 IMAGES_TO_TEST = {
     "linux/amd64": {
@@ -86,3 +88,54 @@ build_test(
 parse_image_test(name = "parse_image_test")
 
 parse_www_authenticate_test(name = "parse_www_authenticate_test")
+
+platform(
+    name = "windows_exec",
+    constraint_values = [
+        "@platforms//os:windows",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+genrule(
+    name = "empty_tar",
+    outs = ["empty.tar"],
+    cmd = "tar -cf $@ --files-from /dev/null",
+    tags = ["manual"],
+)
+
+# The per-layer descriptor wrapper of "wrap_app" must not use the default
+# wrapper path of a target named "wrap_app_descriptor_0".
+oci_image(
+    name = "wrap_app",
+    architecture = "amd64",
+    os = "linux",
+    tags = ["manual"],
+    tars = [":empty_tar"],
+)
+
+oci_image(
+    name = "wrap_app_descriptor_0",
+    architecture = "amd64",
+    os = "linux",
+    tags = ["manual"],
+    tars = [":empty_tar"],
+)
+
+windows_wrappers_test(
+    name = "windows_wrappers_test",
+    expected_wrappers = [
+        "oci/tests/_wrap/wrap_app/descriptor_0.bat",
+        "oci/tests/wrap_wrap_app.bat",
+    ],
+    target_under_test = ":wrap_app",
+)
+
+windows_wrappers_test(
+    name = "windows_wrappers_collision_test",
+    expected_wrappers = [
+        "oci/tests/_wrap/wrap_app_descriptor_0/descriptor_0.bat",
+        "oci/tests/wrap_wrap_app_descriptor_0.bat",
+    ],
+    target_under_test = ":wrap_app_descriptor_0",
+)
